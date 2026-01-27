@@ -1,7 +1,21 @@
---! reflect_db_role_setting
-select setconfig, setdatabase::int, setrole::int
-from pg_db_role_setting
--- where setdatabase = (select oid from pg_database where datname = 'your_database_name')
-	-- and setrole = 0
-
+--! reflect_db_role_setting : (rolname?)
+select
+	string_to_array(substring(setting from 13), ',') as search_path,
+	pg_roles.rolname::text
+from
+	pg_db_role_setting cross join lateral unnest(pg_db_role_setting.setconfig) as s(setting)
+	left join pg_roles on pg_db_role_setting.setrole = pg_roles.oid
+	left join pg_database on pg_db_role_setting.setdatabase = pg_database.oid
+where
+	starts_with(setting, 'search_path=')
+	and (
+		pg_database.datname = current_database()
+		or pg_db_role_setting.setrole != 0
+	)
 ;
+
+
+-- SHOW search_path ;
+
+-- "$user",public
+
