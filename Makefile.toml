@@ -1,0 +1,43 @@
+# cargo make --no-workspace mytask
+
+[config]
+default_to_workspace = false
+# for tasks you *want* to run individually in members:
+# workspace = true
+
+[tasks.dev_test]
+command = "cargo"
+args = ["test", "--", "--nocapture"]
+dependencies = ["gen_reflect"]
+
+
+[tasks.test_temp_container_utils]
+command = "cargo"
+args = ["test", "-p", "temp_container_utils"]
+
+[tasks.gen_reflect]
+command = "clorinde"
+install_crate = "clorinde"
+install_crate_args = ["--version", "^1.3"]
+condition = { files_modified = { input = ["./reflect_queries/**/*"], output = ["./reflect_crate/**/*"] } }
+args = [
+	"schema", "empty.sql",
+	"--podman", "true",
+	"--container-image", "docker.io/library/postgres:18",
+	"--queries-path", "reflect_queries",
+	"--destination", "reflect_crate",
+	"--container-wait", "500",
+]
+
+
+# [tasks.test]
+# command = "cargo"
+# args = ["test"]
+# dependencies = ["clean"]
+
+# [tasks.my-flow]
+# dependencies = [
+# 	"format",
+# 	"build",
+# 	"test"
+# ]

@@ -1,3 +1,20 @@
+[workspace]
+members = [
+	".",
+	"temp_container_utils",
+	"reflect_crate",
+]
+
+[workspace.dependencies]
+futures = "0.3"
+thiserror = "2"
+tokio = { version = "1", features = ["full", "rt"] }
+tokio-postgres = { version = "0.7" }
+rand = "0.9"
+rand_distr = "0.5"
+
+
+
 [package]
 name = "postgres-static-analyzer"
 version = "0.1.0"
@@ -5,3 +22,9 @@ edition = "2024"
 
 [dependencies]
 hashbrown = "0.16"
+tokio = { workspace = true, features = ["full", "rt"] }
+reflect_crate = { path = "./reflect_crate" }
+
+[dev-dependencies]
+anyhow = "1"
+temp_container_utils = { path = "./temp_container_utils" }
