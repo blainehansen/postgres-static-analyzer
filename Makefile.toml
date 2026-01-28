@@ -23,7 +23,7 @@ condition = { files_modified = { input = ["./reflect_queries/**/*"], output = ["
 args = [
 	"schema", "empty.sql",
 	"--podman", "true",
-	"--container-image", "docker.io/library/postgres:18",
+	"--container-image", "docker.io/library/postgres:17",
 	"--queries-path", "reflect_queries",
 	"--destination", "reflect_crate",
 	"--container-wait", "500",

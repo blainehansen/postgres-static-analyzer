@@ -110,7 +110,7 @@ async fn spawn_postgres(container_name: &str, pg_pass: &str, pg_user: &str, pg_d
 		"--env", &format!("PGPORT={pg_port}"),
 		"-p", &format!("{pg_port}:{pg_port}"),
 		"--detach", "--rm",
-		"docker.io/library/postgres:18",
+		"docker.io/library/postgres:17",
 	], "start temp container").await
 }
 

@@ -24,6 +24,9 @@ edition = "2024"
 hashbrown = "0.16"
 tokio = { workspace = true, features = ["full", "rt"] }
 reflect_crate = { path = "./reflect_crate" }
+# sqlparser = "0.60"
+pg_query = "6.1"
+thiserror.workspace = true
 
 [dev-dependencies]
 anyhow = "1"
