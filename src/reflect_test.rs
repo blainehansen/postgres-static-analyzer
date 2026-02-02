@@ -45,7 +45,7 @@ fn empty_schema(schema_name: &str) -> SchemaState {
 }
 
 #[tokio::test]
-async fn test_reflect_schemas() -> anyhow::Result<()> {
+async fn test_reflect_user_schemas() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let schemas = reflect::reflect_user_schemas(&client).await?;
 		assert_eq!(schemas, Set::from([
@@ -74,6 +74,43 @@ async fn test_reflect_schemas() -> anyhow::Result<()> {
 			empty_schema("aaa"),
 			empty_schema("bbb"),
 		]));
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
+
+	Ok(())
+}
+
+fn empty_table(table_name: &str) -> TableState {
+	TableState { name: table_name.to_string(), columns: Set::new() }
+}
+
+#[tokio::test]
+async fn test_reflect_user_tables() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		let tables = reflect::reflect_user_tables(&client).await?;
+		assert!(tables.is_empty());
+
+		client.batch_execute(r#"
+			create table aaa ();
+			create table bbb ();
+			create table "big things poppin" ();
+		"#).await?;
+		let tables = reflect::reflect_user_tables(&client).await?;
+		assert_eq!(tables, vec![
+			("public".to_string(), empty_table("aaa")),
+			("public".to_string(), empty_table("bbb")),
+			("public".to_string(), empty_table("big things poppin")),
+		]);
+
+		client.batch_execute(r#"
+			drop table aaa;
+			drop table "big things poppin";
+		"#).await?;
+		let tables = reflect::reflect_user_tables(&client).await?;
+		assert_eq!(tables, vec![
+			("public".to_string(), empty_table("bbb")),
+		]);
 
 		Ok::<_, postgres::Error>(())
 	}).await??;

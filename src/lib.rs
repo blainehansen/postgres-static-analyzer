@@ -176,7 +176,6 @@ pub struct TableState {
 	// foreign keys
 	// primary key (singular)
 	// unique
-	pub default_settings: ConnectionSettings,
 }
 impl_hash_and_equivalent!(TableState);
 

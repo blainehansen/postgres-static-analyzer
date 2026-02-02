@@ -1,4 +1,4 @@
-use crate::{postgres, PgClient, Set, Map, ConnectionSettings, SchemaState};
+use crate::{ConnectionSettings, Map, PgClient, SchemaState, Set, TableState, postgres};
 
 pub(crate) async fn reflect_all_settings(
 	client: &PgClient
@@ -28,9 +28,28 @@ pub(crate) async fn reflect_all_settings(
 pub(crate) async fn reflect_user_schemas(
 	client: &PgClient
 ) -> Result<Set<SchemaState>, postgres::Error> {
-	let schema_names = reflect_crate::queries::main::reflect_user_schemas().bind(client).all().await?;
+	let schema_query = reflect_crate::queries::main::reflect_user_schemas();
 
-	Ok(schema_names.into_iter().map(|schema_name| {
+	let (schemas, tables) = tokio::try_join!(
+		schema_query.bind(client).all(),
+		reflect_user_tables(client),
+	)?;
+
+	todo!(); // put the reflected tables onto their correct schema
+
+	Ok(schemas.into_iter().map(|schema_name| {
 		SchemaState { name: schema_name, tables: Set::new() }
+	}).collect())
+}
+
+
+pub(crate) async fn reflect_user_tables(
+	client: &PgClient
+) -> Result<Vec<(String, TableState)>, postgres::Error> {
+	let tables = reflect_crate::queries::main::reflect_user_tables().bind(client).all().await?;
+
+	Ok(tables.into_iter().map(|table| {
+		(table.nspname, TableState { name: table.relname, columns: Set::new() })
+
 	}).collect())
 }
