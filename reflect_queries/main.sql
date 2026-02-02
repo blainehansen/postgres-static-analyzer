@@ -15,6 +15,17 @@ where
 ;
 
 
+--! reflect_user_schemas
+select
+	pg_namespace.nspname::text
+	-- oid
+	-- nspowner
+	-- nspacl
+from pg_namespace
+where pg_namespace.nspname not in ('information_schema', 'pg_catalog', 'pg_toast')
+;
+
+
 -- SHOW search_path ;
 
 -- "$user",public
