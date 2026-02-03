@@ -27,6 +27,7 @@ reflect_crate = { path = "./reflect_crate" }
 # sqlparser = "0.60"
 pg_query = "6.1"
 thiserror.workspace = true
+itertools = "0.14.0"
 
 [dev-dependencies]
 anyhow = "1"

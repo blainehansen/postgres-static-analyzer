@@ -769,6 +769,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "hashbrown",
+ "itertools 0.14.0",
  "pg_query",
  "reflect_crate",
  "temp_container_utils",

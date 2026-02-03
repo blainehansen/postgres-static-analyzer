@@ -1,7 +1,7 @@
 use crate::ConnectionSettings;
 
 use super::*;
-use hashbrown::HashMap;
+use std::collections::HashMap;
 
 // async fn pg_con(config: &PgConfig) -> Result<PgClient, postgres::Error> {
 // 	let (client, conn) = config.connect(postgres::NoTls).await?;
@@ -29,7 +29,7 @@ async fn test_reflect_all_settings() -> anyhow::Result<()> {
 		"#).await?;
 		let (current_database_settings, user_settings) = reflect::reflect_all_settings(&client).await?;
 		assert_eq!(current_database_settings, Some(connection_settings(vec!["hmm"])));
-		assert_eq!(user_settings, HashMap::from([
+		assert_eq!(user_settings, Map::from([
 			("tempuser".to_string(), connection_settings(vec!["hmm"]))
 		]));
 
@@ -97,20 +97,78 @@ async fn test_reflect_user_tables() -> anyhow::Result<()> {
 			create table "big things poppin" ();
 		"#).await?;
 		let tables = reflect::reflect_user_tables(&client).await?;
-		assert_eq!(tables, vec![
-			("public".to_string(), empty_table("aaa")),
-			("public".to_string(), empty_table("bbb")),
-			("public".to_string(), empty_table("big things poppin")),
-		]);
+		assert_eq!(tables, HashMap::from([
+			("public".to_string(), Set::from([
+				empty_table("aaa"),
+				empty_table("bbb"),
+				empty_table("big things poppin"),
+			])),
+		]));
 
 		client.batch_execute(r#"
 			drop table aaa;
 			drop table "big things poppin";
 		"#).await?;
 		let tables = reflect::reflect_user_tables(&client).await?;
-		assert_eq!(tables, vec![
-			("public".to_string(), empty_table("bbb")),
-		]);
+		assert_eq!(tables, HashMap::from([
+			("public".to_string(), Set::from([
+				empty_table("bbb"),
+			])),
+		]));
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
+
+	Ok(())
+}
+
+
+fn col(name: &str, typ: &str, not_null: bool, default_expr: Option<&str>) -> Column {
+	Column {
+		name: name.to_string(), typ: Ref { schema_name: Some("pg_catalog".to_string()), name: typ.to_string() },
+		not_null, default_expr: default_expr.map(str::to_string),
+	}
+}
+
+#[tokio::test]
+async fn reflect_user_table_columns() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		let columns = reflect::reflect_user_table_columns(&client).await?;
+		assert!(columns.is_empty());
+
+		client.batch_execute(r#"
+			create table aaa (
+				id int primary key,
+				hey bool default ('hey there' is null),
+				yo text not null,
+				hmm uuid
+			);
+			create table bbb (
+				id bigint
+			);
+		"#).await?;
+		let columns = reflect::reflect_user_table_columns(&client).await?;
+		assert_eq!(columns, HashMap::from([
+			(("public".to_string(), "aaa".to_string()), Set::from([
+				col("id", "int4", true, None),
+				col("hey", "bool", false, Some("('hey there' IS NULL)")),
+				col("yo", "text", true, None),
+				col("hmm", "uuid", false, None),
+			])),
+			(("public".to_string(), "bbb".to_string()), Set::from([
+				col("id", "int8", false, None),
+			])),
+		]));
+
+		client.batch_execute(r#"
+			drop table aaa;
+		"#).await?;
+		let columns = reflect::reflect_user_table_columns(&client).await?;
+		assert_eq!(columns, HashMap::from([
+			(("public".to_string(), "bbb".to_string()), Set::from([
+				col("id", "int8", false, None),
+			])),
+		]));
 
 		Ok::<_, postgres::Error>(())
 	}).await??;

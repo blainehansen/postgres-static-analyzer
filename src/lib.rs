@@ -6,7 +6,7 @@ fn nodes_to_enum(nodes: Vec<Node>) -> Vec<NodeEnum> {
 	nodes.into_iter().filter_map(|n| n.node).collect()
 }
 
-pub(crate) use reflect_crate::tokio_postgres::{self as postgres, Config as PgConfig, Client as PgClient};
+pub(crate) use reflect_crate::tokio_postgres::{self as postgres, /*Config as PgConfig,*/ Client as PgClient};
 
 pub type Set<T> = HashSet<T>;
 pub type Map<T> = HashMap<String, T>;
@@ -141,7 +141,7 @@ macro_rules! impl_hash_and_equivalent {
 	};
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct DbState {
 	pub roles: Set<Role>,
 	pub default_settings: ConnectionSettings,
@@ -150,7 +150,7 @@ pub struct DbState {
 }
 
 // https://www.postgresql.org/docs/current/sql-createrole.html
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Role {
 	pub name: String,
 	pub default_settings: ConnectionSettings,
@@ -159,7 +159,7 @@ impl_hash_and_equivalent!(Role);
 
 
 // https://www.postgresql.org/docs/current/sql-createschema.html
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SchemaState {
 	pub name: String,
 	// pub typs: Set<Typ>,
@@ -169,7 +169,7 @@ impl_hash_and_equivalent!(SchemaState);
 
 
 // https://www.postgresql.org/docs/current/sql-createtable.html
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TableState {
 	pub name: String,
 	pub columns: Set<Column>,
@@ -179,29 +179,47 @@ pub struct TableState {
 }
 impl_hash_and_equivalent!(TableState);
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Column {
 	pub name: String,
-	pub typ: String,
+	pub typ: Ref,
 	pub not_null: bool,
+	pub default_expr: Option<String>,
+	// pub attgenerated
 }
 impl_hash_and_equivalent!(Column);
 
-
-// https://www.postgresql.org/docs/current/sql-createtype.html
-#[derive(Debug, PartialEq, Eq)]
-pub struct Typ {
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Ref {
+	pub schema_name: Option<String>,
 	pub name: String,
 }
-impl_hash_and_equivalent!(Typ);
+
+
+// https://www.postgresql.org/docs/current/sql-createtype.html
+// #[derive(Debug, PartialEq, Eq, Clone)]
+// pub struct Typ {
+// 	pub name: String,
+// }
+// impl_hash_and_equivalent!(Typ);
 
 
 // https://www.postgresql.org/docs/current/runtime-config-client.html
 // row_security?
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ConnectionSettings {
 	pub search_path: Vec<String>,
 }
+// SHOW search_path ;
+// "$user",public
+
+pub fn make_default_settings() -> ConnectionSettings {
+	ConnectionSettings {
+		search_path: vec!["\"$user\"".to_string(), "public".to_string()]
+	}
+}
+
+
 // At the database level -- only takes affect for new sessions: ALTER DATABASE mydb SET search_path = public, utility;
 // At the server user level -- only takes affect for new sessions: ALTER ROLE postgres SET search_path = public,utility;
 // At the database user level - only takes affect for new sessions: ALTER ROLE postgres IN DATABASE mydb SET search_path = public, utility;
