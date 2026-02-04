@@ -82,11 +82,12 @@ async fn test_reflect_user_schemas() -> anyhow::Result<()> {
 }
 
 fn empty_table(table_name: &str) -> TableState {
+	// TODO unique and primary keys
 	TableState { name: table_name.to_string(), columns: Set::new() }
 }
 
 #[tokio::test]
-async fn test_reflect_user_tables() -> anyhow::Result<()> {
+async fn test_reflect_user_tables_empty() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let tables = reflect::reflect_user_tables(&client).await?;
 		assert!(tables.is_empty());
@@ -120,6 +121,11 @@ async fn test_reflect_user_tables() -> anyhow::Result<()> {
 	}).await??;
 
 	Ok(())
+}
+
+fn tab(table_name: &'static str, columns: Set<Column>) -> TableState {
+	// TODO unique and primary keys
+	TableState { name: table_name.to_string(), columns }
 }
 
 
@@ -160,13 +166,38 @@ async fn reflect_user_table_columns() -> anyhow::Result<()> {
 			])),
 		]));
 
+		let tables = reflect::reflect_user_tables(&client).await?;
+		assert_eq!(tables, HashMap::from([
+			("public".to_string(), Set::from([
+				tab("aaa", Set::from([
+					col("id", "int4", true, None),
+					col("hey", "bool", false, Some("('hey there' IS NULL)")),
+					col("yo", "text", true, None),
+					col("hmm", "uuid", false, None),
+				])),
+				tab("bbb", Set::from([
+					col("id", "int8", false, None),
+				])),
+			])),
+		]));
+
 		client.batch_execute(r#"
 			drop table aaa;
+			alter table bbb rename column id to heyhey;
 		"#).await?;
 		let columns = reflect::reflect_user_table_columns(&client).await?;
 		assert_eq!(columns, HashMap::from([
 			(("public".to_string(), "bbb".to_string()), Set::from([
-				col("id", "int8", false, None),
+				col("heyhey", "int8", false, None),
+			])),
+		]));
+
+		let tables = reflect::reflect_user_tables(&client).await?;
+		assert_eq!(tables, HashMap::from([
+			("public".to_string(), Set::from([
+				tab("bbb", Set::from([
+					col("heyhey", "int8", false, None),
+				])),
 			])),
 		]));
 

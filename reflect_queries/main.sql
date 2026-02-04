@@ -26,17 +26,21 @@ where pg_namespace.nspname not in ('information_schema', 'pg_catalog', 'pg_toast
 ;
 
 
---! reflect_user_tables
+--! reflect_user_tables : (conname?, primary_key_columns?)
 select
 	pg_namespace.nspname::text,
-	pg_class.relname::text
+	pg_class.relname::text,
+	pg_constraint.conname::text,
+	array_agg(pg_attribute.attname::text) filter (where pg_constraint.contype = 'p') as primary_key_columns
 from
 	pg_catalog.pg_class
 	join pg_catalog.pg_namespace on pg_class.relnamespace = pg_namespace.oid
+	left join pg_catalog.pg_constraint on pg_constraint.conrelid = pg_class.oid and pg_constraint.contype = 'p'
+	left join pg_catalog.pg_attribute on pg_attribute.attrelid = pg_class.oid and pg_attribute.attnum = ANY(pg_constraint.conkey)
 where
-	pg_class.relkind = 'r' -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table, I = partitioned index
+	pg_class.relkind = 'r'
 	and pg_namespace.nspname not in ('pg_catalog', 'information_schema', 'pg_toast')
-	-- and pg_catalog.pg_table_is_visible(pg_class.oid) -- optional: only show tables in the current search path
+group by pg_namespace.nspname, pg_class.relname, pg_constraint.conname
 ;
 
 
@@ -63,22 +67,20 @@ where
 ;
 
 
-
--- select
--- 	pg_namespace.nspname::text,
--- 	pg_class.relname::text,
--- 	array(
--- 		select pg_attribute.attname, pg_attribute.attnotnull, pg_attribute.atthasdef, pg_attribute.attgenerated
--- 		from pg_attribute
--- 	) as columns
--- from
--- 	pg_catalog.pg_class
--- 	join pg_catalog.pg_namespace on pg_class.relnamespace = pg_namespace.oid
--- 	join pg_catalog.pg_attribute on pg_class.oid = pg_attribute.attrelid
--- 		and not pg_attribute.attisdropped and pg_attribute.attnum > 0
--- where
--- 	pg_class.relkind = 'r' -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table, I = partitioned index
--- 	and pg_namespace.nspname not in ('pg_catalog', 'information_schema', 'pg_toast')
--- 	-- and pg_catalog.pg_table_is_visible(pg_class.oid) -- optional: only show tables in the current search path
--- group by pg_namespace.nspname, pg_class.relname
--- ;
+--! reflect_user_table_unique_constraints
+select
+	pg_namespace.nspname::text, pg_class.relname::text, pg_constraint.conname::text,
+	array_agg(pg_attribute.attname::text) as unique_columns
+from
+	pg_catalog.pg_constraint
+	join pg_catalog.pg_class on pg_class.oid = pg_constraint.conrelid
+	join pg_catalog.pg_namespace on pg_class.relnamespace = pg_namespace.oid
+	join pg_catalog.pg_attribute on pg_attribute.attrelid = pg_constraint.conrelid and pg_attribute.attnum = any(pg_constraint.conkey)
+where
+	pg_class.relkind = 'r'
+	and pg_constraint.contype = 'u'
+	and pg_namespace.nspname not in ('pg_catalog', 'information_schema', 'pg_toast')
+	and not pg_attribute.attisdropped
+	and pg_attribute.attnum > 0
+group by pg_namespace.nspname, pg_class.relname, pg_constraint.conname
+;

@@ -1,4 +1,3 @@
-use hashbrown::{HashSet, HashMap};
 // use sqlparser::ast::Statement as SqlStatement;
 use pg_query::{Node, NodeEnum};
 
@@ -8,8 +7,8 @@ fn nodes_to_enum(nodes: Vec<Node>) -> Vec<NodeEnum> {
 
 pub(crate) use reflect_crate::tokio_postgres::{self as postgres, /*Config as PgConfig,*/ Client as PgClient};
 
-pub type Set<T> = HashSet<T>;
-pub type Map<T> = HashMap<String, T>;
+pub type Set<T> = hashbrown::HashSet<T>;
+pub type Map<T> = hashbrown::HashMap<String, T>;
 
 mod reflect;
 #[cfg(test)]
@@ -67,7 +66,7 @@ pub(crate) fn apply_command(
 
 			match (exists, if_not_exists) {
 				(false, _) => {
-					let mut schema = SchemaState { name: schemaname, tables: HashSet::new() };
+					let mut schema = SchemaState { name: schemaname, tables: Set::new() };
 					add_nodes_to_schema(&mut flags, &mut errors, &mut schema, nodes_to_enum(schema_elts))?;
 					db_state.schemas.insert(schema);
 				}
@@ -173,9 +172,9 @@ impl_hash_and_equivalent!(SchemaState);
 pub struct TableState {
 	pub name: String,
 	pub columns: Set<Column>,
+	pub primary_key: Option<(String, Set<String>)>,
+	pub unique_constraints: std::collections::HashMap<String, Set<String>>,
 	// foreign keys
-	// primary key (singular)
-	// unique
 }
 impl_hash_and_equivalent!(TableState);
 

@@ -1,4 +1,4 @@
-use crate::{Column, ConnectionSettings, Map, PgClient, Ref, SchemaState, Set, TableState, postgres};
+use crate::{postgres, Set, Map, Column, ConnectionSettings, PgClient, Ref, SchemaState, TableState};
 use std::collections::HashMap;
 
 pub(crate) async fn reflect_all_settings(
@@ -50,19 +50,50 @@ pub(crate) async fn reflect_user_schemas(
 pub(crate) async fn reflect_user_tables(
 	client: &PgClient
 ) -> Result<HashMap<String, Set<TableState>>, postgres::Error> {
+
+
+	let tables_query = reflect_crate::queries::main::reflect_user_tables();
+	let (tables, all_columns, all_unique_constraints) = tokio::try_join!(
+		tables_query.bind(client)
+			.map(|t| {
+				(t.nspname.to_string(), TableState {
+					name: t.relname.to_string(),
+					columns: Set::new(),
+					primary_key: t.primary_key_columns.map(|c| {
+						(t.conname.unwrap_or_default().to_string(), c.map(str::to_string).collect())
+					}),
+					unique_constraints: HashMap::new(),
+				})
+			})
+			// TODO probably possible to use the iter() method to get a stream and then deal with that
+			.all(),
+		reflect_user_table_columns(client),
+		reflect_user_table_unique_constraints(client),
+	)?;
+
 	use itertools::Itertools;
+	let mut tables = tables.into_iter().into_grouping_map().collect::<Set<_>>();
 
-	let tables = reflect_crate::queries::main::reflect_user_tables().bind(client)
-		.map(|t| {
-			(t.nspname.to_string(), TableState { name: t.relname.to_string(), columns: Set::new() })
-		})
-		// TODO probably possible to use the iter() method to get a stream and then deal with that
-		.all()
-		.await?
-		.into_iter().into_grouping_map().collect::<Set<_>>();
+	for ((schema_name, table_name), columns) in all_columns {
+		if let Some(tables_in_schema) = tables.get_mut(&schema_name) {
+			if let Some(mut table) = tables_in_schema.take(&table_name.as_str()) {
+				// TODO it would be nice to have the raw form coming here be something we could just .extend() columns
+				table.columns = columns;
+				tables_in_schema.insert(table);
+			}
+		}
+	}
 
-		// TODO put the columns on the tables
-		// reflect_user_table_columns
+	for ((schema_name, table_name), unique_constraints) in all_unique_constraints {
+		if let Some(tables_in_schema) = tables.get_mut(&schema_name) {
+			if let Some(mut table) = tables_in_schema.take(&table_name.as_str()) {
+				// TODO it would be nice to have the raw form coming here be something we could just .extend() unique_constraints
+				table.unique_constraints = unique_constraints;
+				tables_in_schema.insert(table);
+			}
+		}
+
+	}
 
 	Ok(tables)
 }
@@ -91,4 +122,25 @@ pub(crate) async fn reflect_user_table_columns(
 		.into_iter().into_grouping_map().collect::<Set<_>>();
 
 	Ok(columns)
+}
+
+pub(crate) async fn reflect_user_table_unique_constraints(
+	client: &PgClient
+) -> Result<HashMap<(String, String), HashMap<String, Set<String>>>, postgres::Error> {
+	use itertools::Itertools;
+
+	let unique_constraints = reflect_crate::queries::main::reflect_user_table_unique_constraints().bind(client)
+		.map(|uc| {
+			(
+				(uc.nspname.to_string(), uc.relname.to_string()),
+				(uc.conname.to_string(), uc.unique_columns.map(str::to_string).collect()),
+			)
+		})
+		.all()
+		.await?
+		.into_iter()
+		.into_grouping_map()
+		.collect::<HashMap<_, _>>();
+
+	Ok(unique_constraints)
 }
