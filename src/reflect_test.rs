@@ -9,6 +9,10 @@ use std::collections::HashMap;
 // 	Ok(client)
 // }
 
+fn s(val: &str) -> String {
+	val.to_string()
+}
+
 fn connection_settings(search_path: Vec<&str>) -> ConnectionSettings {
 	ConnectionSettings { search_path: search_path.into_iter().map(str::to_string).collect() }
 }
@@ -83,7 +87,10 @@ async fn test_reflect_user_schemas() -> anyhow::Result<()> {
 
 fn empty_table(table_name: &str) -> TableState {
 	// TODO unique and primary keys
-	TableState { name: table_name.to_string(), columns: Set::new() }
+	TableState {
+		name: table_name.to_string(), columns: Set::new(),
+		primary_key: None, unique_constraints: HashMap::new(),
+	}
 }
 
 #[tokio::test]
@@ -124,8 +131,11 @@ async fn test_reflect_user_tables_empty() -> anyhow::Result<()> {
 }
 
 fn tab(table_name: &'static str, columns: Set<Column>) -> TableState {
-	// TODO unique and primary keys
-	TableState { name: table_name.to_string(), columns }
+	TableState {
+		name: table_name.to_string(), columns,
+		primary_key: None, unique_constraints: HashMap::new(),
+
+	}
 }
 
 
@@ -144,7 +154,7 @@ async fn reflect_user_table_columns() -> anyhow::Result<()> {
 
 		client.batch_execute(r#"
 			create table aaa (
-				id int primary key,
+				id int not null,
 				hey bool default ('hey there' is null),
 				yo text not null,
 				hmm uuid
@@ -153,18 +163,6 @@ async fn reflect_user_table_columns() -> anyhow::Result<()> {
 				id bigint
 			);
 		"#).await?;
-		let columns = reflect::reflect_user_table_columns(&client).await?;
-		assert_eq!(columns, HashMap::from([
-			(("public".to_string(), "aaa".to_string()), Set::from([
-				col("id", "int4", true, None),
-				col("hey", "bool", false, Some("('hey there' IS NULL)")),
-				col("yo", "text", true, None),
-				col("hmm", "uuid", false, None),
-			])),
-			(("public".to_string(), "bbb".to_string()), Set::from([
-				col("id", "int8", false, None),
-			])),
-		]));
 
 		let tables = reflect::reflect_user_tables(&client).await?;
 		assert_eq!(tables, HashMap::from([
@@ -185,12 +183,6 @@ async fn reflect_user_table_columns() -> anyhow::Result<()> {
 			drop table aaa;
 			alter table bbb rename column id to heyhey;
 		"#).await?;
-		let columns = reflect::reflect_user_table_columns(&client).await?;
-		assert_eq!(columns, HashMap::from([
-			(("public".to_string(), "bbb".to_string()), Set::from([
-				col("heyhey", "int8", false, None),
-			])),
-		]));
 
 		let tables = reflect::reflect_user_tables(&client).await?;
 		assert_eq!(tables, HashMap::from([
@@ -198,6 +190,88 @@ async fn reflect_user_table_columns() -> anyhow::Result<()> {
 				tab("bbb", Set::from([
 					col("heyhey", "int8", false, None),
 				])),
+			])),
+		]));
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
+
+	Ok(())
+}
+
+#[tokio::test]
+async fn reflect_user_table_constraints() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		let unique_constraints = reflect::reflect_user_table_unique_constraints(&client).await?;
+		assert!(unique_constraints.is_empty());
+
+		client.batch_execute(r#"
+			create table aaa (
+				a int primary key,
+				b int, c int unique, d int not null,
+				unique (a),
+				unique (c, d)
+			);
+			create table bbb (
+				a int, b int, c int, d int,
+				primary key (a, b),
+				unique (a, b),
+				unique (b, c, d)
+			);
+		"#).await?;
+
+		let tables = reflect::reflect_user_tables(&client).await?;
+		assert_eq!(tables, HashMap::from([
+			("public".to_string(), Set::from([
+				TableState {
+					name: s("aaa"), columns: Set::from([
+						col("a", "int4", true, None),
+						col("b", "int4", false, None),
+						col("c", "int4", false, None),
+						col("d", "int4", true, None),
+					]),
+					primary_key: Some((s("aaa_pkey"), Set::from([s("a")]))),
+					unique_constraints: HashMap::from([
+						(s("aaa_c_d_key"), Set::from([s("c"), s("d")])),
+						(s("aaa_c_key"), Set::from([s("c")])),
+					]),
+				},
+
+				TableState {
+					name: s("bbb"), columns: Set::from([
+						col("a", "int4", true, None),
+						col("b", "int4", true, None),
+						col("c", "int4", false, None),
+						col("d", "int4", false, None),
+					]),
+					primary_key: Some((s("bbb_pkey"), Set::from([s("a"), s("b")]))),
+					unique_constraints: HashMap::from([
+						(s("bbb_b_c_d_key"), Set::from([s("b"), s("c"), s("d")])),
+					]),
+				},
+			])),
+		]));
+
+		client.batch_execute(r#"
+			drop table aaa;
+			alter table bbb rename column a to heyhey;
+		"#).await?;
+
+		let tables = reflect::reflect_user_tables(&client).await?;
+		assert_eq!(tables, HashMap::from([
+			("public".to_string(), Set::from([
+				TableState {
+					name: s("bbb"), columns: Set::from([
+						col("heyhey", "int4", true, None),
+						col("b", "int4", true, None),
+						col("c", "int4", false, None),
+						col("d", "int4", false, None),
+					]),
+					primary_key: Some((s("bbb_pkey"), Set::from([s("heyhey"), s("b")]))),
+					unique_constraints: HashMap::from([
+						(s("bbb_b_c_d_key"), Set::from([s("b"), s("c"), s("d")])),
+					]),
+				},
 			])),
 		]));
 

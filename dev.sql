@@ -1,12 +1,17 @@
-drop table if exists t;
+drop table if exists aaa;
+drop table if exists bbb;
 
-create table t (
-	a bool unique,
-	b bool,
-	c bool unique,
-	d bool unique,
-	unique (a, b)
-	-- primary key (a, b)
+create table aaa (
+	a int primary key,
+	b int, c int unique, d int not null,
+	unique (a),
+	unique (c, d)
+);
+create table bbb (
+	a int, b int, c int, d int,
+	primary key (a, b),
+	unique (a, b),
+	unique (b, c, d)
 );
 
 select

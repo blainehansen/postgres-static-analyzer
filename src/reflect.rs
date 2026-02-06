@@ -77,8 +77,7 @@ pub(crate) async fn reflect_user_tables(
 	for ((schema_name, table_name), columns) in all_columns {
 		if let Some(tables_in_schema) = tables.get_mut(&schema_name) {
 			if let Some(mut table) = tables_in_schema.take(&table_name.as_str()) {
-				// TODO it would be nice to have the raw form coming here be something we could just .extend() columns
-				table.columns = columns;
+				table.columns.extend(columns);
 				tables_in_schema.insert(table);
 			}
 		}
@@ -87,8 +86,7 @@ pub(crate) async fn reflect_user_tables(
 	for ((schema_name, table_name), unique_constraints) in all_unique_constraints {
 		if let Some(tables_in_schema) = tables.get_mut(&schema_name) {
 			if let Some(mut table) = tables_in_schema.take(&table_name.as_str()) {
-				// TODO it would be nice to have the raw form coming here be something we could just .extend() unique_constraints
-				table.unique_constraints = unique_constraints;
+				table.unique_constraints.extend(unique_constraints);
 				tables_in_schema.insert(table);
 			}
 		}
@@ -102,7 +100,7 @@ pub(crate) async fn reflect_user_tables(
 // https://www.postgresql.org/docs/current/catalog-pg-attribute.html
 pub(crate) async fn reflect_user_table_columns(
 	client: &PgClient
-) -> Result<HashMap<(String, String), Set<Column>>, postgres::Error> {
+) -> Result<HashMap<(String, String), Vec<Column>>, postgres::Error> {
 	use itertools::Itertools;
 
 	let columns = reflect_crate::queries::main::reflect_user_table_columns().bind(client)
@@ -119,14 +117,14 @@ pub(crate) async fn reflect_user_table_columns(
 		})
 		.all()
 		.await?
-		.into_iter().into_grouping_map().collect::<Set<_>>();
+		.into_iter().into_grouping_map().collect();
 
 	Ok(columns)
 }
 
 pub(crate) async fn reflect_user_table_unique_constraints(
 	client: &PgClient
-) -> Result<HashMap<(String, String), HashMap<String, Set<String>>>, postgres::Error> {
+) -> Result<HashMap<(String, String), Vec<(String, Set<String>)>>, postgres::Error> {
 	use itertools::Itertools;
 
 	let unique_constraints = reflect_crate::queries::main::reflect_user_table_unique_constraints().bind(client)
@@ -140,7 +138,7 @@ pub(crate) async fn reflect_user_table_unique_constraints(
 		.await?
 		.into_iter()
 		.into_grouping_map()
-		.collect::<HashMap<_, _>>();
+		.collect::<Vec<_>>();
 
 	Ok(unique_constraints)
 }

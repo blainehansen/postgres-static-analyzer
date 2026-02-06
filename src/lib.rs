@@ -148,6 +148,12 @@ pub struct DbState {
 	pub settings: ConnectionSettings,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Ref {
+	pub schema_name: Option<String>,
+	pub name: String,
+}
+
 // https://www.postgresql.org/docs/current/sql-createrole.html
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Role {
@@ -187,12 +193,6 @@ pub struct Column {
 	// pub attgenerated
 }
 impl_hash_and_equivalent!(Column);
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Ref {
-	pub schema_name: Option<String>,
-	pub name: String,
-}
 
 
 // https://www.postgresql.org/docs/current/sql-createtype.html
