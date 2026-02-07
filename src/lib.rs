@@ -1,3 +1,5 @@
+pub use reflect::reflect_db_state;
+
 // use sqlparser::ast::Statement as SqlStatement;
 use pg_query::{Node, NodeEnum};
 
@@ -145,8 +147,24 @@ pub struct DbState {
 	pub roles: Set<Role>,
 	pub default_settings: ConnectionSettings,
 	pub schemas: Set<SchemaState>,
-	pub settings: ConnectionSettings,
+	pub foreign_keys: Vec<ForeignKey>,
+	// TODO we assume that the "local" settings in connection params or whatever don't matter to us right?
+	// we assume we're checking for any possible future connection?
+	// which means if they're going to use different settings they have to pass them in the seq functions
+	// pub settings: ConnectionSettings,
 }
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub struct ForeignKey {
+	constraint_name: String,
+	referring_schema: String,
+	referring_table: String,
+	referring_columns: Vec<String>,
+	referred_schema: String,
+	referred_table: String,
+	referred_columns: Vec<String>,
+}
+
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Ref {

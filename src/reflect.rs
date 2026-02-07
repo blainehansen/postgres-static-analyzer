@@ -1,7 +1,27 @@
-use crate::{postgres, Set, Map, Column, ConnectionSettings, PgClient, Ref, SchemaState, TableState};
+use crate::{
+	Column, ConnectionSettings, DbState, ForeignKey, Map, PgClient, Ref, Role, SchemaState, Set, TableState, make_default_settings, postgres
+};
 use std::collections::HashMap;
 
-pub(crate) async fn reflect_all_settings(
+pub async fn reflect_db_state(
+	client: &PgClient
+) -> Result<DbState, postgres::Error> {
+	let (current_database_settings, user_settings) = reflect_default_settings(client).await?;
+	let current_database_settings = current_database_settings.unwrap_or_else(make_default_settings);
+	let schemas = reflect_user_schemas(client).await?;
+	let foreign_keys = reflect_foreign_keys(client).await?;
+
+	Ok(DbState {
+		// TODO this is definitely not the correct way to do this over time, which will become clear once Role has a bit more information in it
+		roles: user_settings.into_iter().map(|(name, default_settings)| Role { name, default_settings }).collect(),
+		default_settings: current_database_settings,
+		schemas,
+		foreign_keys,
+	})
+}
+
+
+pub(crate) async fn reflect_default_settings(
 	client: &PgClient
 ) -> Result<(Option<ConnectionSettings>, Map<ConnectionSettings>), postgres::Error> {
 	let all_settings = reflect_crate::queries::main::reflect_db_role_setting().bind(client)
@@ -142,3 +162,24 @@ pub(crate) async fn reflect_user_table_unique_constraints(
 
 	Ok(unique_constraints)
 }
+
+
+pub(crate) async fn reflect_foreign_keys(
+	client: &PgClient
+) -> Result<Vec<ForeignKey>, postgres::Error> {
+	let foreign_keys = reflect_crate::queries::main::reflect_foreign_keys().bind(client)
+		.map(|fk| {
+			ForeignKey {
+				constraint_name: fk.conname.to_string(),
+				referring_schema: fk.referring_schema.to_string(),
+				referring_table: fk.referring_table.to_string(),
+				referring_columns: fk.referring_columns.map(str::to_string).collect(),
+				referred_schema: fk.referred_schema.to_string(),
+				referred_table: fk.referred_table.to_string(),
+				referred_columns: fk.referred_columns.map(str::to_string).collect(),
+			}
+		})
+		.all().await?;
+	Ok(foreign_keys)
+}
+

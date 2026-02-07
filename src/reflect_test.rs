@@ -19,9 +19,9 @@ fn connection_settings(search_path: Vec<&str>) -> ConnectionSettings {
 
 
 #[tokio::test]
-async fn test_reflect_all_settings() -> anyhow::Result<()> {
+async fn test_reflect_default_settings() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
-		let (current_database_settings, user_settings) = reflect::reflect_all_settings(&client).await?;
+		let (current_database_settings, user_settings) = reflect::reflect_default_settings(&client).await?;
 
 		assert_eq!(current_database_settings, None);
 		assert!(user_settings.is_empty());
@@ -31,7 +31,7 @@ async fn test_reflect_all_settings() -> anyhow::Result<()> {
 			alter role tempuser set search_path = hmm;
 			alter role tempuser in database tempdb set search_path = hmm;
 		"#).await?;
-		let (current_database_settings, user_settings) = reflect::reflect_all_settings(&client).await?;
+		let (current_database_settings, user_settings) = reflect::reflect_default_settings(&client).await?;
 		assert_eq!(current_database_settings, Some(connection_settings(vec!["hmm"])));
 		assert_eq!(user_settings, Map::from([
 			("tempuser".to_string(), connection_settings(vec!["hmm"]))
@@ -49,7 +49,7 @@ fn empty_schema(schema_name: &str) -> SchemaState {
 }
 
 #[tokio::test]
-async fn test_reflect_user_schemas() -> anyhow::Result<()> {
+async fn test_test_reflect_user_schemas() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let schemas = reflect::reflect_user_schemas(&client).await?;
 		assert_eq!(schemas, Set::from([
@@ -94,7 +94,7 @@ fn empty_table(table_name: &str) -> TableState {
 }
 
 #[tokio::test]
-async fn test_reflect_user_tables_empty() -> anyhow::Result<()> {
+async fn test_test_reflect_user_tables_empty() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let tables = reflect::reflect_user_tables(&client).await?;
 		assert!(tables.is_empty());
@@ -147,7 +147,7 @@ fn col(name: &str, typ: &str, not_null: bool, default_expr: Option<&str>) -> Col
 }
 
 #[tokio::test]
-async fn reflect_user_table_columns() -> anyhow::Result<()> {
+async fn test_reflect_user_table_columns() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let columns = reflect::reflect_user_table_columns(&client).await?;
 		assert!(columns.is_empty());
@@ -200,7 +200,7 @@ async fn reflect_user_table_columns() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn reflect_user_table_constraints() -> anyhow::Result<()> {
+async fn test_reflect_user_table_constraints() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let unique_constraints = reflect::reflect_user_table_unique_constraints(&client).await?;
 		assert!(unique_constraints.is_empty());
@@ -280,3 +280,65 @@ async fn reflect_user_table_constraints() -> anyhow::Result<()> {
 
 	Ok(())
 }
+
+
+#[tokio::test]
+async fn test_test_reflect_foreign_keys() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		let foreign_keys = reflect::reflect_foreign_keys(&client).await?;
+		assert!(foreign_keys.is_empty());
+
+		client.batch_execute(r#"
+			create table aaa (
+				aaa_a int, aaa_b int not null,
+				unique (aaa_a, aaa_b),
+				aaa_c int unique
+			);
+			create table bbb (
+				bbb_a int not null, bbb_b int not null,
+				foreign key (bbb_a, bbb_b) references aaa (aaa_a, aaa_b),
+				bbb_c int references aaa(aaa_c)
+			);
+		"#).await?;
+		let mut foreign_keys = reflect::reflect_foreign_keys(&client).await?;
+		assert_eq!(foreign_keys.sort(), vec![
+			ForeignKey {
+				constraint_name: s("bbb_bbb_a_bbb_b_fkey"),
+				referring_schema: s("public"), referring_table: s("bbb"), referring_columns: vec![s("bbb_a"), s("bbb_b")],
+				referred_schema: s("public"), referred_table: s("aaa"), referred_columns: vec![s("aaa_a"), s("aaa_b")],
+			},
+			ForeignKey {
+				constraint_name: s("bbb_bbb_c_fkey"),
+				referring_schema: s("public"), referring_table: s("bbb"), referring_columns: vec![s("bbb_c")],
+				referred_schema: s("public"), referred_table: s("aaa"), referred_columns: vec![s("aaa_c")],
+			},
+		].sort());
+
+		client.batch_execute(r#"
+			alter table aaa drop column aaa_a cascade;
+			alter table aaa rename column aaa_b to aaa_heyhey;
+			alter table aaa drop column aaa_c cascade;
+		"#).await?;
+		let mut foreign_keys = reflect::reflect_foreign_keys(&client).await?;
+		assert_eq!(foreign_keys.sort(), vec![
+			ForeignKey {
+				constraint_name: s("bbb_bbb_a_bbb_b_fkey"),
+				referring_schema: s("public"), referring_table: s("bbb"), referring_columns: vec![s("bbb_b")],
+				referred_schema: s("public"), referred_table: s("aaa"), referred_columns: vec![s("aaa_heyhey")],
+			},
+		].sort());
+
+		client.batch_execute(r#"
+			alter table aaa drop column aaa_heyhey cascade;
+		"#).await?;
+		let foreign_keys = reflect::reflect_foreign_keys(&client).await?;
+		assert!(foreign_keys.is_empty());
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
+
+
+
+	Ok(())
+}
+
