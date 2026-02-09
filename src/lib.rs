@@ -50,7 +50,7 @@ pub struct ApplyFlags {
 
 
 pub(crate) fn apply_command(
-	db_settings: ConnectionSettings,
+	_db_settings: ConnectionSettings,
 	mut db_state: DbState,
 	sql_statement: NodeEnum,
 ) -> SupportResult<ApplyOutcome> {
@@ -68,7 +68,7 @@ pub(crate) fn apply_command(
 
 			match (exists, if_not_exists) {
 				(false, _) => {
-					let mut schema = SchemaState { name: schemaname, tables: Set::new() };
+					let mut schema = SchemaState { name: schemaname, tables: Set::new(), typs: Set::new() };
 					add_nodes_to_schema(&mut flags, &mut errors, &mut schema, nodes_to_enum(schema_elts))?;
 					db_state.schemas.insert(schema);
 				}
@@ -185,10 +185,50 @@ impl_hash_and_equivalent!(Role);
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SchemaState {
 	pub name: String,
-	// pub typs: Set<Typ>,
 	pub tables: Set<TableState>,
+	pub typs: Set<Typ>,
+	pub funcs: Set<Func>,
 }
 impl_hash_and_equivalent!(SchemaState);
+
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Func {
+	pub name: String,
+	pub args: Vec<Arg>,
+	// pub kind: ,
+	pub is_strict: bool,
+	pub returns_set: bool,
+	// pub language: Ref,
+	// prosrc
+	// prosqlbody
+	pub body: String,
+}
+impl_hash_and_equivalent!(Func);
+
+
+// https://www.postgresql.org/docs/current/sql-createtype.html
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Typ {
+	pub name: String,
+	pub body: TypBody,
+
+}
+impl_hash_and_equivalent!(Typ);
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum TypBody {
+	Enum { values: Vec<String> },
+	Composite { fields: Set<CompositeField> },
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct CompositeField {
+	pub name: String,
+	pub typ: Ref,
+	// TODO not_null? relevant?
+}
+impl_hash_and_equivalent!(CompositeField);
 
 
 // https://www.postgresql.org/docs/current/sql-createtable.html
@@ -212,13 +252,6 @@ pub struct Column {
 }
 impl_hash_and_equivalent!(Column);
 
-
-// https://www.postgresql.org/docs/current/sql-createtype.html
-// #[derive(Debug, PartialEq, Eq, Clone)]
-// pub struct Typ {
-// 	pub name: String,
-// }
-// impl_hash_and_equivalent!(Typ);
 
 
 // https://www.postgresql.org/docs/current/runtime-config-client.html

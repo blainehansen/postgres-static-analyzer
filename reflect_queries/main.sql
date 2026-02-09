@@ -112,3 +112,19 @@ where
 	and referred_sch.nspname not in ('pg_catalog', 'information_schema', 'pg_toast')
 group by con.oid, referring_sch.oid, referring_tab.oid, referred_sch.oid, referred_tab.oid
 ;
+
+
+-- https://www.postgresql.org/docs/current/catalog-pg-type.html
+-- https://www.postgresql.org/docs/current/catalog-pg-enum.html
+--! reflect_enum_types
+select
+	sch.nspname::text, typ.typname::text,
+	coalesce(array_agg(enu.enumlabel::text order by enu.enumsortorder) filter (where enu.enumlabel is not null), '{}') as enum_values
+from
+	pg_catalog.pg_type as typ
+	left join pg_catalog.pg_enum as enu on typ.oid = enu.enumtypid
+	join pg_catalog.pg_namespace as sch on sch.oid = typ.typnamespace
+where
+	typ.typtype = 'e'
+	and sch.nspname not in ('pg_catalog', 'information_schema', 'pg_toast')
+group by sch.oid, typ.oid;

@@ -45,7 +45,7 @@ async fn test_reflect_default_settings() -> anyhow::Result<()> {
 
 
 fn empty_schema(schema_name: &str) -> SchemaState {
-	SchemaState { name: schema_name.to_string(), tables: Set::new() }
+	SchemaState { name: schema_name.to_string(), tables: Set::new(), typs: Set::new() }
 }
 
 #[tokio::test]
@@ -338,6 +338,37 @@ async fn test_test_reflect_foreign_keys() -> anyhow::Result<()> {
 	}).await??;
 
 
+
+	Ok(())
+}
+
+#[tokio::test]
+async fn test_reflect_enum_types() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		let typs = reflect::reflect_enum_types(&client).await?;
+		assert!(typs.is_empty());
+
+		client.batch_execute(r#"
+			create type aaa as enum ('a', 'b', 'c');
+			create type bbb as enum ();
+		"#).await?;
+		let typs = reflect::reflect_enum_types(&client).await?;
+		assert_eq!(typs, vec![
+			(s("public"), Typ { name: s("aaa"), body: TypBody::Enum { values: vec![s("a"), s("b"), s("c")] } }),
+			(s("public"), Typ { name: s("bbb"), body: TypBody::Enum { values: vec![] } }),
+		]);
+
+		client.batch_execute(r#"
+			drop type bbb;
+			alter type aaa add value 'yo' before 'b';
+		"#).await?;
+		let typs = reflect::reflect_enum_types(&client).await?;
+		assert_eq!(typs, vec![
+			(s("public"), Typ { name: s("aaa"), body: TypBody::Enum { values: vec![s("a"), s("yo"), s("b"), s("c")] } }),
+		]);
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
 
 	Ok(())
 }

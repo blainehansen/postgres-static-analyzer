@@ -1,5 +1,5 @@
 use crate::{
-	Column, ConnectionSettings, DbState, ForeignKey, Map, PgClient, Ref, Role, SchemaState, Set, TableState, make_default_settings, postgres
+	Column, ConnectionSettings, DbState, ForeignKey, Map, PgClient, Ref, Role, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
 };
 use std::collections::HashMap;
 
@@ -52,14 +52,19 @@ pub(crate) async fn reflect_user_schemas(
 ) -> Result<Set<SchemaState>, postgres::Error> {
 	let schema_query = reflect_crate::queries::main::reflect_user_schemas();
 
-	let (schemas, mut tables_map) = tokio::try_join!(
+	let (schemas, mut tables_map, all_typs) = tokio::try_join!(
 		schema_query.bind(client).all(),
 		reflect_user_tables(client),
+		reflect_types(client)
 	)?;
+
+	use itertools::Itertools;
+	let mut typs_map = all_typs.into_iter().into_grouping_map().collect::<Set<_>>();
 
 	let schemas = schemas.into_iter().map(|schema_name| {
 		let tables = tables_map.remove(&schema_name).unwrap_or_default();
-		SchemaState { name: schema_name, tables }
+		let typs = typs_map.remove(&schema_name).unwrap_or_default();
+		SchemaState { name: schema_name, tables, typs }
 	}).collect();
 
 	Ok(schemas)
@@ -183,3 +188,36 @@ pub(crate) async fn reflect_foreign_keys(
 	Ok(foreign_keys)
 }
 
+
+
+pub(crate) async fn reflect_types(
+	client: &PgClient
+) -> Result<Vec<(String, Typ)>, postgres::Error> {
+	let (enum_types,) = tokio::try_join!(
+		reflect_enum_types(client),
+	)?;
+
+	let all_typs = [
+		enum_types,
+	].concat();
+
+	Ok(all_typs)
+}
+
+pub(crate) async fn reflect_enum_types(
+	client: &PgClient
+) -> Result<Vec<(String, Typ)>, postgres::Error> {
+	let enum_types = reflect_crate::queries::main::reflect_enum_types().bind(client)
+		.map(|t| {
+			(
+				t.nspname.to_string(),
+				Typ {
+					name: t.typname.to_string(),
+					body: TypBody::Enum { values: t.enum_values.map(str::to_string).collect() },
+				},
+			)
+		})
+		.all().await?;
+
+	Ok(enum_types)
+}
