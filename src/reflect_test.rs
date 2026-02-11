@@ -49,7 +49,7 @@ fn empty_schema(schema_name: &str) -> SchemaState {
 }
 
 #[tokio::test]
-async fn test_test_reflect_user_schemas() -> anyhow::Result<()> {
+async fn test_reflect_user_schemas() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let schemas = reflect::reflect_user_schemas(&client).await?;
 		assert_eq!(schemas, Set::from([
@@ -94,7 +94,7 @@ fn empty_table(table_name: &str) -> TableState {
 }
 
 #[tokio::test]
-async fn test_test_reflect_user_tables_empty() -> anyhow::Result<()> {
+async fn test_reflect_user_tables_empty() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let tables = reflect::reflect_user_tables(&client).await?;
 		assert!(tables.is_empty());
@@ -141,7 +141,7 @@ fn tab(table_name: &'static str, columns: Set<Column>) -> TableState {
 
 fn col(name: &str, typ: &str, not_null: bool, default_expr: Option<&str>) -> Column {
 	Column {
-		name: name.to_string(), typ: Ref { schema_name: Some("pg_catalog".to_string()), name: typ.to_string() },
+		name: name.to_string(), typ: Ref { schema_name: "pg_catalog".to_string(), name: typ.to_string() },
 		not_null, default_expr: default_expr.map(str::to_string),
 	}
 }
@@ -283,7 +283,7 @@ async fn test_reflect_user_table_constraints() -> anyhow::Result<()> {
 
 
 #[tokio::test]
-async fn test_test_reflect_foreign_keys() -> anyhow::Result<()> {
+async fn test_reflect_foreign_keys() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let foreign_keys = reflect::reflect_foreign_keys(&client).await?;
 		assert!(foreign_keys.is_empty());
@@ -342,6 +342,54 @@ async fn test_test_reflect_foreign_keys() -> anyhow::Result<()> {
 	Ok(())
 }
 
+
+#[tokio::test]
+async fn test_reflect_composite_types() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		let typs = reflect::reflect_composite_types(&client).await?;
+		assert!(typs.is_empty());
+
+		client.batch_execute(r#"
+			create type aaa as (aaa_a int, aaa_b bool, aaa_c text[], aaa_d text);
+			create table bbb (bbb_a int not null);
+		"#).await?;
+		let typs = reflect::reflect_composite_types(&client).await?;
+		assert_eq!(typs, vec![
+			(s("public"), Typ { name: s("aaa"), body: TypBody::Composite { fields: Set::from([
+				CompositeField { name: s("aaa_a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
+				CompositeField { name: s("aaa_b"), field_num: 2, typ: Ref { schema_name: s("pg_catalog"), name: s("bool") } },
+				CompositeField { name: s("aaa_c"), field_num: 3, typ: Ref { schema_name: s("pg_catalog"), name: s("_text") } },
+				CompositeField { name: s("aaa_d"), field_num: 4, typ: Ref { schema_name: s("pg_catalog"), name: s("text") } },
+			]) } }),
+			(s("public"), Typ { name: s("bbb"), body: TypBody::Composite { fields: Set::from([
+				CompositeField { name: s("bbb_a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
+			]) } }),
+		]);
+
+		client.batch_execute(r#"
+			drop table bbb cascade;
+			alter type aaa rename attribute aaa_a to yo_a;
+			alter type aaa add attribute yo_whoa date;
+			alter type aaa drop attribute aaa_b;
+			alter type aaa alter attribute aaa_c type timestamp;
+		"#).await?;
+		let typs = reflect::reflect_composite_types(&client).await?;
+		assert_eq!(typs, vec![
+			(s("public"), Typ { name: s("aaa"), body: TypBody::Composite { fields: Set::from([
+				CompositeField { name: s("yo_a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
+				CompositeField { name: s("aaa_c"), field_num: 3, typ: Ref { schema_name: s("pg_catalog"), name: s("timestamp") } },
+				CompositeField { name: s("aaa_d"), field_num: 4, typ: Ref { schema_name: s("pg_catalog"), name: s("text") } },
+				CompositeField { name: s("yo_whoa"), field_num: 5, typ: Ref { schema_name: s("pg_catalog"), name: s("date") } },
+			]) } }),
+		]);
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
+
+	Ok(())
+}
+
+
 #[tokio::test]
 async fn test_reflect_enum_types() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
@@ -373,3 +421,83 @@ async fn test_reflect_enum_types() -> anyhow::Result<()> {
 	Ok(())
 }
 
+
+
+#[tokio::test]
+async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		let schemas = reflect::reflect_user_schemas(&client).await?;
+		assert_eq!(schemas, Set::from([
+			empty_schema("public"),
+		]));
+
+		client.batch_execute(r#"
+			create type my_enum as enum ('my1', 'my2');
+
+			create table aaa (
+				a int primary key,
+				b int, c int unique, d int not null default 1,
+				unique (a, b)
+			);
+			create table bbb (
+				bbb_a int not null, bbb_b int not null,
+				foreign key (bbb_a, bbb_b) references aaa (a, b),
+				bbb_c int references aaa(c),
+				b_json jsonb, b_date date, b_my my_enum
+			);
+		"#).await?;
+		let schemas = reflect::reflect_user_schemas(&client).await?;
+		assert_eq!(schemas, Set::from([SchemaState { name: "public".to_string(),
+			tables: Set::from([
+				TableState {
+					name: s("aaa"), columns: Set::from([
+						col("a", "int4", true, None),
+						col("b", "int4", false, None),
+						col("c", "int4", false, None),
+						Column { name: s("d"), typ: Ref { schema_name: s("pg_catalog"), name: s("int4") }, not_null: true, default_expr: Some(s("1")) },
+					]),
+					primary_key: Some((s("aaa_pkey"), Set::from([s("a")]))),
+					unique_constraints: HashMap::from([
+						(s("aaa_a_b_key"), Set::from([s("a"), s("b")])),
+						(s("aaa_c_key"), Set::from([s("c")])),
+					]),
+				},
+
+				TableState {
+					name: s("bbb"), columns: Set::from([
+						col("bbb_a", "int4", true, None),
+						col("bbb_b", "int4", true, None),
+						col("bbb_c", "int4", false, None),
+						col("b_json", "jsonb", false, None),
+						col("b_date", "date", false, None),
+						Column { name: s("b_my"), typ: Ref { schema_name: s("public"), name: s("my_enum") }, not_null: false, default_expr: None },
+					]),
+					primary_key: None,
+					unique_constraints: HashMap::new(),
+				},
+			]),
+			typs: Set::from([
+				Typ { name: s("my_enum"), body: TypBody::Enum { values: vec![s("my1"), s("my2")] } },
+				Typ { name: s("aaa"), body: TypBody::Composite { fields: Set::from([
+					CompositeField { name: s("a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
+					CompositeField { name: s("b"), field_num: 2, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
+					CompositeField { name: s("c"), field_num: 3, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
+					CompositeField { name: s("d"), field_num: 4, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
+				]) } },
+				Typ { name: s("bbb"), body: TypBody::Composite { fields: Set::from([
+					CompositeField { name: s("bbb_a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
+					CompositeField { name: s("bbb_b"), field_num: 2, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
+					CompositeField { name: s("bbb_c"), field_num: 3, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
+					CompositeField { name: s("b_json"), field_num: 4, typ: Ref { schema_name: s("pg_catalog"), name: s("jsonb") } },
+					CompositeField { name: s("b_date"), field_num: 5, typ: Ref { schema_name: s("pg_catalog"), name: s("date") } },
+					CompositeField { name: s("b_my"), field_num: 6, typ: Ref { schema_name: s("public"), name: s("my_enum") } },
+				]) } },
+			]) },
+
+		]));
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
+
+	Ok(())
+}

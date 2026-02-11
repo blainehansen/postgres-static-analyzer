@@ -166,9 +166,12 @@ pub struct ForeignKey {
 }
 
 
+// a Ref with a nullable schema name is inherently an *ast* concept
+// if we're actually putting together a real State, it's implied that we must have been able to figure out the fully qualified name as we're doing the checking. for example if we're doing a seq over a create table command, then any unqualified type names in the ast we absolutely must be able to use the connection settings/search path to look in our list of types and figure out which one it really is
+// this means at the State level the schema_name should absolutely never be None
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Ref {
-	pub schema_name: Option<String>,
+	pub schema_name: String,
 	pub name: String,
 }
 
@@ -187,24 +190,24 @@ pub struct SchemaState {
 	pub name: String,
 	pub tables: Set<TableState>,
 	pub typs: Set<Typ>,
-	pub funcs: Set<Func>,
+	// pub funcs: Set<Func>,
 }
 impl_hash_and_equivalent!(SchemaState);
 
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Func {
-	pub name: String,
-	pub args: Vec<Arg>,
-	// pub kind: ,
-	pub is_strict: bool,
-	pub returns_set: bool,
-	// pub language: Ref,
-	// prosrc
-	// prosqlbody
-	pub body: String,
-}
-impl_hash_and_equivalent!(Func);
+// #[derive(Debug, PartialEq, Eq, Clone)]
+// pub struct Func {
+// 	pub name: String,
+// 	pub args: Vec<Arg>,
+// 	// pub kind: ,
+// 	pub is_strict: bool,
+// 	pub returns_set: bool,
+// 	// pub language: Ref,
+// 	// prosrc
+// 	// prosqlbody
+// 	pub body: String,
+// }
+// impl_hash_and_equivalent!(Func);
 
 
 // https://www.postgresql.org/docs/current/sql-createtype.html
@@ -225,8 +228,8 @@ pub enum TypBody {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct CompositeField {
 	pub name: String,
+	pub field_num: u16,
 	pub typ: Ref,
-	// TODO not_null? relevant?
 }
 impl_hash_and_equivalent!(CompositeField);
 

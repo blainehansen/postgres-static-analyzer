@@ -1,5 +1,5 @@
 use crate::{
-	Column, ConnectionSettings, DbState, ForeignKey, Map, PgClient, Ref, Role, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
+	Column, CompositeField, ConnectionSettings, DbState, ForeignKey, Map, PgClient, Ref, Role, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
 };
 use std::collections::HashMap;
 
@@ -133,7 +133,7 @@ pub(crate) async fn reflect_user_table_columns(
 			// TODO attgenerated
 			let column = Column {
 				name: a.attname.to_string(),
-				typ: Ref { schema_name: Some(a.typ_nspname.to_string()), name: a.typname.to_string() },
+				typ: Ref { schema_name: a.typ_nspname.to_string(), name: a.typname.to_string() },
 				not_null: a.attnotnull,
 				default_expr: a.attdef.map(str::to_string),
 			};
@@ -193,15 +193,50 @@ pub(crate) async fn reflect_foreign_keys(
 pub(crate) async fn reflect_types(
 	client: &PgClient
 ) -> Result<Vec<(String, Typ)>, postgres::Error> {
-	let (enum_types,) = tokio::try_join!(
+	let (enum_types, composite_types) = tokio::try_join!(
 		reflect_enum_types(client),
+		reflect_composite_types(client),
 	)?;
 
 	let all_typs = [
 		enum_types,
+		composite_types,
 	].concat();
 
 	Ok(all_typs)
+}
+
+pub(crate) async fn reflect_composite_types(
+	client: &PgClient
+) -> Result<Vec<(String, Typ)>, postgres::Error> {
+	let composite_types = reflect_crate::queries::main::reflect_composite_types().bind(client)
+		.map(|t| {
+			let fields = itertools::izip!(t.field_nums, t.field_names, t.field_typ_schemas, t.field_typs)
+				.map(|(field_num, field_name, field_typ_schema, field_typ)| {
+					debug_assert!(field_num > 0);
+
+					CompositeField {
+						name: field_name.to_string(),
+						field_num: field_num.unsigned_abs(),
+						typ: Ref {
+							schema_name: field_typ_schema.to_string(),
+							name: field_typ.to_string()
+						}
+					}
+				})
+				.collect::<Set<_>>();
+
+			(
+				t.nspname.to_string(),
+				Typ {
+					name: t.typname.to_string(),
+					body: TypBody::Composite { fields },
+				},
+			)
+		})
+		.all().await?;
+
+	Ok(composite_types)
 }
 
 pub(crate) async fn reflect_enum_types(
