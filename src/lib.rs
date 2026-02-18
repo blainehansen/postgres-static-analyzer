@@ -68,7 +68,7 @@ pub(crate) fn apply_command(
 
 			match (exists, if_not_exists) {
 				(false, _) => {
-					let mut schema = SchemaState { name: schemaname, tables: Set::new(), typs: Set::new() };
+					let mut schema = SchemaState { name: schemaname, tables: Set::new(), typs: Set::new(), functions: Set::new() };
 					add_nodes_to_schema(&mut flags, &mut errors, &mut schema, nodes_to_enum(schema_elts))?;
 					db_state.schemas.insert(schema);
 				}
@@ -148,6 +148,8 @@ pub struct DbState {
 	pub default_settings: ConnectionSettings,
 	pub schemas: Set<SchemaState>,
 	pub foreign_keys: Vec<ForeignKey>,
+	// pub languages: Set<Language>,
+
 	// TODO we assume that the "local" settings in connection params or whatever don't matter to us right?
 	// we assume we're checking for any possible future connection?
 	// which means if they're going to use different settings they have to pass them in the seq functions
@@ -190,24 +192,9 @@ pub struct SchemaState {
 	pub name: String,
 	pub tables: Set<TableState>,
 	pub typs: Set<Typ>,
-	// pub funcs: Set<Func>,
+	pub functions: Set<Function>,
 }
 impl_hash_and_equivalent!(SchemaState);
-
-
-// #[derive(Debug, PartialEq, Eq, Clone)]
-// pub struct Func {
-// 	pub name: String,
-// 	pub args: Vec<Arg>,
-// 	// pub kind: ,
-// 	pub is_strict: bool,
-// 	pub returns_set: bool,
-// 	// pub language: Ref,
-// 	// prosrc
-// 	// prosqlbody
-// 	pub body: String,
-// }
-// impl_hash_and_equivalent!(Func);
 
 
 // https://www.postgresql.org/docs/current/sql-createtype.html
@@ -255,6 +242,45 @@ pub struct Column {
 }
 impl_hash_and_equivalent!(Column);
 
+
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Function {
+	pub name: String,
+	pub args: Vec<FunctionArg>,
+	// TODO I think I'll want to actually parse the args and pull the out ones apart and put them in the return type
+	// so return type would be an enum of either a ref to some actual type or a description of the record type implied by the out args
+	pub return_type: Ref,
+	pub kind: FunctionKind,
+	pub volatility: FunctionVolatility,
+	pub body: String,
+	pub has_sql_body: bool,
+	pub is_strict: bool,
+	pub returns_set: bool,
+	pub is_security_definer: bool,
+	pub is_leakproof: bool,
+	pub language: String,
+}
+impl_hash_and_equivalent!(Function);
+
+// f for a normal function, p for a procedure, a for an aggregate function, or w for a window function
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum FunctionKind { Function, Procedure, Aggregate, Window }
+
+// provolatile tells whether the function's result depends only on its input arguments, or is affected by outside factors. It is i for “immutable” functions, which always deliver the same result for the same inputs. It is s for “stable” functions, whose results (for fixed inputs) do not change within a scan. It is v for “volatile” functions, whose results might change at any time. (Use v also for functions with side-effects, so that calls to them cannot get optimized away.)
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum FunctionVolatility { Immutable, Stable, Volatile }
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct FunctionArg {
+	pub name: Option<String>,
+	pub mode: ArgMode,
+	pub typ: Ref,
+	pub default: Option<String>,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum ArgMode { In, Out, InOut, Variadic, Table }
 
 
 // https://www.postgresql.org/docs/current/runtime-config-client.html

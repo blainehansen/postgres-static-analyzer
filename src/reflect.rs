@@ -1,5 +1,5 @@
 use crate::{
-	Column, CompositeField, ConnectionSettings, DbState, ForeignKey, Map, PgClient, Ref, Role, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
+	FunctionArg, ArgMode, Column, CompositeField, ConnectionSettings, DbState, ForeignKey, Function, FunctionKind, FunctionVolatility, Map, PgClient, Ref, Role, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
 };
 use std::collections::HashMap;
 
@@ -52,10 +52,11 @@ pub(crate) async fn reflect_user_schemas(
 ) -> Result<Set<SchemaState>, postgres::Error> {
 	let schema_query = reflect_crate::queries::main::reflect_user_schemas();
 
-	let (schemas, mut tables_map, all_typs) = tokio::try_join!(
+	let (schemas, mut tables_map, all_typs, mut functions_map) = tokio::try_join!(
 		schema_query.bind(client).all(),
 		reflect_user_tables(client),
-		reflect_types(client)
+		reflect_types(client),
+		reflect_functions(client),
 	)?;
 
 	use itertools::Itertools;
@@ -64,7 +65,8 @@ pub(crate) async fn reflect_user_schemas(
 	let schemas = schemas.into_iter().map(|schema_name| {
 		let tables = tables_map.remove(&schema_name).unwrap_or_default();
 		let typs = typs_map.remove(&schema_name).unwrap_or_default();
-		SchemaState { name: schema_name, tables, typs }
+		let functions = functions_map.remove(&schema_name).unwrap_or_default();
+		SchemaState { name: schema_name, tables, typs, functions }
 	}).collect();
 
 	Ok(schemas)
@@ -256,3 +258,59 @@ pub(crate) async fn reflect_enum_types(
 
 	Ok(enum_types)
 }
+
+
+pub(crate) async fn reflect_functions(
+	client: &PgClient
+) -> Result<HashMap<String, Set<Function>>, postgres::Error> {
+	use itertools::Itertools;
+
+	let functions = reflect_crate::queries::main::reflect_functions().bind(client)
+		.map(|f| {
+			let args = itertools::izip!(f.arg_modes, f.arg_names, f.arg_types, f.arg_type_schemas, f.arg_defaults)
+				.map(|(mode, name, typ, typ_schema, default)| {
+					let typ = Ref { schema_name: typ_schema.to_string(), name: typ.to_string() };
+					// encoded as i for IN arguments, o for OUT arguments, b for INOUT arguments, v for VARIADIC arguments, t for TABLE arguments
+					let mode = match mode as u8 as char {
+						'i' => ArgMode::In, 'o' => ArgMode::Out, 'b' => ArgMode::InOut, 'v' => ArgMode::Variadic, 't' => ArgMode::Table,
+						_ => ArgMode::In,
+					};
+					FunctionArg { name: name.map(str::to_string), mode, typ, default: default.map(str::to_string) }
+				})
+				.collect::<Vec<_>>();
+
+			(
+				f.nspname.to_string(),
+				Function {
+					name: f.function_name.to_string(),
+					return_type: Ref { schema_name: f.return_typ_schema.to_string(), name: f.return_typ_name.to_string() },
+					args,
+					// f for a normal function, p for a procedure, a for an aggregate function, or w for a window function
+					kind: match f.prokind as u8 as char {
+						'f' => FunctionKind::Function, 'p' => FunctionKind::Procedure, 'a' => FunctionKind::Aggregate, 'w' => FunctionKind::Window,
+						_ => FunctionKind::Function,
+					},
+					// It is i for "immutable" functions, which always deliver the same result for the same inputs. It is s for "stable" functions, whose results (for fixed inputs) do not change within a scan. It is v for "volatile" functions, whose results might change at any time.
+					volatility: match f.provolatile as u8 as char {
+						'i' => FunctionVolatility::Immutable, 's' => FunctionVolatility::Stable, 'v' => FunctionVolatility::Volatile,
+						_ => FunctionVolatility::Volatile,
+					},
+					body: f.body.to_string(),
+					has_sql_body: f.has_sql_body,
+					is_strict: f.proisstrict,
+					returns_set: f.proretset,
+					is_security_definer: f.prosecdef,
+					is_leakproof: f.proleakproof,
+					language: f.lang_name.to_string(),
+				}
+			)
+		})
+		.all().await?
+		.into_iter()
+		.into_grouping_map()
+		.collect();
+
+	Ok(functions)
+
+}
+

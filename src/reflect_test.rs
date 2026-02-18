@@ -13,6 +13,13 @@ fn s(val: &str) -> String {
 	val.to_string()
 }
 
+fn r(ref_name: &str) -> Ref {
+	Ref { schema_name: s("pg_catalog"), name: s(ref_name) }
+}
+fn re(schema_name: &str, name: &str) -> Ref {
+	Ref { schema_name: s(schema_name), name: s(name) }
+}
+
 fn connection_settings(search_path: Vec<&str>) -> ConnectionSettings {
 	ConnectionSettings { search_path: search_path.into_iter().map(str::to_string).collect() }
 }
@@ -45,7 +52,7 @@ async fn test_reflect_default_settings() -> anyhow::Result<()> {
 
 
 fn empty_schema(schema_name: &str) -> SchemaState {
-	SchemaState { name: schema_name.to_string(), tables: Set::new(), typs: Set::new() }
+	SchemaState { name: schema_name.to_string(), tables: Set::new(), typs: Set::new(), functions: Set::new() }
 }
 
 #[tokio::test]
@@ -447,7 +454,7 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 			);
 		"#).await?;
 		let schemas = reflect::reflect_user_schemas(&client).await?;
-		assert_eq!(schemas, Set::from([SchemaState { name: "public".to_string(),
+		assert_eq!(schemas, Set::from([SchemaState { name: "public".to_string(), functions: Set::new(),
 			tables: Set::from([
 				TableState {
 					name: s("aaa"), columns: Set::from([
@@ -495,6 +502,65 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 			]) },
 
 		]));
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
+
+	Ok(())
+}
+
+
+#[tokio::test]
+async fn test_reflect_functions() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		let functions = reflect::reflect_functions(&client).await?;
+		assert!(functions.is_empty());
+
+		client.batch_execute(r#"
+			create or replace function add(a integer, b integer = 0) returns integer
+				language sql
+				immutable
+				strict
+				return a + b;
+
+		"#).await?;
+		let functions = reflect::reflect_functions(&client).await?;
+		assert_eq!(functions, HashMap::from([
+			(s("public"), Set::from([
+				Function {
+					name: s("add"),
+					args: vec![
+						FunctionArg { name: Some(s("a")), typ: r("int4"),  mode: ArgMode::In, default: None },
+						FunctionArg { name: Some(s("b")), typ: r("int4"),  mode: ArgMode::In, default: Some(s("0")) },
+					],
+					return_type: r("int4"),
+					kind: FunctionKind::Function,
+					volatility: FunctionVolatility::Immutable,
+					body: s("RETURN (a + b)"),
+					has_sql_body: true,
+					is_strict: true,
+					returns_set: false,
+					is_security_definer: false,
+					is_leakproof: false,
+					language: s("sql"),
+				},
+
+			]))
+		]));
+
+
+		// TODO
+		// create or replace function dup(int) returns table(f1 int, f2 text)
+		// 	as $$ select $1, cast($1 as text) || ' is text' $$
+		// 	language sql;
+
+		// create or replace function dup_agh(int, out f1 int, inout f2 text = 'yeah')
+		// 	as $$ select $1, cast($1 as text) || ' is text' $$
+		// 	language sql;
+
+		// create or replace function rec(int, out f1 int, inout f2 text = 'yeah')
+		// 	as $$ select $1, cast($1 as text) || ' is text' $$
+		// 	language sql;
 
 		Ok::<_, postgres::Error>(())
 	}).await??;
