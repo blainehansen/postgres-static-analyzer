@@ -523,6 +523,14 @@ async fn test_reflect_functions() -> anyhow::Result<()> {
 				strict
 				return a + b;
 
+			create or replace function dup(int) returns table(f1 int, f2 text)
+				as $$ select $1, cast($1 as text) || ' is text' $$
+				language sql;
+
+			create or replace function rec(int, out f1 int, inout f2 text = 'yeah')
+				as $$ select $1, cast($1 as text) || ' is text' $$
+				language sql;
+
 		"#).await?;
 		let functions = reflect::reflect_functions(&client).await?;
 		assert_eq!(functions, HashMap::from([
@@ -544,23 +552,76 @@ async fn test_reflect_functions() -> anyhow::Result<()> {
 					is_leakproof: false,
 					language: s("sql"),
 				},
-
+				Function {
+					name: s("dup"),
+					args: vec![
+						FunctionArg { name: None, typ: r("int4"), mode: ArgMode::In, default: None },
+						FunctionArg { name: Some(s("f1")), typ: r("int4"), mode: ArgMode::Table, default: None },
+						FunctionArg { name: Some(s("f2")), typ: r("text"), mode: ArgMode::Table, default: None },
+					],
+					return_type: r("record"),
+					kind: FunctionKind::Function,
+					volatility: FunctionVolatility::Volatile,
+					body: s(" select $1, cast($1 as text) || ' is text' "),
+					has_sql_body: false,
+					is_strict: false,
+					returns_set: true,
+					is_security_definer: false,
+					is_leakproof: false,
+					language: s("sql"),
+				},
+				Function {
+					name: s("rec"),
+					args: vec![
+						FunctionArg { name: None, typ: r("int4"), mode: ArgMode::In, default: None },
+						FunctionArg { name: Some(s("f1")), typ: r("int4"), mode: ArgMode::Out, default: None },
+						FunctionArg { name: Some(s("f2")), typ: r("text"), mode: ArgMode::InOut, default: Some(s("'yeah'::text")) },
+					],
+					return_type: r("record"),
+					kind: FunctionKind::Function,
+					volatility: FunctionVolatility::Volatile,
+					body: s(" select $1, cast($1 as text) || ' is text' "),
+					has_sql_body: false,
+					is_strict: false,
+					returns_set: false,
+					is_security_definer: false,
+					is_leakproof: false,
+					language: s("sql"),
+				},
 			]))
 		]));
 
+		client.batch_execute(r#"
+			create or replace function add(a integer, b integer = 0) returns integer
+				language sql
+				stable
+				return a + b + 1;
 
-		// TODO
-		// create or replace function dup(int) returns table(f1 int, f2 text)
-		// 	as $$ select $1, cast($1 as text) || ' is text' $$
-		// 	language sql;
-
-		// create or replace function dup_agh(int, out f1 int, inout f2 text = 'yeah')
-		// 	as $$ select $1, cast($1 as text) || ' is text' $$
-		// 	language sql;
-
-		// create or replace function rec(int, out f1 int, inout f2 text = 'yeah')
-		// 	as $$ select $1, cast($1 as text) || ' is text' $$
-		// 	language sql;
+			drop function dup;
+			drop function rec;
+		"#).await?;
+		let functions = reflect::reflect_functions(&client).await?;
+		assert_eq!(functions, HashMap::from([
+			(s("public"), Set::from([
+				Function {
+					name: s("add"),
+					args: vec![
+						FunctionArg { name: Some(s("a")), typ: r("int4"),  mode: ArgMode::In, default: None },
+						FunctionArg { name: Some(s("b")), typ: r("int4"),  mode: ArgMode::In, default: Some(s("0")) },
+					],
+					return_type: r("int4"),
+					kind: FunctionKind::Function,
+					volatility: FunctionVolatility::Stable,
+					body: s("RETURN ((a + b) + 1)"),
+					has_sql_body: true,
+					is_strict: false,
+					returns_set: false,
+					is_security_definer: false,
+					is_leakproof: false,
+					language: s("sql"),
+				},
+			]))
+		]));
 
 		Ok::<_, postgres::Error>(())
 	}).await??;
