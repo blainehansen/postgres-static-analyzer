@@ -181,6 +181,16 @@ pub struct Ref {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Role {
 	pub name: String,
+	pub is_super: bool,
+	pub does_inherit: bool,
+	pub can_create_role: bool,
+	pub can_create_db: bool,
+	pub can_login: bool,
+	pub is_replication: bool,
+	pub does_bypass_rls: bool,
+	// rolconnlimit int4
+	pub valid_until: chrono::DateTime<chrono::FixedOffset>,
+
 	pub default_settings: ConnectionSettings,
 }
 impl_hash_and_equivalent!(Role);
