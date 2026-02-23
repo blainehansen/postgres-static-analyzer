@@ -189,9 +189,10 @@ pub struct Role {
 	pub is_replication: bool,
 	pub does_bypass_rls: bool,
 	// rolconnlimit int4
-	pub valid_until: chrono::DateTime<chrono::FixedOffset>,
+	pub valid_until: Option<chrono::DateTime<chrono::FixedOffset>>,
 
-	pub default_settings: ConnectionSettings,
+	pub default_search_path: Option<ConnectionSettings>,
+	pub db_search_path: Option<ConnectionSettings>,
 }
 impl_hash_and_equivalent!(Role);
 

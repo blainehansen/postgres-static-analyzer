@@ -28,20 +28,100 @@ fn connection_settings(search_path: Vec<&str>) -> ConnectionSettings {
 #[tokio::test]
 async fn test_reflect_default_settings() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
-		let (current_database_settings, user_settings) = reflect::reflect_default_settings(&client).await?;
+		let db_default_settings = reflect::reflect_db_default_setting(&client).await?;
+		assert_eq!(db_default_settings, None);
 
-		assert_eq!(current_database_settings, None);
-		assert!(user_settings.is_empty());
+		client.batch_execute(r#"
+			alter database tempdb set search_path = hmmdb;
+			alter role tempuser set search_path = hmmuser;
+			alter role tempuser in database tempdb set search_path = hmmuserdb;
+		"#).await?;
+		let db_default_settings = reflect::reflect_db_default_setting(&client).await?;
+		assert_eq!(db_default_settings, Some(connection_settings(vec!["hmmdb"])));
+
+		client.batch_execute(r#"
+			alter database tempdb set search_path = hmmdb,alsohmmdb;
+			alter role tempuser set search_path = hmmuser,alsohmmuser;
+			alter role tempuser in database tempdb set search_path = hmmuserdb,alsohmmuserdb;
+		"#).await?;
+		let db_default_settings = reflect::reflect_db_default_setting(&client).await?;
+		assert_eq!(db_default_settings, Some(connection_settings(vec!["hmmdb", "alsohmmdb"])));
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
+
+	Ok(())
+}
+
+#[tokio::test]
+async fn test_reflect_roles() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		let roles = reflect::reflect_roles(&client).await?;
+		assert_eq!(roles, Set::from([
+			Role {
+				name: s("tempuser"),
+				is_super: true, does_inherit: true, can_create_role: true, can_create_db: true, can_login: true, is_replication: true, does_bypass_rls: true,
+				valid_until: None,
+				default_search_path: None,
+				db_search_path: None,
+			},
+		]));
 
 		client.batch_execute(r#"
 			alter database tempdb set search_path = hmm;
-			alter role tempuser set search_path = hmm;
-			alter role tempuser in database tempdb set search_path = hmm;
+			alter role tempuser set search_path = hmmdb;
+			alter role tempuser in database tempdb set search_path = hmmdbuser;
 		"#).await?;
-		let (current_database_settings, user_settings) = reflect::reflect_default_settings(&client).await?;
-		assert_eq!(current_database_settings, Some(connection_settings(vec!["hmm"])));
-		assert_eq!(user_settings, Map::from([
-			("tempuser".to_string(), connection_settings(vec!["hmm"]))
+		let roles = reflect::reflect_roles(&client).await?;
+		assert_eq!(roles, Set::from([
+			Role {
+				name: s("tempuser"),
+				is_super: true, does_inherit: true, can_create_role: true, can_create_db: true, can_login: true, is_replication: true, does_bypass_rls: true,
+				valid_until: None,
+				default_search_path: Some(connection_settings(vec!["hmmdb"])),
+				db_search_path: Some(connection_settings(vec!["hmmdbuser"])),
+			},
+		]));
+
+		client.batch_execute(r#"
+			alter database tempdb set search_path = hmmdb,alsohmmdb;
+			alter role tempuser set search_path = hmmuser,alsohmmuser;
+			alter role tempuser in database tempdb set search_path = hmmuserdb,alsohmmuserdb;
+		"#).await?;
+		let roles = reflect::reflect_roles(&client).await?;
+		assert_eq!(roles, Set::from([
+			Role {
+				name: s("tempuser"),
+				is_super: true, does_inherit: true, can_create_role: true, can_create_db: true, can_login: true, is_replication: true, does_bypass_rls: true,
+				valid_until: None,
+				default_search_path: Some(connection_settings(vec!["hmmuser", "alsohmmuser"])),
+				db_search_path: Some(connection_settings(vec!["hmmuserdb", "alsohmmuserdb"])),
+			},
+		]));
+
+			// | CONNECTION LIMIT connlimit
+		client.batch_execute(r#"
+			create role yorole NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOLOGIN NOREPLICATION NOBYPASSRLS
+				PASSWORD 'yoyoyo'
+				VALID UNTIL '2030-01-01 10:23:54+00';
+		"#).await?;
+		let roles = reflect::reflect_roles(&client).await?;
+		use chrono::TimeZone;
+		assert_eq!(roles, Set::from([
+			Role {
+				name: s("tempuser"),
+				is_super: true, does_inherit: true, can_create_role: true, can_create_db: true, can_login: true, is_replication: true, does_bypass_rls: true,
+				valid_until: None,
+				default_search_path: Some(connection_settings(vec!["hmmuser", "alsohmmuser"])),
+				db_search_path: Some(connection_settings(vec!["hmmuserdb", "alsohmmuserdb"])),
+			},
+			Role {
+				name: s("yorole"),
+				is_super: false, does_inherit: false, can_create_role: false, can_create_db: false, can_login: false, is_replication: false, does_bypass_rls: false,
+				valid_until: Some(chrono::Utc.with_ymd_and_hms(2030, 1, 1, 10, 23, 54).unwrap().fixed_offset()),
+				default_search_path: None,
+				db_search_path: None,
+			},
 		]));
 
 		Ok::<_, postgres::Error>(())

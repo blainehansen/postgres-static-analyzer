@@ -1,7 +1,5 @@
-use itertools::izip;
-
 use crate::{
-	FunctionArg, ArgMode, Column, CompositeField, ConnectionSettings, DbState, ForeignKey, Function, FunctionKind, FunctionVolatility, Map, PgClient, Ref, Role, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
+	FunctionArg, ArgMode, Column, CompositeField, ConnectionSettings, DbState, ForeignKey, Function, FunctionKind, FunctionVolatility, PgClient, Ref, Role, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
 };
 use std::collections::HashMap;
 
@@ -10,99 +8,52 @@ pub async fn reflect_db_state(
 ) -> Result<DbState, postgres::Error> {
 	let (
 		roles,
-		(current_database_settings, mut role_settings),
+		default_settings,
 		schemas,
 		foreign_keys,
 	) = tokio::try_join!(
 		reflect_roles(client),
-		reflect_default_settings(client),
+		reflect_db_default_setting(client),
 		reflect_user_schemas(client),
 		reflect_foreign_keys(client),
 	)?;
-	let current_database_settings = current_database_settings.unwrap_or_else(make_default_settings);
+	let default_settings = default_settings.unwrap_or_else(make_default_settings);
 
-	Ok(DbState {
-		// TODO this is definitely not the correct way to do this over time, which will become clear once Role has a bit more information in it
-		roles: role_settings.into_iter().map(|(name, default_settings)| Role { name, default_settings }).collect(),
-		default_settings: current_database_settings,
-		schemas,
-		foreign_keys,
-	})
+	Ok(DbState { roles, default_settings, schemas, foreign_keys })
 }
 
 
 pub(crate) async fn reflect_roles(
 	client: &PgClient
-) -> Result<(Option<ConnectionSettings>, Map<ConnectionSettings>), postgres::Error> {
-	// use itertools::Itertools;
-
+) -> Result<Set<Role>, postgres::Error> {
 	let roles = reflect_crate::queries::main::reflect_roles().bind(client)
 		.map(|r| {
-			// should we do something similar with these as we did before, where all the search_paths for the specific databases are put in a map?
-			// or should we leave it as is and require a search through every time?
-			// that would mean this user specific ConnectionSettings would need a database_name: Option<String>
-			let default_settings = itertools::izip!(r.search_path, r.database_names)
-				.map(|(search_path, database_name)| {
-					(search_path.to_string(), database_name.map(str::to_string))
-				})
-				.collect::<Vec<_>>();
-
 			Role {
 				name: r.name.to_string(),
 				can_create_db: r.rolcreatedb,
 				can_create_role: r.rolcreaterole,
 				can_login: r.rolcanlogin,
-		    is_super: r.rolsuper,
-		    does_inherit: r.rolinherit,
-		    is_replication: r.rolreplication,
-		    does_bypass_rls: r.rolbypassrls,
-		    valid_until: r.rolvaliduntil,
-		    default_settings,
+				is_super: r.rolsuper,
+				does_inherit: r.rolinherit,
+				is_replication: r.rolreplication,
+				does_bypass_rls: r.rolbypassrls,
+				valid_until: r.rolvaliduntil,
+				default_search_path: r.default_search_path.map(|i| ConnectionSettings { search_path: i.map(str::to_string).collect() }),
+				db_search_path: r.db_search_path.map(|i| ConnectionSettings { search_path: i.map(str::to_string).collect() }),
 			}
 		})
-		.all().await?;
+		.all().await?.into_iter().collect();
 
-	let all_settings = reflect_crate::queries::main::reflect_db_role_setting().bind(client)
-		.map(|s| {
-			(s.search_path.map(str::to_string).collect::<Vec<_>>(), s.rolname.map(str::to_string))
-		}).all().await?;
-
-	let mut current_database_settings = None;
-	let mut user_settings: Map<ConnectionSettings> = Map::new();
-	for (search_path, rolname) in all_settings {
-		let settings = ConnectionSettings { search_path };
-
-		if let Some(rolname) = rolname {
-			user_settings.insert(rolname, settings);
-		}
-		else {
-			current_database_settings = Some(settings);
-		}
-	}
-
-	Ok((current_database_settings, user_settings))
+	Ok(roles)
 }
 
 
 pub(crate) async fn reflect_db_default_setting(
 	client: &PgClient
-) -> Result<(Option<ConnectionSettings>, Map<ConnectionSettings>), postgres::Error> {
-	let db_default_setting = reflect_crate::queries::main::reflect_db_default_setting().bind(client).opt().await?;
-
-	let mut current_database_settings = None;
-	let mut user_settings: Map<ConnectionSettings> = Map::new();
-	for (search_path, rolname) in all_settings {
-		let settings = ConnectionSettings { search_path };
-
-		if let Some(rolname) = rolname {
-			user_settings.insert(rolname, settings);
-		}
-		else {
-			current_database_settings = Some(settings);
-		}
-	}
-
-	Ok((current_database_settings, user_settings))
+) -> Result<Option<ConnectionSettings>, postgres::Error> {
+	let db_default_setting = reflect_crate::queries::main::reflect_db_default_setting().bind(client).opt().await?
+		.map(|s| ConnectionSettings { search_path: s.to_owned() });
+	Ok(db_default_setting)
 }
 
 

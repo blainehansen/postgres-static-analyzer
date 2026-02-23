@@ -28,6 +28,8 @@ reflect_crate = { path = "./reflect_crate" }
 pg_query = "6.1"
 thiserror.workspace = true
 itertools = "0.14.0"
+chrono = { version = "0.4", default-features = false, features = ["alloc", "std", "alloc", "clock", "now", "serde"] }
+
 
 [dev-dependencies]
 anyhow = "1"
