@@ -12,7 +12,11 @@ tokio = { version = "1", features = ["full", "rt"] }
 tokio-postgres = { version = "0.7" }
 rand = "0.9"
 rand_distr = "0.5"
-
+chrono = { version = "0.4", default-features = false, features = ["alloc", "std", "alloc", "clock", "now", "serde"] }
+hashbrown = "0.16"
+pg_query = "6.1"
+itertools = "0.14.0"
+anyhow = "1"
 
 
 [package]
@@ -21,16 +25,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-hashbrown = "0.16"
-tokio = { workspace = true, features = ["full", "rt"] }
 reflect_crate = { path = "./reflect_crate" }
-# sqlparser = "0.60"
-pg_query = "6.1"
+hashbrown.workspace = true
+tokio = { workspace = true, features = ["full", "rt"] }
+chrono = { workspace = true, default-features = false, features = ["alloc", "std", "alloc", "clock", "now", "serde"] }
 thiserror.workspace = true
-itertools = "0.14.0"
-chrono = { version = "0.4", default-features = false, features = ["alloc", "std", "alloc", "clock", "now", "serde"] }
+pg_query.workspace = true
+itertools.workspace = true
 
 
 [dev-dependencies]
-anyhow = "1"
+anyhow.workspace = true
 temp_container_utils = { path = "./temp_container_utils" }
