@@ -33,9 +33,7 @@ where
 
 --! reflect_user_schemas
 select
-	nspname::text
-	-- oid
-	-- nspowner
+	nspname::text, pg_get_userbyid(nspowner)::text as owner
 	-- nspacl
 from pg_catalog.pg_namespace
 where pg_namespace.nspname not in ('information_schema', 'pg_catalog', 'pg_toast')
@@ -47,6 +45,7 @@ select
 	sch.nspname::text,
 	tab.relname::text,
 	con.conname::text,
+	pg_get_userbyid(tab.relowner)::text as owner,
 	array_agg(col.attname::text order by col.attnum) filter (where con.contype = 'p') as primary_key_columns
 from
 	pg_catalog.pg_class as tab
@@ -132,7 +131,7 @@ group by con.oid, referring_sch.oid, referring_tab.oid, referred_sch.oid, referr
 
 --! reflect_composite_types
 select
-	sch.nspname::text, typ.typname::text,
+	sch.nspname::text, typ.typname::text, pg_get_userbyid(typ.typowner)::text as owner,
 	array_agg(col.attnum order by col.attnum) as field_nums,
 	array_agg(col.attname::text order by col.attnum) as field_names,
 	array_agg(col_sch.nspname::text order by col.attnum) as field_typ_schemas,
@@ -157,7 +156,7 @@ group by sch.oid, typ.oid, tab.oid
 -- https://www.postgresql.org/docs/current/catalog-pg-enum.html
 --! reflect_enum_types
 select
-	sch.nspname::text, typ.typname::text,
+	sch.nspname::text, typ.typname::text, pg_get_userbyid(typ.typowner)::text as owner,
 	coalesce(array_agg(enu.enumlabel::text order by enu.enumsortorder) filter (where enu.enumlabel is not null), '{}') as enum_values
 from
 	pg_catalog.pg_type as typ
@@ -173,7 +172,7 @@ group by sch.oid, typ.oid
 -- https://www.postgresql.org/docs/17/catalog-pg-proc.html
 --! reflect_functions : (arg_names[?], arg_defaults[?])
 select
-	sch.nspname::text, fn.proname::text as function_name,
+	sch.nspname::text, fn.proname::text as function_name, pg_get_userbyid(fn.proowner)::text as owner,
 	fn.prokind, fn.prosecdef, fn.proleakproof, fn.proisstrict, fn.proretset, fn.provolatile,
 	fn.prosqlbody is not null as has_sql_body,
 	case when fn.prosqlbody is not null then pg_get_function_sqlbody(fn.oid) else fn.prosrc end as body,

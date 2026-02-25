@@ -68,7 +68,7 @@ pub(crate) fn apply_command(
 
 			match (exists, if_not_exists) {
 				(false, _) => {
-					let mut schema = SchemaState { name: schemaname, tables: Set::new(), typs: Set::new(), functions: Set::new() };
+					let mut schema = SchemaState { name: schemaname, owner: "TODO".to_string(), tables: Set::new(), typs: Set::new(), functions: Set::new() };
 					add_nodes_to_schema(&mut flags, &mut errors, &mut schema, nodes_to_enum(schema_elts))?;
 					db_state.schemas.insert(schema);
 				}
@@ -201,6 +201,7 @@ impl_hash_and_equivalent!(Role);
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SchemaState {
 	pub name: String,
+	pub owner: String,
 	pub tables: Set<TableState>,
 	pub typs: Set<Typ>,
 	pub functions: Set<Function>,
@@ -212,6 +213,7 @@ impl_hash_and_equivalent!(SchemaState);
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Typ {
 	pub name: String,
+	pub owner: String,
 	pub body: TypBody,
 
 }
@@ -236,6 +238,7 @@ impl_hash_and_equivalent!(CompositeField);
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TableState {
 	pub name: String,
+	pub owner: String,
 	pub columns: Set<Column>,
 	pub primary_key: Option<(String, Set<String>)>,
 	pub unique_constraints: std::collections::HashMap<String, Set<String>>,
@@ -258,10 +261,11 @@ impl_hash_and_equivalent!(Column);
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Function {
 	pub name: String,
+	pub owner: String,
 	pub args: Vec<FunctionArg>,
 	// TODO I think I'll want to actually parse the args and pull the out ones apart and put them in the return type
 	// so return type would be an enum of either a ref to some actual type or a description of the record type implied by the out args
-	pub return_type: Ref,
+	pub return_typ: Ref,
 	pub kind: FunctionKind,
 	pub volatility: FunctionVolatility,
 	pub body: String,
@@ -348,15 +352,111 @@ pub fn make_default_settings() -> ConnectionSettings {
 
 
 
+// the big question is where to store all these grants. where will we want them when we need them?
+// what questions will we be asking when we need to look at grants?
+// the main one will be "for this user who is implied to be logged in for this query, are they allowed to do it? so for the database in general, and then the database objects that this query acts upon, are each of those actions allowed". so that will always
+// another possibly useful question is "can this database object be acted on in this family of ways (mutation, deletion) by anyone in or out of this set of roles", which is usefully distinct from "can this database object be acted on in this particular way by this particular role" which is the question we're asking above
+// my options for where to put these grant objects:
+// - in one big list. this is actually *not* even how postgres does it! this is simple to query though, since I just do the big union all. and when answering the most common question of "can this role do this thing", I'd have to look separately in this list. however it makes "can this wildcard thing be done by this wildcard role on this wildcard object" much more comparatively easy
+// - on the database objects they apply to (HashMap<RoleName, TableGrant>). this is more type work, but it means that when I'm answering the question of "can this person do this", it's very simple since I have to look up the specific object anyway to see if what they're doing is well-structured, so the grant information comes along naturally. I only have to "multiplex" to make sure I check for all roles they have access to
+// however this structure complicates the querying for these objects greatly. either you have to modify the existing queries that get the information about the object (which could be much more difficult because the acl items are stored as a list and need to be unnested), or a separate query that we then correlate back to the objects (which sounds annoying and inefficient)
+
+// what about the default grants? they go in a sequence from schema-specific to database-wide to postgres-default
+// when we're answering "can this person do this thing to this object" we perhaps *start* by looking at the object itself, if we find nothing cascade up to the schema level, and then the database level, then the postgres-default (or not? only if the schema/database defaults don't exist?)
+
+
+#[derive(Debug)]
+pub struct Grant<P> {
+	// pub grantee: String,
+	pub grantor: String,
+	pub privilege_type: P,
+	pub is_grantable: bool,
+}
+
+// DATABASE	CTc	Tc	\l
+pub type DbGrant = Grant<DbPrivilege>;
+#[allow(non_camel_case_types)]
+pub enum DbPrivilege { CREATE, CONNECT, TEMPORARY}
+
+// // DOMAIN  U  U  \dD+
+// pub type DomainGrant = Grant<DomainPrivilege>;
+// #[allow(non_camel_case_types)]
+// pub enum DomainPrivilege { USAGE }
+
+// FUNCTION or PROCEDURE	X	X	\df+
+pub type FunctionGrant = Grant<FunctionPrivilege>;
+#[allow(non_camel_case_types)]
+pub enum FunctionPrivilege { EXECUTE }
+
+// // FOREIGN DATA WRAPPER	U	none	\dew+
+// pub type ForeignDataWrapperGrant = Grant<ForeignDataWrapperPrivilege>;
+// #[allow(non_camel_case_types)]
+// pub enum ForeignDataWrapperPrivilege { USAGE }
+
+// // FOREIGN SERVER	U	none	\des+
+// pub type ForeignServerGrant = Grant<ForeignServerPrivilege>;
+// #[allow(non_camel_case_types)]
+// pub enum ForeignServerPrivilege { USAGE }
+
+// // LANGUAGE	U	U	\dL+
+// pub type LanguageGrant = Grant<LanguagePrivilege>;
+// #[allow(non_camel_case_types)]
+// pub enum LanguagePrivilege { USAGE }
+
+// // LARGE OBJECT	rw	none	\dl+
+// pub type LargeObjectGrant = Grant<LargeObjectPrivilege>;
+// #[allow(non_camel_case_types)]
+// pub enum LargeObjectPrivilege { SELECT, UPDATE }
+
+// // PARAMETER	sA	none	\dconfig+
+// pub type ParameterGrant = Grant<ParameterPrivilege>;
+// #[allow(non_camel_case_types)]
+// pub enum ParameterPrivilege { SET, ALTER_SYSTEM }
+
+// SCHEMA	UC	none	\dn+
+pub type SchemaGrant = Grant<SchemaPrivilege>;
+#[allow(non_camel_case_types)]
+pub enum SchemaPrivilege { USAGE, CREATE }
+
+// // SEQUENCE	rwU	none	\dp
+// pub type SequenceGrant = Grant<SequencePrivilege>;
+// #[allow(non_camel_case_types)]
+// pub enum SequencePrivilege { SELECT, UPDATE, USAGE }
+
+// TABLE (and table-like objects)	arwdDxtm	none	\dp
+pub type TableGrant = Grant<TablePrivilege>;
+#[allow(non_camel_case_types)]
+pub enum TablePrivilege { INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN }
+
+// Table column	arwx	none	\dp
+pub type TableColumnGrant = Grant<TableColumnPrivilege>;
+#[allow(non_camel_case_types)]
+pub enum TableColumnPrivilege { INSERT, SELECT, UPDATE, REFERENCES }
+
+// // TABLESPACE	C	none	\db+
+// pub type TablespaceGrant = Grant<TablespacePrivilege>;
+// #[allow(non_camel_case_types)]
+// pub enum TablespacePrivilege { CREATE }
+
+// TYPE	U	U	\dT+
+pub type TypeGrant = Grant<TypePrivilege>;
+#[allow(non_camel_case_types)]
+pub enum TypePrivilege { USAGE }
 
 
 
-// // https://www.postgresql.org/docs/current/sql-createdatabase.html
-// #[derive(Debug)]
-// pub struct DbState {
-// 	name: String,
-// 	default_settings: ConnectionSettings,
-// 	schemas: Set<SchemaState>,
-// 	// grants https://www.postgresql.org/docs/current/sql-grant.html
-// }
-// impl_hash_and_equivalent!(DbState);
+// SELECT	r (“read”)	LARGE OBJECT, SEQUENCE, TABLE (and table-like objects), table column
+// INSERT	a (“append”)	TABLE, table column
+// UPDATE	w (“write”)	LARGE OBJECT, SEQUENCE, TABLE, table column
+// DELETE	d	TABLE
+// TRUNCATE	D	TABLE
+// REFERENCES	x	TABLE, table column
+// TRIGGER	t	TABLE
+// CREATE	C	DATABASE, SCHEMA, TABLESPACE
+// CONNECT	c	DATABASE
+// TEMPORARY	T	DATABASE
+// EXECUTE	X	FUNCTION, PROCEDURE
+// USAGE	U	DOMAIN, FOREIGN DATA WRAPPER, FOREIGN SERVER, LANGUAGE, SCHEMA, SEQUENCE, TYPE
+// SET	s	PARAMETER
+// ALTER SYSTEM	A	PARAMETER
+// MAINTAIN	m	TABLE

@@ -131,8 +131,11 @@ async fn test_reflect_roles() -> anyhow::Result<()> {
 }
 
 
-fn empty_schema(schema_name: &str) -> SchemaState {
-	SchemaState { name: schema_name.to_string(), tables: Set::new(), typs: Set::new(), functions: Set::new() }
+fn empty_schema(schema_name: &str, owner: &str) -> SchemaState {
+	SchemaState {
+		name: schema_name.to_string(), owner: s(owner),
+		tables: Set::new(), typs: Set::new(), functions: Set::new(),
+	}
 }
 
 #[tokio::test]
@@ -140,7 +143,7 @@ async fn test_reflect_user_schemas() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let schemas = reflect::reflect_user_schemas(&client).await?;
 		assert_eq!(schemas, Set::from([
-			empty_schema("public"),
+			empty_schema("public", "pg_database_owner"),
 		]));
 
 		client.batch_execute(r#"
@@ -150,10 +153,10 @@ async fn test_reflect_user_schemas() -> anyhow::Result<()> {
 		"#).await?;
 		let schemas = reflect::reflect_user_schemas(&client).await?;
 		assert_eq!(schemas, Set::from([
-			empty_schema("public"),
-			empty_schema("aaa"),
-			empty_schema("bbb"),
-			empty_schema("big things poppin"),
+			empty_schema("public", "pg_database_owner"),
+			empty_schema("aaa", "tempuser"),
+			empty_schema("bbb", "tempuser"),
+			empty_schema("big things poppin", "tempuser"),
 		]));
 
 		client.batch_execute(r#"
@@ -162,8 +165,8 @@ async fn test_reflect_user_schemas() -> anyhow::Result<()> {
 		"#).await?;
 		let schemas = reflect::reflect_user_schemas(&client).await?;
 		assert_eq!(schemas, Set::from([
-			empty_schema("aaa"),
-			empty_schema("bbb"),
+			empty_schema("aaa", "tempuser"),
+			empty_schema("bbb", "tempuser"),
 		]));
 
 		Ok::<_, postgres::Error>(())
@@ -175,7 +178,7 @@ async fn test_reflect_user_schemas() -> anyhow::Result<()> {
 fn empty_table(table_name: &str) -> TableState {
 	// TODO unique and primary keys
 	TableState {
-		name: table_name.to_string(), columns: Set::new(),
+		name: table_name.to_string(), owner: s("tempuser"), columns: Set::new(),
 		primary_key: None, unique_constraints: HashMap::new(),
 	}
 }
@@ -219,7 +222,7 @@ async fn test_reflect_user_tables_empty() -> anyhow::Result<()> {
 
 fn tab(table_name: &'static str, columns: Set<Column>) -> TableState {
 	TableState {
-		name: table_name.to_string(), columns,
+		name: table_name.to_string(), owner: s("tempuser"), columns,
 		primary_key: None, unique_constraints: HashMap::new(),
 
 	}
@@ -311,7 +314,7 @@ async fn test_reflect_user_table_constraints() -> anyhow::Result<()> {
 		assert_eq!(tables, HashMap::from([
 			("public".to_string(), Set::from([
 				TableState {
-					name: s("aaa"), columns: Set::from([
+					name: s("aaa"), owner: s("tempuser"), columns: Set::from([
 						col("a", "int4", true, None),
 						col("b", "int4", false, None),
 						col("c", "int4", false, None),
@@ -325,7 +328,7 @@ async fn test_reflect_user_table_constraints() -> anyhow::Result<()> {
 				},
 
 				TableState {
-					name: s("bbb"), columns: Set::from([
+					name: s("bbb"), owner: s("tempuser"), columns: Set::from([
 						col("a", "int4", true, None),
 						col("b", "int4", true, None),
 						col("c", "int4", false, None),
@@ -348,7 +351,7 @@ async fn test_reflect_user_table_constraints() -> anyhow::Result<()> {
 		assert_eq!(tables, HashMap::from([
 			("public".to_string(), Set::from([
 				TableState {
-					name: s("bbb"), columns: Set::from([
+					name: s("bbb"), owner: s("tempuser"), columns: Set::from([
 						col("heyhey", "int4", true, None),
 						col("b", "int4", true, None),
 						col("c", "int4", false, None),
@@ -442,13 +445,13 @@ async fn test_reflect_composite_types() -> anyhow::Result<()> {
 		"#).await?;
 		let typs = reflect::reflect_composite_types(&client).await?;
 		assert_eq!(typs, vec![
-			(s("public"), Typ { name: s("aaa"), body: TypBody::Composite { fields: Set::from([
+			(s("public"), Typ { name: s("aaa"), owner: s("tempuser"), body: TypBody::Composite { fields: Set::from([
 				CompositeField { name: s("aaa_a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
 				CompositeField { name: s("aaa_b"), field_num: 2, typ: Ref { schema_name: s("pg_catalog"), name: s("bool") } },
 				CompositeField { name: s("aaa_c"), field_num: 3, typ: Ref { schema_name: s("pg_catalog"), name: s("_text") } },
 				CompositeField { name: s("aaa_d"), field_num: 4, typ: Ref { schema_name: s("pg_catalog"), name: s("text") } },
 			]) } }),
-			(s("public"), Typ { name: s("bbb"), body: TypBody::Composite { fields: Set::from([
+			(s("public"), Typ { name: s("bbb"), owner: s("tempuser"), body: TypBody::Composite { fields: Set::from([
 				CompositeField { name: s("bbb_a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
 			]) } }),
 		]);
@@ -462,7 +465,7 @@ async fn test_reflect_composite_types() -> anyhow::Result<()> {
 		"#).await?;
 		let typs = reflect::reflect_composite_types(&client).await?;
 		assert_eq!(typs, vec![
-			(s("public"), Typ { name: s("aaa"), body: TypBody::Composite { fields: Set::from([
+			(s("public"), Typ { name: s("aaa"), owner: s("tempuser"),  body: TypBody::Composite { fields: Set::from([
 				CompositeField { name: s("yo_a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
 				CompositeField { name: s("aaa_c"), field_num: 3, typ: Ref { schema_name: s("pg_catalog"), name: s("timestamp") } },
 				CompositeField { name: s("aaa_d"), field_num: 4, typ: Ref { schema_name: s("pg_catalog"), name: s("text") } },
@@ -489,8 +492,8 @@ async fn test_reflect_enum_types() -> anyhow::Result<()> {
 		"#).await?;
 		let typs = reflect::reflect_enum_types(&client).await?;
 		assert_eq!(typs, vec![
-			(s("public"), Typ { name: s("aaa"), body: TypBody::Enum { values: vec![s("a"), s("b"), s("c")] } }),
-			(s("public"), Typ { name: s("bbb"), body: TypBody::Enum { values: vec![] } }),
+			(s("public"), Typ { name: s("aaa"), owner: s("tempuser"), body: TypBody::Enum { values: vec![s("a"), s("b"), s("c")] } }),
+			(s("public"), Typ { name: s("bbb"), owner: s("tempuser"), body: TypBody::Enum { values: vec![] } }),
 		]);
 
 		client.batch_execute(r#"
@@ -499,7 +502,7 @@ async fn test_reflect_enum_types() -> anyhow::Result<()> {
 		"#).await?;
 		let typs = reflect::reflect_enum_types(&client).await?;
 		assert_eq!(typs, vec![
-			(s("public"), Typ { name: s("aaa"), body: TypBody::Enum { values: vec![s("a"), s("yo"), s("b"), s("c")] } }),
+			(s("public"), Typ { name: s("aaa"), owner: s("tempuser"), body: TypBody::Enum { values: vec![s("a"), s("yo"), s("b"), s("c")] } }),
 		]);
 
 		Ok::<_, postgres::Error>(())
@@ -515,7 +518,7 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let schemas = reflect::reflect_user_schemas(&client).await?;
 		assert_eq!(schemas, Set::from([
-			empty_schema("public"),
+			empty_schema("public", "pg_database_owner"),
 		]));
 
 		client.batch_execute(r#"
@@ -534,10 +537,10 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 			);
 		"#).await?;
 		let schemas = reflect::reflect_user_schemas(&client).await?;
-		assert_eq!(schemas, Set::from([SchemaState { name: "public".to_string(), functions: Set::new(),
+		assert_eq!(schemas, Set::from([SchemaState { name: "public".to_string(), owner: s("pg_database_owner"), functions: Set::new(),
 			tables: Set::from([
 				TableState {
-					name: s("aaa"), columns: Set::from([
+					name: s("aaa"), owner: s("tempuser"), columns: Set::from([
 						col("a", "int4", true, None),
 						col("b", "int4", false, None),
 						col("c", "int4", false, None),
@@ -551,7 +554,7 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 				},
 
 				TableState {
-					name: s("bbb"), columns: Set::from([
+					name: s("bbb"), owner: s("tempuser"), columns: Set::from([
 						col("bbb_a", "int4", true, None),
 						col("bbb_b", "int4", true, None),
 						col("bbb_c", "int4", false, None),
@@ -564,14 +567,14 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 				},
 			]),
 			typs: Set::from([
-				Typ { name: s("my_enum"), body: TypBody::Enum { values: vec![s("my1"), s("my2")] } },
-				Typ { name: s("aaa"), body: TypBody::Composite { fields: Set::from([
+				Typ { name: s("my_enum"), owner: s("tempuser"), body: TypBody::Enum { values: vec![s("my1"), s("my2")] } },
+				Typ { name: s("aaa"), owner: s("tempuser"), body: TypBody::Composite { fields: Set::from([
 					CompositeField { name: s("a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
 					CompositeField { name: s("b"), field_num: 2, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
 					CompositeField { name: s("c"), field_num: 3, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
 					CompositeField { name: s("d"), field_num: 4, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
 				]) } },
-				Typ { name: s("bbb"), body: TypBody::Composite { fields: Set::from([
+				Typ { name: s("bbb"), owner: s("tempuser"),  body: TypBody::Composite { fields: Set::from([
 					CompositeField { name: s("bbb_a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
 					CompositeField { name: s("bbb_b"), field_num: 2, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
 					CompositeField { name: s("bbb_c"), field_num: 3, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
@@ -616,12 +619,12 @@ async fn test_reflect_functions() -> anyhow::Result<()> {
 		assert_eq!(functions, HashMap::from([
 			(s("public"), Set::from([
 				Function {
-					name: s("add"),
+					name: s("add"), owner: s("tempuser"),
 					args: vec![
 						FunctionArg { name: Some(s("a")), typ: r("int4"),  mode: ArgMode::In, default: None },
 						FunctionArg { name: Some(s("b")), typ: r("int4"),  mode: ArgMode::In, default: Some(s("0")) },
 					],
-					return_type: r("int4"),
+					return_typ: r("int4"),
 					kind: FunctionKind::Function,
 					volatility: FunctionVolatility::Immutable,
 					body: s("RETURN (a + b)"),
@@ -633,13 +636,13 @@ async fn test_reflect_functions() -> anyhow::Result<()> {
 					language: s("sql"),
 				},
 				Function {
-					name: s("dup"),
+					name: s("dup"), owner: s("tempuser"),
 					args: vec![
 						FunctionArg { name: None, typ: r("int4"), mode: ArgMode::In, default: None },
 						FunctionArg { name: Some(s("f1")), typ: r("int4"), mode: ArgMode::Table, default: None },
 						FunctionArg { name: Some(s("f2")), typ: r("text"), mode: ArgMode::Table, default: None },
 					],
-					return_type: r("record"),
+					return_typ: r("record"),
 					kind: FunctionKind::Function,
 					volatility: FunctionVolatility::Volatile,
 					body: s(" select $1, cast($1 as text) || ' is text' "),
@@ -651,13 +654,13 @@ async fn test_reflect_functions() -> anyhow::Result<()> {
 					language: s("sql"),
 				},
 				Function {
-					name: s("rec"),
+					name: s("rec"), owner: s("tempuser"),
 					args: vec![
 						FunctionArg { name: None, typ: r("int4"), mode: ArgMode::In, default: None },
 						FunctionArg { name: Some(s("f1")), typ: r("int4"), mode: ArgMode::Out, default: None },
 						FunctionArg { name: Some(s("f2")), typ: r("text"), mode: ArgMode::InOut, default: Some(s("'yeah'::text")) },
 					],
-					return_type: r("record"),
+					return_typ: r("record"),
 					kind: FunctionKind::Function,
 					volatility: FunctionVolatility::Volatile,
 					body: s(" select $1, cast($1 as text) || ' is text' "),
@@ -684,12 +687,12 @@ async fn test_reflect_functions() -> anyhow::Result<()> {
 		assert_eq!(functions, HashMap::from([
 			(s("public"), Set::from([
 				Function {
-					name: s("add"),
+					name: s("add"), owner: s("tempuser"),
 					args: vec![
 						FunctionArg { name: Some(s("a")), typ: r("int4"),  mode: ArgMode::In, default: None },
 						FunctionArg { name: Some(s("b")), typ: r("int4"),  mode: ArgMode::In, default: Some(s("0")) },
 					],
-					return_type: r("int4"),
+					return_typ: r("int4"),
 					kind: FunctionKind::Function,
 					volatility: FunctionVolatility::Stable,
 					body: s("RETURN ((a + b) + 1)"),

@@ -73,11 +73,11 @@ pub(crate) async fn reflect_user_schemas(
 	use itertools::Itertools;
 	let mut typs_map = all_typs.into_iter().into_grouping_map().collect::<Set<_>>();
 
-	let schemas = schemas.into_iter().map(|schema_name| {
-		let tables = tables_map.remove(&schema_name).unwrap_or_default();
-		let typs = typs_map.remove(&schema_name).unwrap_or_default();
-		let functions = functions_map.remove(&schema_name).unwrap_or_default();
-		SchemaState { name: schema_name, tables, typs, functions }
+	let schemas = schemas.into_iter().map(|s| {
+		let tables = tables_map.remove(&s.nspname).unwrap_or_default();
+		let typs = typs_map.remove(&s.nspname).unwrap_or_default();
+		let functions = functions_map.remove(&s.nspname).unwrap_or_default();
+		SchemaState { name: s.nspname, tables, typs, functions, owner: s.owner }
 	}).collect();
 
 	Ok(schemas)
@@ -95,7 +95,7 @@ pub(crate) async fn reflect_user_tables(
 		tables_query.bind(client)
 			.map(|t| {
 				(t.nspname.to_string(), TableState {
-					name: t.relname.to_string(),
+					name: t.relname.to_string(), owner: t.owner.to_string(),
 					columns: Set::new(),
 					primary_key: t.primary_key_columns.map(|c| {
 						(t.conname.unwrap_or_default().to_string(), c.map(str::to_string).collect())
@@ -242,7 +242,7 @@ pub(crate) async fn reflect_composite_types(
 			(
 				t.nspname.to_string(),
 				Typ {
-					name: t.typname.to_string(),
+					name: t.typname.to_string(), owner: t.owner.to_string(),
 					body: TypBody::Composite { fields },
 				},
 			)
@@ -260,7 +260,7 @@ pub(crate) async fn reflect_enum_types(
 			(
 				t.nspname.to_string(),
 				Typ {
-					name: t.typname.to_string(),
+					name: t.typname.to_string(), owner: t.owner.to_string(),
 					body: TypBody::Enum { values: t.enum_values.map(str::to_string).collect() },
 				},
 			)
@@ -293,8 +293,8 @@ pub(crate) async fn reflect_functions(
 			(
 				f.nspname.to_string(),
 				Function {
-					name: f.function_name.to_string(),
-					return_type: Ref { schema_name: f.return_typ_schema.to_string(), name: f.return_typ_name.to_string() },
+					name: f.function_name.to_string(), owner: f.owner.to_string(),
+					return_typ: Ref { schema_name: f.return_typ_schema.to_string(), name: f.return_typ_name.to_string() },
 					args,
 					// f for a normal function, p for a procedure, a for an aggregate function, or w for a window function
 					kind: match f.prokind as u8 as char {

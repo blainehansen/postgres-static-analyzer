@@ -6,30 +6,20 @@
 -- on languages and data types, PUBLIC has the USAGE privilege
 
 
-create role newadmin in role devuser;
-
 create role guy;
-create role other;
+
 
 alter default privileges grant all privileges on tables to guy;
-alter default privileges grant select on tables to other;
 
-set role newadmin;
-alter default privileges grant insert on tables to other;
+alter default privileges grant all privileges on types to public;
 
--- alter default privileges revoke all privileges on tables from PUBLIC;
--- alter default privileges revoke all privileges on sequences from PUBLIC;
--- alter default privileges revoke all privileges on functions from PUBLIC;
--- alter default privileges revoke all privileges on types from PUBLIC;
--- alter default privileges revoke all privileges on schemas from PUBLIC;
-
-
+--! reflect_default_acls : (applicable_schema?)
 select
 	pg_get_userbyid(defaclrole) as applicable_object_owner, -- defaclrole specifies the object owner, the person who's owned objects are included in this default privilege
 	sch.nspname::text as applicable_schema,
 	defaclobjtype,
 	pg_get_userbyid(grantor) as grantor,
-	pg_get_userbyid(grantee) as grantee,
+	case when grantee = 0 then 'public' else pg_get_userbyid(grantee) end as grantee,
 	privilege_type,
 	is_grantable
 
@@ -37,6 +27,7 @@ from
 	pg_catalog.pg_default_acl cross join lateral aclexplode(defaclacl)
 	left join pg_catalog.pg_namespace as sch on pg_default_acl.defaclnamespace = sch.oid
 
+-- group by defaclrole, sch.nspname, defaclobjtype, grantee
 
 
 
