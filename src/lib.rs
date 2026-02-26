@@ -11,6 +11,8 @@ pub(crate) use reflect_crate::tokio_postgres::{self as postgres, /*Config as PgC
 
 pub type Set<T> = hashbrown::HashSet<T>;
 pub type Map<T> = hashbrown::HashMap<String, T>;
+// TODO use hashbrown all the time? https://github.com/rust-lang/hashbrown?tab=readme-ov-file#features
+// pub(crate) use hashbrown::HashMap;
 
 mod reflect;
 #[cfg(test)]
@@ -141,6 +143,19 @@ macro_rules! impl_hash_and_equivalent {
 		}
 	};
 }
+macro_rules! impl_pg_from_str {
+	($type:ident, $($variant:ident),+ $(,)?) => {
+		impl $type {
+			fn pg_from_str(s: &str) -> $type {
+				match s {
+					$(stringify!($variant) => $type::$variant,)+
+					_ => panic!("Postgres returned unexpected {} variant: {}", stringify!($type), s),
+				}
+			}
+		}
+	};
+}
+
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct DbState {
@@ -148,6 +163,7 @@ pub struct DbState {
 	pub default_settings: ConnectionSettings,
 	pub schemas: Set<SchemaState>,
 	pub foreign_keys: Vec<ForeignKey>,
+	pub grants: std::collections::HashMap<String, Vec<DbGrant>>,
 	// pub languages: Set<Language>,
 
 	// TODO we assume that the "local" settings in connection params or whatever don't matter to us right?
@@ -281,10 +297,25 @@ impl_hash_and_equivalent!(Function);
 // f for a normal function, p for a procedure, a for an aggregate function, or w for a window function
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum FunctionKind { Function, Procedure, Aggregate, Window }
-
+impl FunctionKind {
+	fn pg_from_char(c: i8) -> FunctionKind {
+		match c as u8 as char {
+			'f' => FunctionKind::Function, 'p' => FunctionKind::Procedure, 'a' => FunctionKind::Aggregate, 'w' => FunctionKind::Window,
+			_ => panic!("Postgres returned an unknown function variant: {}", c as u8 as char),
+		}
+	}
+}
 // provolatile tells whether the function's result depends only on its input arguments, or is affected by outside factors. It is i for “immutable” functions, which always deliver the same result for the same inputs. It is s for “stable” functions, whose results (for fixed inputs) do not change within a scan. It is v for “volatile” functions, whose results might change at any time. (Use v also for functions with side-effects, so that calls to them cannot get optimized away.)
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum FunctionVolatility { Immutable, Stable, Volatile }
+impl FunctionVolatility {
+	fn pg_from_char(c: i8) -> FunctionVolatility {
+		match c as u8 as char {
+			'i' => FunctionVolatility::Immutable, 's' => FunctionVolatility::Stable, 'v' => FunctionVolatility::Volatile,
+			_ => panic!("Postgres returned an unknown function volatility: {}", c as u8 as char),
+		}
+	}
+}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FunctionArg {
@@ -294,9 +325,17 @@ pub struct FunctionArg {
 	pub default: Option<String>,
 }
 
+// encoded as i for IN arguments, o for OUT arguments, b for INOUT arguments, v for VARIADIC arguments, t for TABLE arguments
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ArgMode { In, Out, InOut, Variadic, Table }
-
+impl ArgMode {
+	fn pg_from_char(c: i8) -> ArgMode {
+		match c as u8 as char {
+			'i' => ArgMode::In, 'o' => ArgMode::Out, 'b' => ArgMode::InOut, 'v' => ArgMode::Variadic, 't' => ArgMode::Table,
+			_ => panic!("Postgres returned an unknown arg mode: {}", c as u8 as char),
+		}
+	}
+}
 
 // https://www.postgresql.org/docs/current/runtime-config-client.html
 // row_security?
@@ -365,7 +404,7 @@ pub fn make_default_settings() -> ConnectionSettings {
 // when we're answering "can this person do this thing to this object" we perhaps *start* by looking at the object itself, if we find nothing cascade up to the schema level, and then the database level, then the postgres-default (or not? only if the schema/database defaults don't exist?)
 
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 pub struct Grant<P> {
 	// pub grantee: String,
 	pub grantor: String,
@@ -376,72 +415,100 @@ pub struct Grant<P> {
 // DATABASE	CTc	Tc	\l
 pub type DbGrant = Grant<DbPrivilege>;
 #[allow(non_camel_case_types)]
-pub enum DbPrivilege { CREATE, CONNECT, TEMPORARY}
+#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
+pub enum DbPrivilege { CREATE, CONNECT, TEMPORARY }
+impl_pg_from_str!(DbPrivilege, CREATE, CONNECT, TEMPORARY);
 
 // // DOMAIN  U  U  \dD+
 // pub type DomainGrant = Grant<DomainPrivilege>;
 // #[allow(non_camel_case_types)]
+// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 // pub enum DomainPrivilege { USAGE }
+// impl_pg_from_str!(DomainPrivilege, USAGE);
 
 // FUNCTION or PROCEDURE	X	X	\df+
 pub type FunctionGrant = Grant<FunctionPrivilege>;
 #[allow(non_camel_case_types)]
+#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 pub enum FunctionPrivilege { EXECUTE }
+impl_pg_from_str!(FunctionPrivilege, EXECUTE);
 
 // // FOREIGN DATA WRAPPER	U	none	\dew+
 // pub type ForeignDataWrapperGrant = Grant<ForeignDataWrapperPrivilege>;
 // #[allow(non_camel_case_types)]
+// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 // pub enum ForeignDataWrapperPrivilege { USAGE }
+// impl_pg_from_str!(ForeignDataWrapperPrivilege, USAGE);
 
 // // FOREIGN SERVER	U	none	\des+
 // pub type ForeignServerGrant = Grant<ForeignServerPrivilege>;
 // #[allow(non_camel_case_types)]
+// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 // pub enum ForeignServerPrivilege { USAGE }
+// impl_pg_from_str!(ForeignServerPrivilege, USAGE);
 
 // // LANGUAGE	U	U	\dL+
 // pub type LanguageGrant = Grant<LanguagePrivilege>;
 // #[allow(non_camel_case_types)]
+// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 // pub enum LanguagePrivilege { USAGE }
+// impl_pg_from_str!(LanguagePrivilege, USAGE);
 
 // // LARGE OBJECT	rw	none	\dl+
 // pub type LargeObjectGrant = Grant<LargeObjectPrivilege>;
 // #[allow(non_camel_case_types)]
+// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 // pub enum LargeObjectPrivilege { SELECT, UPDATE }
+// impl_pg_from_str!(LargeObjectPrivilege, SELECT, UPDATE);
 
 // // PARAMETER	sA	none	\dconfig+
 // pub type ParameterGrant = Grant<ParameterPrivilege>;
 // #[allow(non_camel_case_types)]
+// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 // pub enum ParameterPrivilege { SET, ALTER_SYSTEM }
+// impl_pg_from_str!(ParameterPrivilege, SET, ALTER_SYSTEM);
 
 // SCHEMA	UC	none	\dn+
 pub type SchemaGrant = Grant<SchemaPrivilege>;
 #[allow(non_camel_case_types)]
+#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 pub enum SchemaPrivilege { USAGE, CREATE }
+impl_pg_from_str!(SchemaPrivilege, USAGE, CREATE);
 
 // // SEQUENCE	rwU	none	\dp
 // pub type SequenceGrant = Grant<SequencePrivilege>;
 // #[allow(non_camel_case_types)]
+// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 // pub enum SequencePrivilege { SELECT, UPDATE, USAGE }
+// impl_pg_from_str!(SequencePrivilege, SELECT, UPDATE, USAGE);
 
 // TABLE (and table-like objects)	arwdDxtm	none	\dp
 pub type TableGrant = Grant<TablePrivilege>;
 #[allow(non_camel_case_types)]
+#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 pub enum TablePrivilege { INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN }
+impl_pg_from_str!(TablePrivilege, INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN);
 
 // Table column	arwx	none	\dp
 pub type TableColumnGrant = Grant<TableColumnPrivilege>;
 #[allow(non_camel_case_types)]
+#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 pub enum TableColumnPrivilege { INSERT, SELECT, UPDATE, REFERENCES }
+impl_pg_from_str!(TableColumnPrivilege, INSERT, SELECT, UPDATE, REFERENCES);
 
 // // TABLESPACE	C	none	\db+
 // pub type TablespaceGrant = Grant<TablespacePrivilege>;
 // #[allow(non_camel_case_types)]
+// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 // pub enum TablespacePrivilege { CREATE }
+// impl_pg_from_str!(TablespacePrivilege, CREATE);
 
 // TYPE	U	U	\dT+
 pub type TypeGrant = Grant<TypePrivilege>;
 #[allow(non_camel_case_types)]
+#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 pub enum TypePrivilege { USAGE }
+impl_pg_from_str!(TypePrivilege, USAGE);
 
 
 

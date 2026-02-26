@@ -1,5 +1,5 @@
 use crate::{
-	FunctionArg, ArgMode, Column, CompositeField, ConnectionSettings, DbState, ForeignKey, Function, FunctionKind, FunctionVolatility, PgClient, Ref, Role, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
+	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionKind, FunctionVolatility, PgClient, Ref, Role, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
 };
 use std::collections::HashMap;
 
@@ -9,17 +9,19 @@ pub async fn reflect_db_state(
 	let (
 		roles,
 		default_settings,
+		grants,
 		schemas,
 		foreign_keys,
 	) = tokio::try_join!(
 		reflect_roles(client),
 		reflect_db_default_setting(client),
+		reflect_db_grants(client),
 		reflect_user_schemas(client),
 		reflect_foreign_keys(client),
 	)?;
 	let default_settings = default_settings.unwrap_or_else(make_default_settings);
 
-	Ok(DbState { roles, default_settings, schemas, foreign_keys })
+	Ok(DbState { roles, default_settings, schemas, foreign_keys, grants })
 }
 
 
@@ -56,6 +58,25 @@ pub(crate) async fn reflect_db_default_setting(
 	Ok(db_default_setting)
 }
 
+pub(crate) async fn reflect_db_grants(
+	client: &PgClient
+) -> Result<HashMap<String, Vec<DbGrant>>, postgres::Error> {
+	let grants = reflect_crate::queries::main::reflect_db_grants().bind(client)
+		.map(|s| {
+			let user_grants = itertools::izip!(s.privilege_types, s.is_grantables, s.grantors)
+				.map(|(privilege_type, is_grantable, grantor)| {
+					let privilege_type = DbPrivilege::pg_from_str(privilege_type);
+					DbGrant { privilege_type, is_grantable, grantor: grantor.to_string() }
+				})
+				.collect();
+
+			(s.grantee.to_string(), user_grants)
+		})
+		.all().await?
+		.into_iter().collect();
+	Ok(grants)
+}
+
 
 // https://www.postgresql.org/docs/current/catalog-pg-namespace.html
 pub(crate) async fn reflect_user_schemas(
@@ -88,8 +109,6 @@ pub(crate) async fn reflect_user_schemas(
 pub(crate) async fn reflect_user_tables(
 	client: &PgClient
 ) -> Result<HashMap<String, Set<TableState>>, postgres::Error> {
-
-
 	let tables_query = reflect_crate::queries::main::reflect_user_tables();
 	let (tables, all_columns, all_unique_constraints) = tokio::try_join!(
 		tables_query.bind(client)
@@ -281,11 +300,7 @@ pub(crate) async fn reflect_functions(
 			let args = itertools::izip!(f.arg_modes, f.arg_names, f.arg_types, f.arg_type_schemas, f.arg_defaults)
 				.map(|(mode, name, typ, typ_schema, default)| {
 					let typ = Ref { schema_name: typ_schema.to_string(), name: typ.to_string() };
-					// encoded as i for IN arguments, o for OUT arguments, b for INOUT arguments, v for VARIADIC arguments, t for TABLE arguments
-					let mode = match mode as u8 as char {
-						'i' => ArgMode::In, 'o' => ArgMode::Out, 'b' => ArgMode::InOut, 'v' => ArgMode::Variadic, 't' => ArgMode::Table,
-						_ => ArgMode::In,
-					};
+					let mode = ArgMode::pg_from_char(mode);
 					FunctionArg { name: name.map(str::to_string), mode, typ, default: default.map(str::to_string) }
 				})
 				.collect::<Vec<_>>();
@@ -296,16 +311,8 @@ pub(crate) async fn reflect_functions(
 					name: f.function_name.to_string(), owner: f.owner.to_string(),
 					return_typ: Ref { schema_name: f.return_typ_schema.to_string(), name: f.return_typ_name.to_string() },
 					args,
-					// f for a normal function, p for a procedure, a for an aggregate function, or w for a window function
-					kind: match f.prokind as u8 as char {
-						'f' => FunctionKind::Function, 'p' => FunctionKind::Procedure, 'a' => FunctionKind::Aggregate, 'w' => FunctionKind::Window,
-						_ => FunctionKind::Function,
-					},
-					// It is i for "immutable" functions, which always deliver the same result for the same inputs. It is s for "stable" functions, whose results (for fixed inputs) do not change within a scan. It is v for "volatile" functions, whose results might change at any time.
-					volatility: match f.provolatile as u8 as char {
-						'i' => FunctionVolatility::Immutable, 's' => FunctionVolatility::Stable, 'v' => FunctionVolatility::Volatile,
-						_ => FunctionVolatility::Volatile,
-					},
+					kind: FunctionKind::pg_from_char(f.prokind),
+					volatility: FunctionVolatility::pg_from_char(f.provolatile),
 					body: f.body.to_string(),
 					has_sql_body: f.has_sql_body,
 					is_strict: f.proisstrict,

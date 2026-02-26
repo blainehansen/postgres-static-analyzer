@@ -30,6 +30,20 @@ where
 	and pg_db_role_setting.setrole = 0
 ;
 
+-- TODO interesting behavior when granting/revoking from public: users who previously had the same rights as public or were basically "inheriting" them have their explicit acls added to ensure that the "cascade" to public is no longer used for them.
+--! reflect_db_grants
+select
+	case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
+	array_agg(privilege_type order by a.ordinality) as privilege_types,
+	array_agg(is_grantable order by a.ordinality) as is_grantables,
+	array_agg(pg_get_userbyid(grantor)::text order by a.ordinality) as grantors
+from
+	pg_catalog.pg_database
+	cross join lateral aclexplode(datacl) with ordinality as a
+where datname = current_database()
+group by grantee
+;
+
 
 --! reflect_user_schemas
 select

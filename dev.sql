@@ -8,24 +8,55 @@
 
 create role guy;
 
+create database yoyo;
 
-alter default privileges grant all privileges on tables to guy;
 
-alter default privileges grant all privileges on types to public;
-
---! reflect_default_acls : (applicable_schema?)
 select
-	pg_get_userbyid(defaclrole) as applicable_object_owner, -- defaclrole specifies the object owner, the person who's owned objects are included in this default privilege
-	sch.nspname::text as applicable_schema,
-	defaclobjtype,
-	pg_get_userbyid(grantor) as grantor,
+	-- array_agg(case when grantee = 0 then 'public' else pg_get_userbyid(grantee) end order by a.ordinality) as grantees,
 	case when grantee = 0 then 'public' else pg_get_userbyid(grantee) end as grantee,
-	privilege_type,
-	is_grantable
-
+	array_agg(privilege_type order by a.ordinality) filter (where a.grantee is not null) as privilege_types,
+	array_agg(is_grantable order by a.ordinality) filter (where a.grantee is not null) as is_grantables,
+	array_agg(pg_get_userbyid(grantor) order by a.ordinality) filter (where a.grantee is not null) as grantors
 from
-	pg_catalog.pg_default_acl cross join lateral aclexplode(defaclacl)
-	left join pg_catalog.pg_namespace as sch on pg_default_acl.defaclnamespace = sch.oid
+	pg_catalog.pg_database
+	cross join lateral aclexplode(datacl) with ordinality as a
+where datname = 'yoyo'
+group by grantee
+;
+
+
+revoke create on database yoyo from PUBLIC;
+grant connect on database yoyo to PUBLIC;
+grant all privileges on database yoyo to guy;
+
+select
+	-- array_agg(case when grantee = 0 then 'public' else pg_get_userbyid(grantee) end order by a.ordinality) as grantees,
+	case when grantee = 0 then 'public' else pg_get_userbyid(grantee) end as grantee,
+	array_agg(privilege_type order by a.ordinality) filter (where a.grantee is not null) as privilege_types,
+	array_agg(is_grantable order by a.ordinality) filter (where a.grantee is not null) as is_grantables,
+	array_agg(pg_get_userbyid(grantor) order by a.ordinality) filter (where a.grantee is not null) as grantors
+from
+	pg_catalog.pg_database
+	cross join lateral aclexplode(datacl) with ordinality as a
+where datname = 'yoyo'
+group by grantee
+;
+
+
+
+-- --! reflect_default_acls : (applicable_schema?)
+-- select
+-- 	pg_get_userbyid(defaclrole) as applicable_object_owner, -- defaclrole specifies the object owner, the person who's owned objects are included in this default privilege
+-- 	sch.nspname::text as applicable_schema,
+-- 	defaclobjtype,
+-- 	pg_get_userbyid(grantor) as grantor,
+-- 	case when grantee = 0 then 'public' else pg_get_userbyid(grantee) end as grantee,
+-- 	privilege_type,
+-- 	is_grantable
+
+-- from
+-- 	pg_catalog.pg_default_acl cross join lateral aclexplode(defaclacl)
+-- 	left join pg_catalog.pg_namespace as sch on pg_default_acl.defaclnamespace = sch.oid
 
 -- group by defaclrole, sch.nspname, defaclobjtype, grantee
 

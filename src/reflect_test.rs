@@ -54,6 +54,67 @@ async fn test_reflect_default_settings() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn test_reflect_db_grants() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		let db_grants = reflect::reflect_db_grants(&client).await?;
+		assert!(db_grants.is_empty());
+
+		client.batch_execute(r#"
+			create role guy;
+
+			revoke create on database tempdb from PUBLIC;
+			grant connect on database tempdb to PUBLIC;
+			grant all privileges on database tempdb to guy;
+		"#).await?;
+		let mut db_grants = reflect::reflect_db_grants(&client).await?;
+		db_grants.values_mut().for_each(|v| v.sort());
+		assert_eq!(db_grants, HashMap::from([
+			(s("public"), vec![
+				DbGrant { privilege_type: DbPrivilege::CONNECT, is_grantable: false, grantor: s("tempuser") },
+				DbGrant { privilege_type: DbPrivilege::TEMPORARY, is_grantable: false, grantor: s("tempuser") },
+			]),
+
+			(s("tempuser"), vec![
+				DbGrant { privilege_type: DbPrivilege::CREATE, is_grantable: false, grantor: s("tempuser"), },
+				DbGrant { privilege_type: DbPrivilege::CONNECT, is_grantable: false, grantor: s("tempuser"), },
+				DbGrant { privilege_type: DbPrivilege::TEMPORARY, is_grantable: false, grantor: s("tempuser"), },
+			]),
+
+			(s("guy"), vec![
+				DbGrant { privilege_type: DbPrivilege::CREATE, is_grantable: false, grantor: s("tempuser") },
+				DbGrant { privilege_type: DbPrivilege::CONNECT, is_grantable: false, grantor: s("tempuser") },
+				DbGrant { privilege_type: DbPrivilege::TEMPORARY, is_grantable: false, grantor: s("tempuser") },
+			]),
+		]));
+
+		client.batch_execute(r#"
+			grant all privileges on database tempdb to PUBLIC;
+			grant connect on database tempdb to PUBLIC;
+			revoke all privileges on database tempdb from guy;
+		"#).await?;
+		let mut db_grants = reflect::reflect_db_grants(&client).await?;
+		db_grants.values_mut().for_each(|v| v.sort());
+		assert_eq!(db_grants, HashMap::from([
+			(s("public"), vec![
+				DbGrant { privilege_type: DbPrivilege::CREATE, is_grantable: false, grantor: s("tempuser") },
+				DbGrant { privilege_type: DbPrivilege::CONNECT, is_grantable: false, grantor: s("tempuser") },
+				DbGrant { privilege_type: DbPrivilege::TEMPORARY, is_grantable: false, grantor: s("tempuser") },
+			]),
+
+			(s("tempuser"), vec![
+				DbGrant { privilege_type: DbPrivilege::CREATE, is_grantable: false, grantor: s("tempuser"), },
+				DbGrant { privilege_type: DbPrivilege::CONNECT, is_grantable: false, grantor: s("tempuser"), },
+				DbGrant { privilege_type: DbPrivilege::TEMPORARY, is_grantable: false, grantor: s("tempuser"), },
+			]),
+		]));
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
+
+	Ok(())
+}
+
+#[tokio::test]
 async fn test_reflect_roles() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let roles = reflect::reflect_roles(&client).await?;
