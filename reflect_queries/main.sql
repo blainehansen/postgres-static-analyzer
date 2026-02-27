@@ -30,20 +30,6 @@ where
 	and pg_db_role_setting.setrole = 0
 ;
 
--- TODO interesting behavior when granting/revoking from public: users who previously had the same rights as public or were basically "inheriting" them have their explicit acls added to ensure that the "cascade" to public is no longer used for them.
---! reflect_db_grants
-select
-	case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-	array_agg(privilege_type order by a.ordinality) as privilege_types,
-	array_agg(is_grantable order by a.ordinality) as is_grantables,
-	array_agg(pg_get_userbyid(grantor)::text order by a.ordinality) as grantors
-from
-	pg_catalog.pg_database
-	cross join lateral aclexplode(datacl) with ordinality as a
-where datname = current_database()
-group by grantee
-;
-
 
 --! reflect_user_schemas
 select
@@ -227,4 +213,36 @@ from
 where
 	sch.nspname not in ('pg_catalog', 'information_schema', 'pg_toast')
 group by sch.oid, fn.oid, return_typ.oid, return_typ_sch.oid, lang.oid
+;
+
+
+
+-- TODO interesting behavior when granting/revoking from public: users who previously had the same rights as public or were basically "inheriting" them have their explicit acls added to ensure that the "cascade" to public is no longer used for them.
+--! reflect_db_grants
+select
+	case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
+	array_agg(privilege_type order by a.ordinality) as privilege_types,
+	array_agg(is_grantable order by a.ordinality) as is_grantables,
+	array_agg(pg_get_userbyid(grantor)::text order by a.ordinality) as grantors
+from
+	pg_catalog.pg_database
+	cross join lateral aclexplode(datacl) with ordinality as a
+where datname = current_database()
+group by grantee
+;
+
+
+--! reflect_function_grants
+select
+	fn.proname::text, sch.nspname::text,
+	array_agg(case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end order by a.ordinality) as grantees,
+	-- array_agg(privilege_type order by a.ordinality) as privilege_types,
+	array_agg(is_grantable order by a.ordinality) as is_grantables,
+	array_agg(pg_get_userbyid(grantor)::text order by a.ordinality) as grantors
+from
+	pg_catalog.pg_proc as fn
+	join pg_catalog.pg_namespace as sch on fn.pronamespace = sch.oid
+	cross join lateral aclexplode(fn.proacl) with ordinality as a
+where sch.nspname not in ('pg_catalog', 'information_schema', 'pg_toast')
+group by fn.oid, sch.oid
 ;

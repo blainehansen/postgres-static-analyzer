@@ -291,6 +291,7 @@ pub struct Function {
 	pub is_security_definer: bool,
 	pub is_leakproof: bool,
 	pub language: String,
+	pub grants: std::collections::HashMap<String, Vec<FunctionGrant>>,
 }
 impl_hash_and_equivalent!(Function);
 
@@ -403,6 +404,9 @@ pub fn make_default_settings() -> ConnectionSettings {
 // what about the default grants? they go in a sequence from schema-specific to database-wide to postgres-default
 // when we're answering "can this person do this thing to this object" we perhaps *start* by looking at the object itself, if we find nothing cascade up to the schema level, and then the database level, then the postgres-default (or not? only if the schema/database defaults don't exist?)
 
+// https://www.cybertec-postgresql.com/en/postgresql-alter-default-privileges-permissions-explained/
+// Default privileges are the privileges on an object right after you created it. On all object types, the default privileges allow everything to the object owner. On most objects, nobody else has any privileges by default. But on some objects, PUBLIC (everybody) has certain privileges:
+
 
 #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 pub struct Grant<P> {
@@ -427,32 +431,28 @@ impl_pg_from_str!(DbPrivilege, CREATE, CONNECT, TEMPORARY);
 // impl_pg_from_str!(DomainPrivilege, USAGE);
 
 // FUNCTION or PROCEDURE	X	X	\df+
-pub type FunctionGrant = Grant<FunctionPrivilege>;
+pub type FunctionGrant = Grant<FunctionExecute>;
 #[allow(non_camel_case_types)]
 #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-pub enum FunctionPrivilege { EXECUTE }
-impl_pg_from_str!(FunctionPrivilege, EXECUTE);
+pub struct FunctionExecute;
 
 // // FOREIGN DATA WRAPPER	U	none	\dew+
-// pub type ForeignDataWrapperGrant = Grant<ForeignDataWrapperPrivilege>;
+// pub type ForeignDataWrapperGrant = Grant<ForeignDataWrapperUsage>;
 // #[allow(non_camel_case_types)]
 // #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-// pub enum ForeignDataWrapperPrivilege { USAGE }
-// impl_pg_from_str!(ForeignDataWrapperPrivilege, USAGE);
+// pub struct ForeignDataWrapperUsage;
 
 // // FOREIGN SERVER	U	none	\des+
-// pub type ForeignServerGrant = Grant<ForeignServerPrivilege>;
+// pub type ForeignServerGrant = Grant<ForeignServerUsage>;
 // #[allow(non_camel_case_types)]
 // #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-// pub enum ForeignServerPrivilege { USAGE }
-// impl_pg_from_str!(ForeignServerPrivilege, USAGE);
+// pub struct ForeignServerUsage;
 
 // // LANGUAGE	U	U	\dL+
-// pub type LanguageGrant = Grant<LanguagePrivilege>;
+// pub type LanguageGrant = Grant<LanguageUsage>;
 // #[allow(non_camel_case_types)]
 // #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-// pub enum LanguagePrivilege { USAGE }
-// impl_pg_from_str!(LanguagePrivilege, USAGE);
+// pub struct LanguageUsage;
 
 // // LARGE OBJECT	rw	none	\dl+
 // pub type LargeObjectGrant = Grant<LargeObjectPrivilege>;
@@ -504,11 +504,10 @@ impl_pg_from_str!(TableColumnPrivilege, INSERT, SELECT, UPDATE, REFERENCES);
 // impl_pg_from_str!(TablespacePrivilege, CREATE);
 
 // TYPE	U	U	\dT+
-pub type TypeGrant = Grant<TypePrivilege>;
+pub type TypeGrant = Grant<TypeUsage>;
 #[allow(non_camel_case_types)]
 #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-pub enum TypePrivilege { USAGE }
-impl_pg_from_str!(TypePrivilege, USAGE);
+pub struct TypeUsage;
 
 
 

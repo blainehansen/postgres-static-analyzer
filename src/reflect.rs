@@ -1,5 +1,5 @@
 use crate::{
-	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionKind, FunctionVolatility, PgClient, Ref, Role, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
+	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, PgClient, Ref, Role, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
 };
 use std::collections::HashMap;
 
@@ -147,7 +147,6 @@ pub(crate) async fn reflect_user_tables(
 				tables_in_schema.insert(table);
 			}
 		}
-
 	}
 
 	Ok(tables)
@@ -295,7 +294,21 @@ pub(crate) async fn reflect_functions(
 ) -> Result<HashMap<String, Set<Function>>, postgres::Error> {
 	use itertools::Itertools;
 
-	let functions = reflect_crate::queries::main::reflect_functions().bind(client)
+	let grants_map = reflect_crate::queries::main::reflect_function_grants().bind(client)
+		.map(|g| {
+			let user_grants = itertools::izip!(g.grantees, g.is_grantables, g.grantors)
+				.map(|(grantee, is_grantable, grantor)| {
+					(grantee.to_string(), FunctionGrant { privilege_type: FunctionExecute, is_grantable, grantor: grantor.to_string() })
+				})
+				.into_grouping_map()
+				.collect::<Vec<_>>();
+
+			((g.nspname.to_string(), g.proname.to_string()), user_grants)
+		})
+		.all().await?
+		.into_iter().collect::<HashMap<_, _>>();
+
+	let mut functions = reflect_crate::queries::main::reflect_functions().bind(client)
 		.map(|f| {
 			let args = itertools::izip!(f.arg_modes, f.arg_names, f.arg_types, f.arg_type_schemas, f.arg_defaults)
 				.map(|(mode, name, typ, typ_schema, default)| {
@@ -320,13 +333,23 @@ pub(crate) async fn reflect_functions(
 					is_security_definer: f.prosecdef,
 					is_leakproof: f.proleakproof,
 					language: f.lang_name.to_string(),
+					grants: HashMap::new(),
 				}
 			)
 		})
 		.all().await?
 		.into_iter()
 		.into_grouping_map()
-		.collect();
+		.collect::<Set<_>>();
+
+	for ((schema_name, function_name), grants) in grants_map {
+		if let Some(functions_in_schema) = functions.get_mut(&schema_name) {
+			if let Some(mut function) = functions_in_schema.take(&function_name.as_str()) {
+				function.grants = grants;
+				functions_in_schema.insert(function);
+			}
+		}
+	}
 
 	Ok(functions)
 

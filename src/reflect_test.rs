@@ -695,6 +695,7 @@ async fn test_reflect_functions() -> anyhow::Result<()> {
 					is_security_definer: false,
 					is_leakproof: false,
 					language: s("sql"),
+					grants: HashMap::new(),
 				},
 				Function {
 					name: s("dup"), owner: s("tempuser"),
@@ -713,6 +714,7 @@ async fn test_reflect_functions() -> anyhow::Result<()> {
 					is_security_definer: false,
 					is_leakproof: false,
 					language: s("sql"),
+					grants: HashMap::new(),
 				},
 				Function {
 					name: s("rec"), owner: s("tempuser"),
@@ -731,6 +733,7 @@ async fn test_reflect_functions() -> anyhow::Result<()> {
 					is_security_definer: false,
 					is_leakproof: false,
 					language: s("sql"),
+					grants: HashMap::new(),
 				},
 			]))
 		]));
@@ -763,6 +766,68 @@ async fn test_reflect_functions() -> anyhow::Result<()> {
 					is_security_definer: false,
 					is_leakproof: false,
 					language: s("sql"),
+					grants: HashMap::new(),
+				},
+			]))
+		]));
+
+		client.batch_execute(r#"
+			revoke all privileges on function add from tempuser;
+		"#).await?;
+		let functions = reflect::reflect_functions(&client).await?;
+		assert_eq!(functions, HashMap::from([
+			(s("public"), Set::from([
+				Function {
+					name: s("add"), owner: s("tempuser"),
+					args: vec![
+						FunctionArg { name: Some(s("a")), typ: r("int4"),  mode: ArgMode::In, default: None },
+						FunctionArg { name: Some(s("b")), typ: r("int4"),  mode: ArgMode::In, default: Some(s("0")) },
+					],
+					return_typ: r("int4"),
+					kind: FunctionKind::Function,
+					volatility: FunctionVolatility::Stable,
+					body: s("RETURN ((a + b) + 1)"),
+					has_sql_body: true,
+					is_strict: false,
+					returns_set: false,
+					is_security_definer: false,
+					is_leakproof: false,
+					language: s("sql"),
+					grants: HashMap::from([
+						(s("public"), vec![FunctionGrant { privilege_type: FunctionExecute, is_grantable: false, grantor: s("tempuser") }]),
+					]),
+				},
+			]))
+		]));
+
+		client.batch_execute(r#"
+			alter default privileges revoke all privileges on functions from public;
+			drop function add;
+
+			create function other_add(a integer) returns integer
+				language sql stable return a;
+		"#).await?;
+		let functions = reflect::reflect_functions(&client).await?;
+		assert_eq!(functions, HashMap::from([
+			(s("public"), Set::from([
+				Function {
+					name: s("other_add"), owner: s("tempuser"),
+					args: vec![
+						FunctionArg { name: Some(s("a")), typ: r("int4"),  mode: ArgMode::In, default: None },
+					],
+					return_typ: r("int4"),
+					kind: FunctionKind::Function,
+					volatility: FunctionVolatility::Stable,
+					body: s("RETURN a"),
+					has_sql_body: true,
+					is_strict: false,
+					returns_set: false,
+					is_security_definer: false,
+					is_leakproof: false,
+					language: s("sql"),
+					grants: HashMap::from([
+						(s("tempuser"), vec![FunctionGrant { privilege_type: FunctionExecute, is_grantable: false, grantor: s("tempuser") }]),
+					]),
 				},
 			]))
 		]));
