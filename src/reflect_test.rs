@@ -196,6 +196,21 @@ fn empty_schema(schema_name: &str, owner: &str) -> SchemaState {
 	SchemaState {
 		name: schema_name.to_string(), owner: s(owner),
 		tables: Set::new(), typs: Set::new(), functions: Set::new(),
+		grants: std::collections::HashMap::new(),
+	}
+}
+
+fn public_schema() -> SchemaState {
+	SchemaState {
+		name: s("public"), owner: s("pg_database_owner"),
+		tables: Set::new(), typs: Set::new(), functions: Set::new(),
+		grants: HashMap::from([
+			(s("public"), vec![SchemaGrant { privilege_type: SchemaPrivilege::USAGE, is_grantable: false, grantor: s("pg_database_owner") }]),
+			(s("pg_database_owner"), vec![
+				SchemaGrant { privilege_type: SchemaPrivilege::USAGE, is_grantable: false, grantor: s("pg_database_owner") },
+				SchemaGrant { privilege_type: SchemaPrivilege::CREATE, is_grantable: false, grantor: s("pg_database_owner") },
+			]),
+		]),
 	}
 }
 
@@ -204,7 +219,7 @@ async fn test_reflect_user_schemas() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let schemas = reflect::reflect_user_schemas(&client).await?;
 		assert_eq!(schemas, Set::from([
-			empty_schema("public", "pg_database_owner"),
+			public_schema(),
 		]));
 
 		client.batch_execute(r#"
@@ -214,7 +229,7 @@ async fn test_reflect_user_schemas() -> anyhow::Result<()> {
 		"#).await?;
 		let schemas = reflect::reflect_user_schemas(&client).await?;
 		assert_eq!(schemas, Set::from([
-			empty_schema("public", "pg_database_owner"),
+			public_schema(),
 			empty_schema("aaa", "tempuser"),
 			empty_schema("bbb", "tempuser"),
 			empty_schema("big things poppin", "tempuser"),
@@ -228,6 +243,21 @@ async fn test_reflect_user_schemas() -> anyhow::Result<()> {
 		assert_eq!(schemas, Set::from([
 			empty_schema("aaa", "tempuser"),
 			empty_schema("bbb", "tempuser"),
+		]));
+
+		client.batch_execute(r#"
+			create role my_aaa;
+			grant create on schema aaa to my_aaa;
+		"#).await?;
+		let schema_grants = reflect::reflect_schema_grants(&client).await?;
+		assert_eq!(schema_grants, HashMap::from([
+			(s("aaa"), HashMap::from([
+				(s("my_aaa"), vec![SchemaGrant { privilege_type: SchemaPrivilege::CREATE, is_grantable: false, grantor: s("tempuser") }]),
+				(s("tempuser"), vec![
+					SchemaGrant { privilege_type: SchemaPrivilege::USAGE, is_grantable: false, grantor: s("tempuser") },
+					SchemaGrant { privilege_type: SchemaPrivilege::CREATE, is_grantable: false, grantor: s("tempuser") },
+				]),
+			]))
 		]));
 
 		Ok::<_, postgres::Error>(())
@@ -579,7 +609,7 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let schemas = reflect::reflect_user_schemas(&client).await?;
 		assert_eq!(schemas, Set::from([
-			empty_schema("public", "pg_database_owner"),
+			public_schema(),
 		]));
 
 		client.batch_execute(r#"
@@ -598,8 +628,8 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 			);
 		"#).await?;
 		let schemas = reflect::reflect_user_schemas(&client).await?;
-		assert_eq!(schemas, Set::from([SchemaState { name: "public".to_string(), owner: s("pg_database_owner"), functions: Set::new(),
-			tables: Set::from([
+		let mut expected_public = public_schema();
+		expected_public.tables = Set::from([
 				TableState {
 					name: s("aaa"), owner: s("tempuser"), columns: Set::from([
 						col("a", "int4", true, None),
@@ -626,8 +656,8 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 					primary_key: None,
 					unique_constraints: HashMap::new(),
 				},
-			]),
-			typs: Set::from([
+			]);
+		expected_public.typs = Set::from([
 				Typ { name: s("my_enum"), owner: s("tempuser"), body: TypBody::Enum { values: vec![s("my1"), s("my2")] } },
 				Typ { name: s("aaa"), owner: s("tempuser"), body: TypBody::Composite { fields: Set::from([
 					CompositeField { name: s("a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
@@ -643,10 +673,9 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 					CompositeField { name: s("b_date"), field_num: 5, typ: Ref { schema_name: s("pg_catalog"), name: s("date") } },
 					CompositeField { name: s("b_my"), field_num: 6, typ: Ref { schema_name: s("public"), name: s("my_enum") } },
 				]) } },
-			]) },
+			]);
 
-		]));
-
+		assert_eq!(schemas, Set::from([expected_public]));
 		Ok::<_, postgres::Error>(())
 	}).await??;
 

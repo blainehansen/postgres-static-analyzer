@@ -1,5 +1,5 @@
 use crate::{
-	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, PgClient, Ref, Role, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
+	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, PgClient, Ref, Role, SchemaGrant, SchemaPrivilege, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
 };
 use std::collections::HashMap;
 
@@ -78,17 +78,42 @@ pub(crate) async fn reflect_db_grants(
 }
 
 
+pub(crate) async fn reflect_schema_grants(
+	client: &PgClient
+) -> Result<HashMap<String, HashMap<String, Vec<SchemaGrant>>>, postgres::Error> {
+	use itertools::Itertools;
+
+	let grants_map = reflect_crate::queries::main::reflect_schema_grants().bind(client)
+		.map(|g| {
+			let user_grants = itertools::izip!(g.grantees, g.privilege_types, g.is_grantables, g.grantors)
+				.map(|(grantee, privilege_type, is_grantable, grantor)| {
+					let privilege_type = SchemaPrivilege::pg_from_str(privilege_type);
+					(grantee.to_string(), SchemaGrant { privilege_type, is_grantable, grantor: grantor.to_string() })
+				})
+				.into_grouping_map()
+				.collect::<Vec<_>>();
+
+			(g.nspname.to_string(), user_grants)
+		})
+		.all().await?
+		.into_iter().collect::<HashMap<_, _>>();
+
+	Ok(grants_map)
+}
+
+
 // https://www.postgresql.org/docs/current/catalog-pg-namespace.html
 pub(crate) async fn reflect_user_schemas(
 	client: &PgClient
 ) -> Result<Set<SchemaState>, postgres::Error> {
 	let schema_query = reflect_crate::queries::main::reflect_user_schemas();
 
-	let (schemas, mut tables_map, all_typs, mut functions_map) = tokio::try_join!(
+	let (schemas, mut tables_map, all_typs, mut functions_map, mut grants_map) = tokio::try_join!(
 		schema_query.bind(client).all(),
 		reflect_user_tables(client),
 		reflect_types(client),
 		reflect_functions(client),
+		reflect_schema_grants(client),
 	)?;
 
 	use itertools::Itertools;
@@ -98,7 +123,8 @@ pub(crate) async fn reflect_user_schemas(
 		let tables = tables_map.remove(&s.nspname).unwrap_or_default();
 		let typs = typs_map.remove(&s.nspname).unwrap_or_default();
 		let functions = functions_map.remove(&s.nspname).unwrap_or_default();
-		SchemaState { name: s.nspname, tables, typs, functions, owner: s.owner }
+		let grants = grants_map.remove(&s.nspname).unwrap_or_default();
+		SchemaState { name: s.nspname, tables, typs, functions, owner: s.owner, grants }
 	}).collect();
 
 	Ok(schemas)

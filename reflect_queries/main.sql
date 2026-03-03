@@ -246,3 +246,18 @@ from
 where sch.nspname not in ('pg_catalog', 'information_schema', 'pg_toast')
 group by fn.oid, sch.oid
 ;
+
+
+--! reflect_schema_grants
+select
+	nspname::text,
+	array_agg(case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end order by a.ordinality) as grantees,
+	array_agg(privilege_type order by a.ordinality) as privilege_types,
+	array_agg(is_grantable order by a.ordinality) as is_grantables,
+	array_agg(pg_get_userbyid(grantor)::text order by a.ordinality) as grantors
+from
+	pg_catalog.pg_namespace
+	cross join lateral aclexplode(nspacl) with ordinality as a
+where nspname not in ('pg_catalog', 'information_schema', 'pg_toast')
+group by nspname
+;
