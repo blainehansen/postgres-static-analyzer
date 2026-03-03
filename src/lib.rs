@@ -70,7 +70,7 @@ pub(crate) fn apply_command(
 
 			match (exists, if_not_exists) {
 				(false, _) => {
-					let mut schema = SchemaState { name: schemaname, owner: "TODO".to_string(), tables: Set::new(), typs: Set::new(), functions: Set::new() };
+					let mut schema = SchemaState { name: schemaname, owner: "TODO".to_string(), tables: Set::new(), typs: Set::new(), functions: Set::new(), grants: std::collections::HashMap::new() };
 					add_nodes_to_schema(&mut flags, &mut errors, &mut schema, nodes_to_enum(schema_elts))?;
 					db_state.schemas.insert(schema);
 				}
@@ -234,6 +234,7 @@ pub struct SchemaState {
 	pub tables: Set<TableState>,
 	pub typs: Set<Typ>,
 	pub functions: Set<Function>,
+	pub grants: std::collections::HashMap<String, Vec<SchemaGrant>>,
 }
 impl_hash_and_equivalent!(SchemaState);
 
