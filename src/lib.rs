@@ -160,6 +160,7 @@ macro_rules! impl_pg_from_str {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct DbState {
 	pub roles: Set<Role>,
+	pub role_memberships: Vec<RoleMembership>,
 	pub default_settings: ConnectionSettings,
 	pub schemas: Set<SchemaState>,
 	pub foreign_keys: Vec<ForeignKey>,
@@ -170,6 +171,18 @@ pub struct DbState {
 	// we assume we're checking for any possible future connection?
 	// which means if they're going to use different settings they have to pass them in the seq functions
 	// pub settings: ConnectionSettings,
+}
+
+// https://www.postgresql.org/docs/17/catalog-pg-auth-members.html
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct RoleMembership {
+	pub parent_role: String,
+	pub child_role: String,
+	pub grantor: String,
+	pub can_regrant_option: bool,
+	pub does_auto_inherit: bool,
+	pub can_set_to: bool,
+
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]

@@ -1,5 +1,5 @@
 use crate::{
-	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, PgClient, Ref, Role, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
+	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, PgClient, Ref, Role, RoleMembership, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
 };
 use std::collections::HashMap;
 
@@ -8,12 +8,14 @@ pub async fn reflect_db_state(
 ) -> Result<DbState, postgres::Error> {
 	let (
 		roles,
+		role_memberships,
 		default_settings,
 		grants,
 		schemas,
 		foreign_keys,
 	) = tokio::try_join!(
 		reflect_roles(client),
+		reflect_role_memberships(client),
 		reflect_db_default_setting(client),
 		reflect_db_grants(client),
 		reflect_user_schemas(client),
@@ -21,7 +23,24 @@ pub async fn reflect_db_state(
 	)?;
 	let default_settings = default_settings.unwrap_or_else(make_default_settings);
 
-	Ok(DbState { roles, default_settings, schemas, foreign_keys, grants })
+	Ok(DbState { roles, role_memberships, default_settings, schemas, foreign_keys, grants })
+}
+
+pub async fn reflect_role_memberships(
+	client: &PgClient
+) -> Result<Vec<RoleMembership>, postgres::Error> {
+	let role_memberships = reflect_crate::queries::main::reflect_role_memberships().bind(client)
+		.map(|rm| RoleMembership {
+			parent_role: rm.parent_role.to_string(),
+			child_role: rm.child_role.to_string(),
+			grantor: rm.grantor.to_string(),
+			can_regrant_option: rm.admin_option,
+			does_auto_inherit: rm.inherit_option,
+			can_set_to: rm.set_option,
+		})
+		.all().await?;
+
+	Ok(role_memberships)
 }
 
 

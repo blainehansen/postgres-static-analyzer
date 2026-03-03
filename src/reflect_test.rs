@@ -191,6 +191,48 @@ async fn test_reflect_roles() -> anyhow::Result<()> {
 	Ok(())
 }
 
+#[tokio::test]
+async fn test_reflect_role_memberships() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		let role_memberships = reflect::reflect_role_memberships(&client).await?;
+		assert!(role_memberships.is_empty());
+
+		client.batch_execute(r#"
+			create role parent_role;
+			create role child_role;
+			grant parent_role to child_role;
+		"#).await?;
+		let role_memberships = reflect::reflect_role_memberships(&client).await?;
+		assert_eq!(role_memberships, vec![
+			RoleMembership {
+				parent_role: s("parent_role"), child_role: s("child_role"), grantor: s("tempuser"),
+				can_regrant_option: false, does_auto_inherit: true, can_set_to: true,
+			},
+		]);
+
+		client.batch_execute(r#"
+			grant parent_role to child_role with admin option;
+		"#).await?;
+		let role_memberships = reflect::reflect_role_memberships(&client).await?;
+		assert_eq!(role_memberships, vec![
+			RoleMembership {
+				parent_role: s("parent_role"), child_role: s("child_role"), grantor: s("tempuser"),
+				can_regrant_option: true, does_auto_inherit: true, can_set_to: true,
+			},
+		]);
+
+		client.batch_execute(r#"
+			revoke parent_role from child_role;
+		"#).await?;
+		let role_memberships = reflect::reflect_role_memberships(&client).await?;
+		assert!(role_memberships.is_empty());
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
+
+	Ok(())
+}
+
 
 fn empty_schema(schema_name: &str, owner: &str) -> SchemaState {
 	SchemaState {

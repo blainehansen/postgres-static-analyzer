@@ -1,6 +1,6 @@
 --! reflect_roles : (rolvaliduntil?, default_search_path?, db_search_path?)
 select
-	pg_roles.rolname::text as name,
+	pg_get_userbyid(pg_roles.oid)::text as name,
 	rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin, rolreplication, /*rolconnlimit,*/ rolvaliduntil, rolbypassrls,
 	('{' || global_s.option_value || '}')::text[] as default_search_path,
 	('{' || db_s.option_value || '}')::text[] as db_search_path
@@ -15,7 +15,17 @@ from
 		and db_rs.setdatabase = (select oid from pg_catalog.pg_database where datname = current_database())
 	left join lateral pg_options_to_table(db_rs.setconfig) as db_s on  db_s.option_name = 'search_path'
 
-where pg_roles.rolname not in ('pg_database_owner', 'pg_read_all_data', 'pg_write_all_data', 'pg_monitor', 'pg_read_all_settings', 'pg_read_all_stats', 'pg_stat_scan_tables', 'pg_read_server_files', 'pg_write_server_files', 'pg_execute_server_program', 'pg_signal_backend', 'pg_checkpoint', 'pg_maintain', 'pg_use_reserved_connections', 'pg_create_subscription')
+where pg_get_userbyid(pg_roles.oid) not in ('pg_database_owner', 'pg_read_all_data', 'pg_write_all_data', 'pg_monitor', 'pg_read_all_settings', 'pg_read_all_stats', 'pg_stat_scan_tables', 'pg_read_server_files', 'pg_write_server_files', 'pg_execute_server_program', 'pg_signal_backend', 'pg_checkpoint', 'pg_maintain', 'pg_use_reserved_connections', 'pg_create_subscription')
+;
+
+--! reflect_role_memberships
+select
+	pg_get_userbyid(roleid)::text as parent_role,
+	pg_get_userbyid(member)::text as child_role,
+	pg_get_userbyid(grantor)::text as grantor,
+	admin_option, inherit_option, set_option
+from pg_catalog.pg_auth_members
+where pg_get_userbyid(roleid) not in ('pg_database_owner', 'pg_read_all_data', 'pg_write_all_data', 'pg_monitor', 'pg_read_all_settings', 'pg_read_all_stats', 'pg_stat_scan_tables', 'pg_read_server_files', 'pg_write_server_files', 'pg_execute_server_program', 'pg_signal_backend', 'pg_checkpoint', 'pg_maintain', 'pg_use_reserved_connections', 'pg_create_subscription')
 ;
 
 
