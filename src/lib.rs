@@ -245,7 +245,7 @@ pub struct Typ {
 	pub name: String,
 	pub owner: String,
 	pub body: TypBody,
-
+	pub grants: std::collections::HashMap<String, Vec<TypeGrant>>,
 }
 impl_hash_and_equivalent!(Typ);
 
@@ -540,3 +540,20 @@ pub struct TypeUsage;
 // SET	s	PARAMETER
 // ALTER SYSTEM	A	PARAMETER
 // MAINTAIN	m	TABLE
+
+
+#[derive(Eq, PartialEq)]
+pub(crate) struct Hash2Key(String, String);
+
+impl std::hash::Hash for Hash2Key {
+	fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+		self.0.hash(state);
+		self.1.hash(state);
+	}
+}
+
+impl hashbrown::Equivalent<Hash2Key> for (&str, &str) {
+	fn equivalent(&self, key: &Hash2Key) -> bool {
+		self.0 == key.0 && self.1 == key.1
+	}
+}

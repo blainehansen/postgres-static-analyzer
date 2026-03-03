@@ -583,10 +583,10 @@ async fn test_reflect_composite_types() -> anyhow::Result<()> {
 				CompositeField { name: s("aaa_b"), field_num: 2, typ: Ref { schema_name: s("pg_catalog"), name: s("bool") } },
 				CompositeField { name: s("aaa_c"), field_num: 3, typ: Ref { schema_name: s("pg_catalog"), name: s("_text") } },
 				CompositeField { name: s("aaa_d"), field_num: 4, typ: Ref { schema_name: s("pg_catalog"), name: s("text") } },
-			]) } }),
+			]) }, grants: HashMap::new() }),
 			(s("public"), Typ { name: s("bbb"), owner: s("tempuser"), body: TypBody::Composite { fields: Set::from([
 				CompositeField { name: s("bbb_a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
-			]) } }),
+			]) }, grants: HashMap::new() }),
 		]);
 
 		client.batch_execute(r#"
@@ -603,7 +603,7 @@ async fn test_reflect_composite_types() -> anyhow::Result<()> {
 				CompositeField { name: s("aaa_c"), field_num: 3, typ: Ref { schema_name: s("pg_catalog"), name: s("timestamp") } },
 				CompositeField { name: s("aaa_d"), field_num: 4, typ: Ref { schema_name: s("pg_catalog"), name: s("text") } },
 				CompositeField { name: s("yo_whoa"), field_num: 5, typ: Ref { schema_name: s("pg_catalog"), name: s("date") } },
-			]) } }),
+			]) }, grants: HashMap::new() }),
 		]);
 
 		Ok::<_, postgres::Error>(())
@@ -625,8 +625,8 @@ async fn test_reflect_enum_types() -> anyhow::Result<()> {
 		"#).await?;
 		let typs = reflect::reflect_enum_types(&client).await?;
 		assert_eq!(typs, vec![
-			(s("public"), Typ { name: s("aaa"), owner: s("tempuser"), body: TypBody::Enum { values: vec![s("a"), s("b"), s("c")] } }),
-			(s("public"), Typ { name: s("bbb"), owner: s("tempuser"), body: TypBody::Enum { values: vec![] } }),
+			(s("public"), Typ { name: s("aaa"), owner: s("tempuser"), body: TypBody::Enum { values: vec![s("a"), s("b"), s("c")] }, grants: HashMap::new() }),
+			(s("public"), Typ { name: s("bbb"), owner: s("tempuser"), body: TypBody::Enum { values: vec![] }, grants: HashMap::new() }),
 		]);
 
 		client.batch_execute(r#"
@@ -635,7 +635,7 @@ async fn test_reflect_enum_types() -> anyhow::Result<()> {
 		"#).await?;
 		let typs = reflect::reflect_enum_types(&client).await?;
 		assert_eq!(typs, vec![
-			(s("public"), Typ { name: s("aaa"), owner: s("tempuser"), body: TypBody::Enum { values: vec![s("a"), s("yo"), s("b"), s("c")] } }),
+			(s("public"), Typ { name: s("aaa"), owner: s("tempuser"), body: TypBody::Enum { values: vec![s("a"), s("yo"), s("b"), s("c")] }, grants: HashMap::new() }),
 		]);
 
 		Ok::<_, postgres::Error>(())
@@ -645,6 +645,36 @@ async fn test_reflect_enum_types() -> anyhow::Result<()> {
 }
 
 
+
+#[tokio::test]
+async fn test_reflect_type_grants() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		client.batch_execute(r#"
+			create type aaa as (a int);
+			create role guy;
+			grant usage on type aaa to guy;
+		"#).await?;
+
+		let typs = reflect::reflect_types(&client).await?;
+		assert_eq!(typs, vec![
+			(s("public"), Typ {
+				name: s("aaa"), owner: s("tempuser"),
+				body: TypBody::Composite { fields: Set::from([
+					CompositeField { name: s("a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
+				]) },
+				grants: HashMap::from([
+					(s("guy"), vec![TypeGrant { privilege_type: TypeUsage, is_grantable: false, grantor: s("tempuser") }]),
+					(s("public"), vec![TypeGrant { privilege_type: TypeUsage, is_grantable: false, grantor: s("tempuser") }]),
+					(s("tempuser"), vec![TypeGrant { privilege_type: TypeUsage, is_grantable: false, grantor: s("tempuser") }]),
+				]),
+			}),
+		]);
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
+
+	Ok(())
+}
 
 #[tokio::test]
 async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
@@ -700,13 +730,13 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 				},
 			]);
 		expected_public.typs = Set::from([
-				Typ { name: s("my_enum"), owner: s("tempuser"), body: TypBody::Enum { values: vec![s("my1"), s("my2")] } },
+				Typ { name: s("my_enum"), owner: s("tempuser"), body: TypBody::Enum { values: vec![s("my1"), s("my2")] }, grants: HashMap::new() },
 				Typ { name: s("aaa"), owner: s("tempuser"), body: TypBody::Composite { fields: Set::from([
 					CompositeField { name: s("a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
 					CompositeField { name: s("b"), field_num: 2, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
 					CompositeField { name: s("c"), field_num: 3, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
 					CompositeField { name: s("d"), field_num: 4, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
-				]) } },
+				]) }, grants: HashMap::new() },
 				Typ { name: s("bbb"), owner: s("tempuser"),  body: TypBody::Composite { fields: Set::from([
 					CompositeField { name: s("bbb_a"), field_num: 1, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
 					CompositeField { name: s("bbb_b"), field_num: 2, typ: Ref { schema_name: s("pg_catalog"), name: s("int4") } },
@@ -714,7 +744,7 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 					CompositeField { name: s("b_json"), field_num: 4, typ: Ref { schema_name: s("pg_catalog"), name: s("jsonb") } },
 					CompositeField { name: s("b_date"), field_num: 5, typ: Ref { schema_name: s("pg_catalog"), name: s("date") } },
 					CompositeField { name: s("b_my"), field_num: 6, typ: Ref { schema_name: s("public"), name: s("my_enum") } },
-				]) } },
+				]) }, grants: HashMap::new() },
 			]);
 
 		assert_eq!(schemas, Set::from([expected_public]));

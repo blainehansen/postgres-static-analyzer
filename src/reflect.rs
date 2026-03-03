@@ -1,5 +1,5 @@
 use crate::{
-	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, PgClient, Ref, Role, SchemaGrant, SchemaPrivilege, RoleMembership, SchemaState, Set, TableState, Typ, TypBody, make_default_settings, postgres
+	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, Hash2Key, PgClient, Ref, Role, RoleMembership, SchemaGrant, SchemaPrivilege, SchemaState, Set, TableState, Typ, TypBody, TypeGrant, TypeUsage, make_default_settings, postgres
 };
 use std::collections::HashMap;
 
@@ -269,15 +269,19 @@ pub(crate) async fn reflect_foreign_keys(
 pub(crate) async fn reflect_types(
 	client: &PgClient
 ) -> Result<Vec<(String, Typ)>, postgres::Error> {
-	let (enum_types, composite_types) = tokio::try_join!(
+	let (enum_types, composite_types, mut grants_map) = tokio::try_join!(
 		reflect_enum_types(client),
 		reflect_composite_types(client),
+		reflect_type_grants(client),
 	)?;
 
-	let all_typs = [
-		enum_types,
-		composite_types,
-	].concat();
+	let mut all_typs = [enum_types, composite_types].concat();
+
+	for (schema_name, typ) in all_typs.iter_mut() {
+		if let Some(grants) = grants_map.remove(&(schema_name.as_str(), typ.name.as_str())) {
+			typ.grants = grants;
+		}
+	}
 
 	Ok(all_typs)
 }
@@ -296,8 +300,8 @@ pub(crate) async fn reflect_composite_types(
 						field_num: field_num.unsigned_abs(),
 						typ: Ref {
 							schema_name: field_typ_schema.to_string(),
-							name: field_typ.to_string()
-						}
+							name: field_typ.to_string(),
+						},
 					}
 				})
 				.collect::<Set<_>>();
@@ -307,6 +311,7 @@ pub(crate) async fn reflect_composite_types(
 				Typ {
 					name: t.typname.to_string(), owner: t.owner.to_string(),
 					body: TypBody::Composite { fields },
+					grants: HashMap::new(),
 				},
 			)
 		})
@@ -325,6 +330,7 @@ pub(crate) async fn reflect_enum_types(
 				Typ {
 					name: t.typname.to_string(), owner: t.owner.to_string(),
 					body: TypBody::Enum { values: t.enum_values.map(str::to_string).collect() },
+					grants: HashMap::new(),
 				},
 			)
 		})
@@ -333,6 +339,31 @@ pub(crate) async fn reflect_enum_types(
 	Ok(enum_types)
 }
 
+pub(crate) async fn reflect_type_grants(
+	client: &PgClient
+) -> Result<hashbrown::HashMap<Hash2Key, HashMap<String, Vec<TypeGrant>>>, postgres::Error> {
+	use itertools::Itertools;
+
+	let grants_map = reflect_crate::queries::main::reflect_type_grants().bind(client)
+		.map(|g| {
+			let user_grants = itertools::izip!(g.grantees, g.is_grantables, g.grantors)
+				.map(|(grantee, is_grantable, grantor)| {
+					(
+						grantee.to_string(),
+						TypeGrant { privilege_type: TypeUsage, is_grantable, grantor: grantor.to_string() },
+					)
+				})
+				.into_grouping_map()
+				.collect::<Vec<_>>();
+
+			(Hash2Key(g.nspname.to_string(), g.typname.to_string()), user_grants)
+		})
+		.all().await?
+		.into_iter()
+		.collect::<hashbrown::HashMap<_, _>>();
+
+	Ok(grants_map)
+}
 
 pub(crate) async fn reflect_functions(
 	client: &PgClient
@@ -379,7 +410,7 @@ pub(crate) async fn reflect_functions(
 					is_leakproof: f.proleakproof,
 					language: f.lang_name.to_string(),
 					grants: HashMap::new(),
-				}
+				},
 			)
 		})
 		.all().await?
@@ -397,6 +428,5 @@ pub(crate) async fn reflect_functions(
 	}
 
 	Ok(functions)
-
 }
 
