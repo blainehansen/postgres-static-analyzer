@@ -284,6 +284,7 @@ pub struct Column {
 	pub not_null: bool,
 	pub default_expr: Option<String>,
 	// pub attgenerated
+	pub grants: std::collections::HashMap<String, Vec<TableColumnGrant>>,
 }
 impl_hash_and_equivalent!(Column);
 

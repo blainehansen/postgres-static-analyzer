@@ -367,6 +367,7 @@ fn col(name: &str, typ: &str, not_null: bool, default_expr: Option<&str>) -> Col
 	Column {
 		name: name.to_string(), typ: Ref { schema_name: "pg_catalog".to_string(), name: typ.to_string() },
 		not_null, default_expr: default_expr.map(str::to_string),
+		grants: HashMap::new(),
 	}
 }
 
@@ -724,6 +725,56 @@ async fn test_reflect_table_grants() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn test_reflect_column_grants() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		let column_grants = reflect::reflect_column_grants(&client).await?;
+		assert!(column_grants.is_empty());
+
+		client.batch_execute(r#"
+			create role guy;
+			create table aaa (a int, b int);
+			grant select (a) on table aaa to guy;
+			grant update (b) on table aaa to public;
+		"#).await?;
+
+		let mut column_grants = reflect::reflect_column_grants(&client).await?;
+		column_grants.values_mut().for_each(|m| m.values_mut().for_each(|v| v.sort()));
+		assert_eq!(column_grants, HashMap::from([
+			((s("public"), s("aaa"), s("a")), HashMap::from([
+				(s("guy"), vec![
+					TableColumnGrant { privilege_type: TableColumnPrivilege::SELECT, is_grantable: false, grantor: s("tempuser") },
+				]),
+			])),
+			((s("public"), s("aaa"), s("b")), HashMap::from([
+				(s("public"), vec![
+					TableColumnGrant { privilege_type: TableColumnPrivilege::UPDATE, is_grantable: false, grantor: s("tempuser") },
+				]),
+			])),
+		]));
+
+		let tables = reflect::reflect_user_tables(&client).await?;
+		let table = tables.get("public").unwrap().get(&"aaa").unwrap();
+		let a_col = table.columns.get(&"a").unwrap();
+		assert_eq!(a_col.grants, HashMap::from([
+			(s("guy"), vec![
+				TableColumnGrant { privilege_type: TableColumnPrivilege::SELECT, is_grantable: false, grantor: s("tempuser") },
+			]),
+		]));
+		let b_col = table.columns.get(&"b").unwrap();
+		assert_eq!(b_col.grants, HashMap::from([
+			(s("public"), vec![
+				TableColumnGrant { privilege_type: TableColumnPrivilege::UPDATE, is_grantable: false, grantor: s("tempuser") },
+			]),
+		]));
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
+
+	Ok(())
+}
+
+
+#[tokio::test]
 async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let schemas = reflect::reflect_user_schemas(&client).await?;
@@ -754,7 +805,7 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 						col("a", "int4", true, None),
 						col("b", "int4", false, None),
 						col("c", "int4", false, None),
-						Column { name: s("d"), typ: Ref { schema_name: s("pg_catalog"), name: s("int4") }, not_null: true, default_expr: Some(s("1")) },
+						Column { name: s("d"), typ: Ref { schema_name: s("pg_catalog"), name: s("int4") }, not_null: true, default_expr: Some(s("1")), grants: HashMap::new() },
 					]),
 					primary_key: Some((s("aaa_pkey"), Set::from([s("a")]))),
 					unique_constraints: HashMap::from([
@@ -771,7 +822,7 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 						col("bbb_c", "int4", false, None),
 						col("b_json", "jsonb", false, None),
 						col("b_date", "date", false, None),
-						Column { name: s("b_my"), typ: Ref { schema_name: s("public"), name: s("my_enum") }, not_null: false, default_expr: None },
+						Column { name: s("b_my"), typ: Ref { schema_name: s("public"), name: s("my_enum") }, not_null: false, default_expr: None, grants: HashMap::new() },
 					]),
 					primary_key: None,
 					unique_constraints: HashMap::new(),

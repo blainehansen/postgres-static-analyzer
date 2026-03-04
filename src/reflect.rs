@@ -1,5 +1,5 @@
 use crate::{
-	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, Hash2Key, PgClient, Ref, Role, RoleMembership, SchemaGrant, SchemaPrivilege, SchemaState, Set, TableGrant, TablePrivilege, TableState, Typ, TypBody, TypeGrant, TypeUsage, make_default_settings, postgres
+	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, Hash2Key, PgClient, Ref, Role, RoleMembership, SchemaGrant, SchemaPrivilege, SchemaState, Set, TableColumnGrant, TableColumnPrivilege, TableGrant, TablePrivilege, TableState, Typ, TypBody, TypeGrant, TypeUsage, make_default_settings, postgres
 };
 use std::collections::HashMap;
 
@@ -155,7 +155,7 @@ pub(crate) async fn reflect_user_tables(
 	client: &PgClient
 ) -> Result<HashMap<String, Set<TableState>>, postgres::Error> {
 	let tables_query = reflect_crate::queries::main::reflect_user_tables();
-	let (tables, all_columns, all_unique_constraints, grants_map) = tokio::try_join!(
+	let (tables, all_columns, all_unique_constraints, grants_map, mut column_grants_map) = tokio::try_join!(
 		tables_query.bind(client)
 			.map(|t| {
 				(t.nspname.to_string(), TableState {
@@ -173,6 +173,7 @@ pub(crate) async fn reflect_user_tables(
 		reflect_user_table_columns(client),
 		reflect_user_table_unique_constraints(client),
 		reflect_table_grants(client),
+		reflect_column_grants(client),
 	)?;
 
 	use itertools::Itertools;
@@ -206,6 +207,18 @@ pub(crate) async fn reflect_user_tables(
 		}
 	}
 
+	for ((schema_name, table_name, column_name), grants) in column_grants_map {
+		if let Some(tables_in_schema) = tables.get_mut(&schema_name) {
+			if let Some(mut table) = tables_in_schema.take(&table_name.as_str()) {
+				if let Some(mut column) = table.columns.take(&column_name.as_str()) {
+					column.grants = grants;
+					table.columns.insert(column);
+				}
+				tables_in_schema.insert(table);
+			}
+		}
+	}
+
 	Ok(tables)
 }
 
@@ -234,6 +247,30 @@ pub(crate) async fn reflect_table_grants(
 }
 
 
+pub(crate) async fn reflect_column_grants(
+	client: &PgClient
+) -> Result<HashMap<(String, String, String), HashMap<String, Vec<TableColumnGrant>>>, postgres::Error> {
+	use itertools::Itertools;
+
+	let grants_map = reflect_crate::queries::main::reflect_column_grants().bind(client)
+		.map(|g| {
+			let user_grants = itertools::izip!(g.grantees, g.privilege_types, g.is_grantables, g.grantors)
+				.map(|(grantee, privilege_type, is_grantable, grantor)| {
+					let privilege_type = TableColumnPrivilege::pg_from_str(privilege_type);
+					(grantee.to_string(), TableColumnGrant { privilege_type, is_grantable, grantor: grantor.to_string() })
+				})
+				.into_grouping_map()
+				.collect::<Vec<_>>();
+
+			((g.nspname.to_string(), g.relname.to_string(), g.attname.to_string()), user_grants)
+		})
+		.all().await?
+		.into_iter().collect::<HashMap<_, _>>();
+
+	Ok(grants_map)
+}
+
+
 // https://www.postgresql.org/docs/current/catalog-pg-attribute.html
 pub(crate) async fn reflect_user_table_columns(
 	client: &PgClient
@@ -248,6 +285,7 @@ pub(crate) async fn reflect_user_table_columns(
 				typ: Ref { schema_name: a.typ_nspname.to_string(), name: a.typname.to_string() },
 				not_null: a.attnotnull,
 				default_expr: a.attdef.map(str::to_string),
+				grants: HashMap::new(),
 			};
 
 			((a.nspname.to_string(), a.relname.to_string()), column)

@@ -305,3 +305,24 @@ where
 	and sch.nspname not in ('pg_catalog', 'information_schema', 'pg_toast')
 group by tab.oid, sch.oid
 ;
+
+
+--! reflect_column_grants
+select
+	tab.relname::text, sch.nspname::text, col.attname::text,
+	array_agg(case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end order by a.ordinality) as grantees,
+	array_agg(privilege_type order by a.ordinality) as privilege_types,
+	array_agg(is_grantable order by a.ordinality) as is_grantables,
+	array_agg(pg_get_userbyid(grantor)::text order by a.ordinality) as grantors
+from
+	pg_catalog.pg_attribute as col
+	join pg_catalog.pg_class as tab on col.attrelid = tab.oid
+	join pg_catalog.pg_namespace as sch on tab.relnamespace = sch.oid
+	cross join lateral aclexplode(col.attacl) with ordinality as a
+where
+	tab.relkind = 'r'
+	and sch.nspname not in ('pg_catalog', 'information_schema', 'pg_toast')
+	and not col.attisdropped
+	and col.attnum > 0
+group by col.attrelid, col.attnum, tab.oid, sch.oid
+;
