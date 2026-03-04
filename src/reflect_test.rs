@@ -313,6 +313,7 @@ fn empty_table(table_name: &str) -> TableState {
 	TableState {
 		name: table_name.to_string(), owner: s("tempuser"), columns: Set::new(),
 		primary_key: None, unique_constraints: HashMap::new(),
+		grants: HashMap::new(),
 	}
 }
 
@@ -357,7 +358,7 @@ fn tab(table_name: &'static str, columns: Set<Column>) -> TableState {
 	TableState {
 		name: table_name.to_string(), owner: s("tempuser"), columns,
 		primary_key: None, unique_constraints: HashMap::new(),
-
+		grants: HashMap::new(),
 	}
 }
 
@@ -458,6 +459,7 @@ async fn test_reflect_user_table_constraints() -> anyhow::Result<()> {
 						(s("aaa_c_d_key"), Set::from([s("c"), s("d")])),
 						(s("aaa_c_key"), Set::from([s("c")])),
 					]),
+					grants: HashMap::new(),
 				},
 
 				TableState {
@@ -471,6 +473,7 @@ async fn test_reflect_user_table_constraints() -> anyhow::Result<()> {
 					unique_constraints: HashMap::from([
 						(s("bbb_b_c_d_key"), Set::from([s("b"), s("c"), s("d")])),
 					]),
+					grants: HashMap::new(),
 				},
 			])),
 		]));
@@ -494,6 +497,7 @@ async fn test_reflect_user_table_constraints() -> anyhow::Result<()> {
 					unique_constraints: HashMap::from([
 						(s("bbb_b_c_d_key"), Set::from([s("b"), s("c"), s("d")])),
 					]),
+					grants: HashMap::new(),
 				},
 			])),
 		]));
@@ -677,6 +681,49 @@ async fn test_reflect_type_grants() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn test_reflect_table_grants() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		let table_grants = reflect::reflect_table_grants(&client).await?;
+		assert!(table_grants.is_empty());
+
+		client.batch_execute(r#"
+			create role guy;
+			create table aaa (a int);
+			grant select, insert on table aaa to guy;
+			grant select on table aaa to public;
+		"#).await?;
+
+		let mut table_grants = reflect::reflect_table_grants(&client).await?;
+		table_grants.values_mut().for_each(|m| m.values_mut().for_each(|v| v.sort()));
+		assert_eq!(table_grants, HashMap::from([
+			((s("public"), s("aaa")), HashMap::from([
+				(s("guy"), vec![
+					TableGrant { privilege_type: TablePrivilege::INSERT, is_grantable: false, grantor: s("tempuser") },
+					TableGrant { privilege_type: TablePrivilege::SELECT, is_grantable: false, grantor: s("tempuser") },
+				]),
+				(s("public"), vec![
+					TableGrant { privilege_type: TablePrivilege::SELECT, is_grantable: false, grantor: s("tempuser") },
+				]),
+				(s("tempuser"), vec![
+					TableGrant { privilege_type: TablePrivilege::INSERT, is_grantable: false, grantor: s("tempuser") },
+					TableGrant { privilege_type: TablePrivilege::SELECT, is_grantable: false, grantor: s("tempuser") },
+					TableGrant { privilege_type: TablePrivilege::UPDATE, is_grantable: false, grantor: s("tempuser") },
+					TableGrant { privilege_type: TablePrivilege::DELETE, is_grantable: false, grantor: s("tempuser") },
+					TableGrant { privilege_type: TablePrivilege::TRUNCATE, is_grantable: false, grantor: s("tempuser") },
+					TableGrant { privilege_type: TablePrivilege::REFERENCES, is_grantable: false, grantor: s("tempuser") },
+					TableGrant { privilege_type: TablePrivilege::TRIGGER, is_grantable: false, grantor: s("tempuser") },
+					TableGrant { privilege_type: TablePrivilege::MAINTAIN, is_grantable: false, grantor: s("tempuser") },
+				]),
+			])),
+		]));
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
+
+	Ok(())
+}
+
+#[tokio::test]
 async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let schemas = reflect::reflect_user_schemas(&client).await?;
@@ -714,6 +761,7 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 						(s("aaa_a_b_key"), Set::from([s("a"), s("b")])),
 						(s("aaa_c_key"), Set::from([s("c")])),
 					]),
+					grants: HashMap::new(),
 				},
 
 				TableState {
@@ -727,6 +775,7 @@ async fn test_reflect_user_schemas_full() -> anyhow::Result<()> {
 					]),
 					primary_key: None,
 					unique_constraints: HashMap::new(),
+					grants: HashMap::new(),
 				},
 			]);
 		expected_public.typs = Set::from([

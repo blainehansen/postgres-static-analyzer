@@ -1,5 +1,5 @@
 use crate::{
-	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, Hash2Key, PgClient, Ref, Role, RoleMembership, SchemaGrant, SchemaPrivilege, SchemaState, Set, TableState, Typ, TypBody, TypeGrant, TypeUsage, make_default_settings, postgres
+	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, Hash2Key, PgClient, Ref, Role, RoleMembership, SchemaGrant, SchemaPrivilege, SchemaState, Set, TableGrant, TablePrivilege, TableState, Typ, TypBody, TypeGrant, TypeUsage, make_default_settings, postgres
 };
 use std::collections::HashMap;
 
@@ -155,7 +155,7 @@ pub(crate) async fn reflect_user_tables(
 	client: &PgClient
 ) -> Result<HashMap<String, Set<TableState>>, postgres::Error> {
 	let tables_query = reflect_crate::queries::main::reflect_user_tables();
-	let (tables, all_columns, all_unique_constraints) = tokio::try_join!(
+	let (tables, all_columns, all_unique_constraints, grants_map) = tokio::try_join!(
 		tables_query.bind(client)
 			.map(|t| {
 				(t.nspname.to_string(), TableState {
@@ -165,12 +165,14 @@ pub(crate) async fn reflect_user_tables(
 						(t.conname.unwrap_or_default().to_string(), c.map(str::to_string).collect())
 					}),
 					unique_constraints: HashMap::new(),
+					grants: HashMap::new(),
 				})
 			})
 			// TODO probably possible to use the iter() method to get a stream and then deal with that
 			.all(),
 		reflect_user_table_columns(client),
 		reflect_user_table_unique_constraints(client),
+		reflect_table_grants(client),
 	)?;
 
 	use itertools::Itertools;
@@ -194,7 +196,41 @@ pub(crate) async fn reflect_user_tables(
 		}
 	}
 
+	// TODO since we just iterate over grants_map, and since the underlying query in reflect_table_grants is already unique, maybe we don't need a hashmap at all?
+	for ((schema_name, table_name), grants) in grants_map {
+		if let Some(tables_in_schema) = tables.get_mut(&schema_name) {
+			if let Some(mut table) = tables_in_schema.take(&table_name.as_str()) {
+				table.grants = grants;
+				tables_in_schema.insert(table);
+			}
+		}
+	}
+
 	Ok(tables)
+}
+
+
+pub(crate) async fn reflect_table_grants(
+	client: &PgClient
+) -> Result<HashMap<(String, String), HashMap<String, Vec<TableGrant>>>, postgres::Error> {
+	use itertools::Itertools;
+
+	let grants_map = reflect_crate::queries::main::reflect_table_grants().bind(client)
+		.map(|g| {
+			let user_grants = itertools::izip!(g.grantees, g.privilege_types, g.is_grantables, g.grantors)
+				.map(|(grantee, privilege_type, is_grantable, grantor)| {
+					let privilege_type = TablePrivilege::pg_from_str(privilege_type);
+					(grantee.to_string(), TableGrant { privilege_type, is_grantable, grantor: grantor.to_string() })
+				})
+				.into_grouping_map()
+				.collect::<Vec<_>>();
+
+			((g.nspname.to_string(), g.relname.to_string()), user_grants)
+		})
+		.all().await?
+		.into_iter().collect::<HashMap<_, _>>();
+
+	Ok(grants_map)
 }
 
 

@@ -273,6 +273,7 @@ pub struct TableState {
 	pub primary_key: Option<(String, Set<String>)>,
 	pub unique_constraints: std::collections::HashMap<String, Set<String>>,
 	// foreign keys
+	pub grants: std::collections::HashMap<String, Vec<TableGrant>>,
 }
 impl_hash_and_equivalent!(TableState);
 
@@ -542,7 +543,7 @@ pub struct TypeUsage;
 // MAINTAIN	m	TABLE
 
 
-#[derive(Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub(crate) struct Hash2Key(String, String);
 
 impl std::hash::Hash for Hash2Key {
