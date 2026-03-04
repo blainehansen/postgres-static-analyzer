@@ -439,11 +439,10 @@ pub enum DbPrivilege { CREATE, CONNECT, TEMPORARY }
 impl_pg_from_str!(DbPrivilege, CREATE, CONNECT, TEMPORARY);
 
 // // DOMAIN  U  U  \dD+
-// pub type DomainGrant = Grant<DomainPrivilege>;
+// pub type DomainGrant = Grant<DomainUsage>;
 // #[allow(non_camel_case_types)]
 // #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-// pub enum DomainPrivilege { USAGE }
-// impl_pg_from_str!(DomainPrivilege, USAGE);
+// pub struct DomainUsage;
 
 // FUNCTION or PROCEDURE	X	X	\df+
 pub type FunctionGrant = Grant<FunctionExecute>;
@@ -512,11 +511,10 @@ pub enum TableColumnPrivilege { INSERT, SELECT, UPDATE, REFERENCES }
 impl_pg_from_str!(TableColumnPrivilege, INSERT, SELECT, UPDATE, REFERENCES);
 
 // // TABLESPACE	C	none	\db+
-// pub type TablespaceGrant = Grant<TablespacePrivilege>;
+// pub type TablespaceGrant = Grant<TablespaceCreate>;
 // #[allow(non_camel_case_types)]
 // #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-// pub enum TablespacePrivilege { CREATE }
-// impl_pg_from_str!(TablespacePrivilege, CREATE);
+// pub struct TablespaceCreate;
 
 // TYPE	U	U	\dT+
 pub type TypeGrant = Grant<TypeUsage>;

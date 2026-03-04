@@ -1,3 +1,186 @@
+default privileges for objects as witnessed by acldefault
+
+to sum up:
+the owner is given all privileges.
+column privileges aren't specified in situations where table privileges are in place that make them unnecessary?
+by default, public has TEMPORARY, CONNECT on all databases
+by default, public has EXECUTE on all functions
+by default, public has USAGE on all languages
+by default, public has USAGE on all types/domains
+
+```
+COLUMN
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+
+
+TABLE and table-like objects
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ devuser | INSERT         | f            | devuser
+ devuser | SELECT         | f            | devuser
+ devuser | UPDATE         | f            | devuser
+ devuser | DELETE         | f            | devuser
+ devuser | TRUNCATE       | f            | devuser
+ devuser | REFERENCES     | f            | devuser
+ devuser | TRIGGER        | f            | devuser
+ devuser | MAINTAIN       | f            | devuser
+
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ a       | INSERT         | f            | a
+ a       | SELECT         | f            | a
+ a       | UPDATE         | f            | a
+ a       | DELETE         | f            | a
+ a       | TRUNCATE       | f            | a
+ a       | REFERENCES     | f            | a
+ a       | TRIGGER        | f            | a
+ a       | MAINTAIN       | f            | a
+
+
+SEQUENCE
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ devuser | SELECT         | f            | devuser
+ devuser | UPDATE         | f            | devuser
+ devuser | USAGE          | f            | devuser
+
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ a       | SELECT         | f            | a
+ a       | UPDATE         | f            | a
+ a       | USAGE          | f            | a
+
+
+DATABASE
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ public  | TEMPORARY      | f            | devuser
+ public  | CONNECT        | f            | devuser
+ devuser | CREATE         | f            | devuser
+ devuser | TEMPORARY      | f            | devuser
+ devuser | CONNECT        | f            | devuser
+
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ public  | TEMPORARY      | f            | a
+ public  | CONNECT        | f            | a
+ a       | CREATE         | f            | a
+ a       | TEMPORARY      | f            | a
+ a       | CONNECT        | f            | a
+
+
+FUNCTION or PROCEDURE
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ public  | EXECUTE        | f            | devuser
+ devuser | EXECUTE        | f            | devuser
+
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ public  | EXECUTE        | f            | a
+ a       | EXECUTE        | f            | a
+
+
+LANGUAGE
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ public  | USAGE          | f            | devuser
+ devuser | USAGE          | f            | devuser
+
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ public  | USAGE          | f            | a
+ a       | USAGE          | f            | a
+
+
+LARGE OBJECT
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ devuser | SELECT         | f            | devuser
+ devuser | UPDATE         | f            | devuser
+
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ a       | SELECT         | f            | a
+ a       | UPDATE         | f            | a
+
+
+SCHEMA
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ devuser | USAGE          | f            | devuser
+ devuser | CREATE         | f            | devuser
+
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ a       | USAGE          | f            | a
+ a       | CREATE         | f            | a
+
+
+PARAMETER
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ devuser | SET            | f            | devuser
+ devuser | ALTER SYSTEM   | f            | devuser
+
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ a       | SET            | f            | a
+ a       | ALTER SYSTEM   | f            | a
+
+
+TABLESPACE
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ devuser | CREATE         | f            | devuser
+
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ a       | CREATE         | f            | a
+
+
+FOREIGN DATA WRAPPER
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ devuser | USAGE          | f            | devuser
+
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ a       | USAGE          | f            | a
+
+
+FOREIGN SERVER
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ devuser | USAGE          | f            | devuser
+
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ a       | USAGE          | f            | a
+
+
+TYPE or DOMAIN
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ public  | USAGE          | f            | devuser
+ devuser | USAGE          | f            | devuser
+
+ grantee | privilege_type | is_grantable | grantor
+---------+----------------+--------------+---------
+ public  | USAGE          | f            | a
+ a       | USAGE          | f            | a
+```
+
+
+
+
+
+
+
 crates:
 
 - state, for the dbstate etc structs
@@ -5,231 +188,3 @@ crates:
 - arbitrary statement, strategies that can create valid or invalid statements given an existing state
 - diff, which can diff states and produce statements
 - static analysis, which can produce states from raw strings and states etc
-
-
-
-```postgresql
--- --! reflect_default_acls : (applicable_schema?)
--- select
---  pg_get_userbyid(defaclrole) as applicable_object_owner, -- defaclrole specifies the object owner, the person who's owned objects are included in this default privilege
---  sch.nspname::text as applicable_schema,
---  defaclobjtype,
---  pg_get_userbyid(grantor) as grantor,
---  case when grantee = 0 then 'public' else pg_get_userbyid(grantee) end as grantee,
---  privilege_type,
---  is_grantable
-
--- from
---  pg_catalog.pg_default_acl cross join lateral aclexplode(defaclacl)
---  left join pg_catalog.pg_namespace as sch on pg_default_acl.defaclnamespace = sch.oid
-
--- group by defaclrole, sch.nspname, defaclobjtype, grantee
-
-
-
--- SELECT
---  obj_type,
---  object_schema,
---  object_name,
---  grantor_role,
---  grantee_role,
---  privilege_type,
---  is_grantable
--- FROM (
-
---  -- TABLEs, VIEWs, MATERIALIZED VIEWs, FOREIGN TABLEs, PARTITIONs
---  SELECT
---    c.relkind::text AS obj_type,
---    n.nspname       AS object_schema,
---    c.relname       AS object_name,
---    pg_get_userbyid(acl.grantor) AS grantor_role,
---    CASE acl.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END AS grantee_role,
---    acl.privilege_type,
---    acl.is_grantable
---  FROM pg_catalog.pg_class c
---  JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
---  CROSS JOIN LATERAL aclexplode(COALESCE(c.relacl, acldefault('r', c.relowner))) AS acl
---  WHERE c.relkind IN ('r','v','m','f','p')  -- table, view, mat view, foreign table, partitioned table
-
---  UNION ALL
-
---  -- TABLE COLUMNS
---  SELECT
---    'column'        AS obj_type,
---    n.nspname       AS object_schema,
---    c.relname || '.' || a.attname AS object_name,
---    pg_get_userbyid(acl.grantor) AS grantor_role,
---    CASE acl.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END AS grantee_role,
---    acl.privilege_type,
---    acl.is_grantable
---  FROM pg_catalog.pg_attribute a
---  JOIN pg_catalog.pg_class c ON c.oid = a.attrelid
---  JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
---  CROSS JOIN LATERAL aclexplode(a.attacl) AS acl
---  WHERE a.attacl IS NOT NULL
---    AND a.attnum > 0
---    AND NOT a.attisdropped
-
---  UNION ALL
-
---  -- SEQUENCEs
---  SELECT
---    'sequence'      AS obj_type,
---    n.nspname       AS object_schema,
---    c.relname       AS object_name,
---    pg_get_userbyid(acl.grantor) AS grantor_role,
---    CASE acl.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END AS grantee_role,
---    acl.privilege_type,
---    acl.is_grantable
---  FROM pg_catalog.pg_class c
---  JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
---  CROSS JOIN LATERAL aclexplode(COALESCE(c.relacl, acldefault('S', c.relowner))) AS acl
---  WHERE c.relkind = 'S'
-
---  UNION ALL
-
---  -- FUNCTIONs and PROCEDUREs
---  SELECT
---    CASE p.prokind WHEN 'f' THEN 'function' WHEN 'p' THEN 'procedure' ELSE 'function' END AS obj_type,
---    n.nspname       AS object_schema,
---    p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' AS object_name,
---    pg_get_userbyid(acl.grantor) AS grantor_role,
---    CASE acl.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END AS grantee_role,
---    acl.privilege_type,
---    acl.is_grantable
---  FROM pg_catalog.pg_proc p
---  JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
---  CROSS JOIN LATERAL aclexplode(COALESCE(p.proacl, acldefault('f', p.proowner))) AS acl
-
---  UNION ALL
-
---  -- SCHEMAs
---  SELECT
---    'schema'        AS obj_type,
---    NULL            AS object_schema,
---    n.nspname       AS object_name,
---    pg_get_userbyid(acl.grantor) AS grantor_role,
---    CASE acl.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END AS grantee_role,
---    acl.privilege_type,
---    acl.is_grantable
---  FROM pg_catalog.pg_namespace n
---  CROSS JOIN LATERAL aclexplode(COALESCE(n.nspacl, acldefault('n', n.nspowner))) AS acl
-
---  UNION ALL
-
---  -- DATABASEs
---  SELECT
---    'database'      AS obj_type,
---    NULL            AS object_schema,
---    d.datname       AS object_name,
---    pg_get_userbyid(acl.grantor) AS grantor_role,
---    CASE acl.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END AS grantee_role,
---    acl.privilege_type,
---    acl.is_grantable
---  FROM pg_catalog.pg_database d
---  CROSS JOIN LATERAL aclexplode(COALESCE(d.datacl, acldefault('d', d.datdba))) AS acl
-
---  UNION ALL
-
---  -- TABLESPACEs
---  SELECT
---    'tablespace'    AS obj_type,
---    NULL            AS object_schema,
---    t.spcname       AS object_name,
---    pg_get_userbyid(acl.grantor) AS grantor_role,
---    CASE acl.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END AS grantee_role,
---    acl.privilege_type,
---    acl.is_grantable
---  FROM pg_catalog.pg_tablespace t
---  CROSS JOIN LATERAL aclexplode(COALESCE(t.spcacl, acldefault('t', t.spcowner))) AS acl
-
---  UNION ALL
-
---  -- LANGUAGEs
---  SELECT
---    'language'      AS obj_type,
---    NULL            AS object_schema,
---    l.lanname       AS object_name,
---    pg_get_userbyid(acl.grantor) AS grantor_role,
---    CASE acl.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END AS grantee_role,
---    acl.privilege_type,
---    acl.is_grantable
---  FROM pg_catalog.pg_language l
---  CROSS JOIN LATERAL aclexplode(COALESCE(l.lanacl, acldefault('l', l.lanowner))) AS acl
-
---  UNION ALL
-
---  -- TYPEs and DOMAINs
---  SELECT
---    CASE t.typtype WHEN 'd' THEN 'domain' ELSE 'type' END AS obj_type,
---    n.nspname       AS object_schema,
---    t.typname       AS object_name,
---    pg_get_userbyid(acl.grantor) AS grantor_role,
---    CASE acl.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END AS grantee_role,
---    acl.privilege_type,
---    acl.is_grantable
---  FROM pg_catalog.pg_type t
---  JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
---  CROSS JOIN LATERAL aclexplode(COALESCE(t.typacl, acldefault('T', t.typowner))) AS acl
---  WHERE t.typtype IN ('b','c','d','e','r')  -- base, composite, domain, enum, range
-
---  UNION ALL
-
---  -- FOREIGN DATA WRAPPERs
---  SELECT
---    'foreign_data_wrapper' AS obj_type,
---    NULL            AS object_schema,
---    w.fdwname       AS object_name,
---    pg_get_userbyid(acl.grantor) AS grantor_role,
---    CASE acl.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END AS grantee_role,
---    acl.privilege_type,
---    acl.is_grantable
---  FROM pg_catalog.pg_foreign_data_wrapper w
---  CROSS JOIN LATERAL aclexplode(COALESCE(w.fdwacl, acldefault('F', w.fdwowner))) AS acl
-
---  UNION ALL
-
---  -- FOREIGN SERVERs
---  SELECT
---    'foreign_server' AS obj_type,
---    NULL            AS object_schema,
---    s.srvname       AS object_name,
---    pg_get_userbyid(acl.grantor) AS grantor_role,
---    CASE acl.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END AS grantee_role,
---    acl.privilege_type,
---    acl.is_grantable
---  FROM pg_catalog.pg_foreign_server s
---  CROSS JOIN LATERAL aclexplode(COALESCE(s.srvacl, acldefault('S', s.srvowner))) AS acl
-
---  UNION ALL
-
---  -- LARGE OBJECTs
---  SELECT
---    'large_object'  AS obj_type,
---    NULL            AS object_schema,
---    lo.oid::text    AS object_name,
---    pg_get_userbyid(acl.grantor) AS grantor_role,
---    CASE acl.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END AS grantee_role,
---    acl.privilege_type,
---    acl.is_grantable
---  FROM pg_catalog.pg_largeobject_metadata lo
---  CROSS JOIN LATERAL aclexplode(COALESCE(lo.lomacl, acldefault('L', lo.lomowner))) AS acl
-
---  UNION ALL
-
---  -- CONFIGURATIONs / PARAMETERs (pg_parameter_acl, PG 15+)
---  SELECT
---    'parameter'     AS obj_type,
---    NULL            AS object_schema,
---    p.parname       AS object_name,
---    pg_get_userbyid(acl.grantor) AS grantor_role,
---    CASE acl.grantee WHEN 0 THEN 'PUBLIC' ELSE pg_get_userbyid(acl.grantee) END AS grantee_role,
---    acl.privilege_type,
---    acl.is_grantable
---  FROM pg_catalog.pg_parameter_acl p
---  CROSS JOIN LATERAL aclexplode(p.paracl) AS acl
-
--- ) grants
--- ORDER BY obj_type, object_schema, object_name, grantee_role, privilege_type;
-
-```
