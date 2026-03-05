@@ -556,3 +556,33 @@ impl hashbrown::Equivalent<Hash2Key> for (&str, &str) {
 		self.0 == key.0 && self.1 == key.1
 	}
 }
+
+
+pub(crate) trait GroupMapHb: Iterator + Sized {
+	fn into_group_map_hashbrown<K, V, C>(self) -> HashMap<K, C>
+	where
+		Self: Iterator<Item = (K, V)>,
+		K: std::hash::Hash + Eq,
+		C: Default + Extend<V>,
+	{
+		self.fold(HashMap::new(), |mut acc, (k, v)| {
+			acc.entry(k).or_default().extend(std::iter::once(v));
+			acc
+		})
+	}
+
+	// fn into_group_map_by_hb<K, V, C, F>(self, f: F) -> HashMap<K, C>
+	// where
+	// 	Self: Iterator<Item = V>,
+	// 	K: std::hash::Hash + Eq,
+	// 	C: Default + Extend<V>,
+	// 	F: Fn(&V) -> K,
+	// {
+	// 	self.fold(HashMap::new(), |mut acc, v| {
+	// 		acc.entry(f(&v)).or_default().extend(std::iter::once(v));
+	// 		acc
+	// 	})
+	// }
+}
+
+impl<T: Iterator> GroupMapHb for T {}

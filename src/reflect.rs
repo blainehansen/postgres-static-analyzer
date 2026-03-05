@@ -1,7 +1,6 @@
 use crate::{
-	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, Hash2Key, PgClient, Ref, Role, RoleMembership, SchemaGrant, SchemaPrivilege, SchemaState, Set, TableColumnGrant, TableColumnPrivilege, TableGrant, TablePrivilege, TableState, Typ, TypBody, TypeGrant, TypeUsage, make_default_settings, postgres, HashMap,
+	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, Hash2Key, PgClient, Ref, Role, RoleMembership, SchemaGrant, SchemaPrivilege, SchemaState, Set, TableColumnGrant, TableColumnPrivilege, TableGrant, TablePrivilege, TableState, Typ, TypBody, TypeGrant, TypeUsage, make_default_settings, postgres, HashMap, GroupMapHb,
 };
-use itertools::Itertools;
 
 pub async fn reflect_db_state(
 	client: &PgClient
@@ -108,10 +107,7 @@ pub(crate) async fn reflect_schema_grants(
 					let privilege_type = SchemaPrivilege::pg_from_str(privilege_type);
 					(grantee.to_string(), SchemaGrant { privilege_type, is_grantable, grantor: grantor.to_string() })
 				})
-				.into_grouping_map()
-				.collect()
-				.into_iter()
-				.collect::<HashMap<_, _>>();
+				.into_group_map_hashbrown();
 
 			(g.nspname.to_string(), user_grants)
 		})
@@ -137,8 +133,7 @@ pub(crate) async fn reflect_user_schemas(
 	)?;
 
 	let mut typs_map = all_typs.into_iter()
-		.into_grouping_map()
-		.collect::<Set<_>>();
+		.into_group_map_hashbrown();
 
 	let schemas = schemas.into_iter().map(|s| {
 		let tables = tables_map.remove(&s.nspname).unwrap_or_default();
@@ -179,10 +174,7 @@ pub(crate) async fn reflect_user_tables(
 	)?;
 
 	let mut tables = tables.into_iter()
-		.into_grouping_map()
-		.collect::<Set<_>>()
-		.into_iter()
-		.collect::<HashMap<_, _>>();
+		.into_group_map_hashbrown::<_, _, Set<_>>();
 
 	for ((schema_name, table_name), columns) in all_columns {
 		if let Some(tables_in_schema) = tables.get_mut(&schema_name) {
@@ -239,10 +231,7 @@ pub(crate) async fn reflect_table_grants(
 					let privilege_type = TablePrivilege::pg_from_str(privilege_type);
 					(grantee.to_string(), TableGrant { privilege_type, is_grantable, grantor: grantor.to_string() })
 				})
-				.into_grouping_map()
-				.collect::<Vec<_>>()
-				.into_iter()
-				.collect::<HashMap<_, _>>();
+				.into_group_map_hashbrown::<_, _, Vec<_>>();
 
 			((g.nspname.to_string(), g.relname.to_string()), user_grants)
 		})
@@ -264,10 +253,7 @@ pub(crate) async fn reflect_column_grants(
 					let privilege_type = TableColumnPrivilege::pg_from_str(privilege_type);
 					(grantee.to_string(), TableColumnGrant { privilege_type, is_grantable, grantor: grantor.to_string() })
 				})
-				.into_grouping_map()
-				.collect::<Vec<_>>()
-				.into_iter()
-				.collect::<HashMap<_, _>>();
+				.into_group_map_hashbrown::<_, _, Vec<_>>();
 
 			((g.nspname.to_string(), g.relname.to_string(), g.attname.to_string()), user_grants)
 		})
@@ -298,10 +284,7 @@ pub(crate) async fn reflect_user_table_columns(
 		.all()
 		.await?
 		.into_iter()
-		.into_grouping_map()
-		.collect::<Vec<_>>()
-		.into_iter()
-		.collect::<HashMap<_, _>>();
+		.into_group_map_hashbrown::<_, _, Vec<_>>();
 
 	Ok(columns)
 }
@@ -320,10 +303,7 @@ pub(crate) async fn reflect_user_table_unique_constraints(
 		.all()
 		.await?
 		.into_iter()
-		.into_grouping_map()
-		.collect::<Vec<_>>()
-		.into_iter()
-		.collect::<HashMap<_, _>>();
+		.into_group_map_hashbrown::<_, _, Vec<_>>();
 
 	Ok(unique_constraints)
 }
@@ -435,10 +415,7 @@ pub(crate) async fn reflect_type_grants(
 						TypeGrant { privilege_type: TypeUsage, is_grantable, grantor: grantor.to_string() },
 					)
 				})
-				.into_grouping_map()
-				.collect::<Vec<_>>()
-				.into_iter()
-				.collect::<HashMap<_, _>>();
+				.into_group_map_hashbrown::<_, _, Vec<_>>();
 
 			(Hash2Key(g.nspname.to_string(), g.typname.to_string()), user_grants)
 		})
@@ -459,10 +436,7 @@ pub(crate) async fn reflect_functions(
 				.map(|(grantee, is_grantable, grantor)| {
 					(grantee.to_string(), FunctionGrant { privilege_type: FunctionExecute, is_grantable, grantor: grantor.to_string() })
 				})
-				.into_grouping_map()
-				.collect::<Vec<_>>()
-				.into_iter()
-				.collect::<HashMap<_, _>>();
+				.into_group_map_hashbrown::<_, _, Vec<_>>();
 
 			((g.nspname.to_string(), g.proname.to_string()), user_grants)
 		})
@@ -500,10 +474,7 @@ pub(crate) async fn reflect_functions(
 		})
 		.all().await?;
 	let mut functions = functions.into_iter()
-		.into_grouping_map()
-		.collect::<Set<_>>()
-		.into_iter()
-		.collect::<HashMap<_, _>>();
+		.into_group_map_hashbrown::<_, _, Set<_>>();
 
 	for ((schema_name, function_name), grants) in grants_map {
 		if let Some(functions_in_schema) = functions.get_mut(&schema_name) {
