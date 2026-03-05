@@ -11,8 +11,7 @@ pub(crate) use reflect_crate::tokio_postgres::{self as postgres, /*Config as PgC
 
 pub type Set<T> = hashbrown::HashSet<T>;
 pub type Map<T> = hashbrown::HashMap<String, T>;
-// TODO use hashbrown all the time? https://github.com/rust-lang/hashbrown?tab=readme-ov-file#features
-// pub(crate) use hashbrown::HashMap;
+pub(crate) use hashbrown::HashMap;
 
 mod reflect;
 #[cfg(test)]
@@ -70,7 +69,7 @@ pub(crate) fn apply_command(
 
 			match (exists, if_not_exists) {
 				(false, _) => {
-					let mut schema = SchemaState { name: schemaname, owner: "TODO".to_string(), tables: Set::new(), typs: Set::new(), functions: Set::new(), grants: std::collections::HashMap::new() };
+					let mut schema = SchemaState { name: schemaname, owner: "TODO".to_string(), tables: Set::new(), typs: Set::new(), functions: Set::new(), grants: HashMap::new() };
 					add_nodes_to_schema(&mut flags, &mut errors, &mut schema, nodes_to_enum(schema_elts))?;
 					db_state.schemas.insert(schema);
 				}
@@ -164,7 +163,7 @@ pub struct DbState {
 	pub default_settings: ConnectionSettings,
 	pub schemas: Set<SchemaState>,
 	pub foreign_keys: Vec<ForeignKey>,
-	pub grants: std::collections::HashMap<String, Vec<DbGrant>>,
+	pub grants: HashMap<String, Vec<DbGrant>>,
 	// pub languages: Set<Language>,
 
 	// TODO we assume that the "local" settings in connection params or whatever don't matter to us right?
@@ -234,7 +233,7 @@ pub struct SchemaState {
 	pub tables: Set<TableState>,
 	pub typs: Set<Typ>,
 	pub functions: Set<Function>,
-	pub grants: std::collections::HashMap<String, Vec<SchemaGrant>>,
+	pub grants: HashMap<String, Vec<SchemaGrant>>,
 }
 impl_hash_and_equivalent!(SchemaState);
 
@@ -245,7 +244,7 @@ pub struct Typ {
 	pub name: String,
 	pub owner: String,
 	pub body: TypBody,
-	pub grants: std::collections::HashMap<String, Vec<TypeGrant>>,
+	pub grants: HashMap<String, Vec<TypeGrant>>,
 }
 impl_hash_and_equivalent!(Typ);
 
@@ -271,9 +270,9 @@ pub struct TableState {
 	pub owner: String,
 	pub columns: Set<Column>,
 	pub primary_key: Option<(String, Set<String>)>,
-	pub unique_constraints: std::collections::HashMap<String, Set<String>>,
+	pub unique_constraints: HashMap<String, Set<String>>,
 	// foreign keys
-	pub grants: std::collections::HashMap<String, Vec<TableGrant>>,
+	pub grants: HashMap<String, Vec<TableGrant>>,
 }
 impl_hash_and_equivalent!(TableState);
 
@@ -284,7 +283,7 @@ pub struct Column {
 	pub not_null: bool,
 	pub default_expr: Option<String>,
 	// pub attgenerated
-	pub grants: std::collections::HashMap<String, Vec<TableColumnGrant>>,
+	pub grants: HashMap<String, Vec<TableColumnGrant>>,
 }
 impl_hash_and_equivalent!(Column);
 
@@ -307,7 +306,7 @@ pub struct Function {
 	pub is_security_definer: bool,
 	pub is_leakproof: bool,
 	pub language: String,
-	pub grants: std::collections::HashMap<String, Vec<FunctionGrant>>,
+	pub grants: HashMap<String, Vec<FunctionGrant>>,
 }
 impl_hash_and_equivalent!(Function);
 

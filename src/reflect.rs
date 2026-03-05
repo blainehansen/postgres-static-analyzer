@@ -1,7 +1,7 @@
 use crate::{
-	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, Hash2Key, PgClient, Ref, Role, RoleMembership, SchemaGrant, SchemaPrivilege, SchemaState, Set, TableColumnGrant, TableColumnPrivilege, TableGrant, TablePrivilege, TableState, Typ, TypBody, TypeGrant, TypeUsage, make_default_settings, postgres
+	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, Hash2Key, PgClient, Ref, Role, RoleMembership, SchemaGrant, SchemaPrivilege, SchemaState, Set, TableColumnGrant, TableColumnPrivilege, TableGrant, TablePrivilege, TableState, Typ, TypBody, TypeGrant, TypeUsage, make_default_settings, postgres, HashMap,
 };
-use std::collections::HashMap;
+use itertools::Itertools;
 
 pub async fn reflect_db_state(
 	client: &PgClient
@@ -100,7 +100,6 @@ pub(crate) async fn reflect_db_grants(
 pub(crate) async fn reflect_schema_grants(
 	client: &PgClient
 ) -> Result<HashMap<String, HashMap<String, Vec<SchemaGrant>>>, postgres::Error> {
-	use itertools::Itertools;
 
 	let grants_map = reflect_crate::queries::main::reflect_schema_grants().bind(client)
 		.map(|g| {
@@ -110,7 +109,9 @@ pub(crate) async fn reflect_schema_grants(
 					(grantee.to_string(), SchemaGrant { privilege_type, is_grantable, grantor: grantor.to_string() })
 				})
 				.into_grouping_map()
-				.collect::<Vec<_>>();
+				.collect()
+				.into_iter()
+				.collect::<HashMap<_, _>>();
 
 			(g.nspname.to_string(), user_grants)
 		})
@@ -135,8 +136,9 @@ pub(crate) async fn reflect_user_schemas(
 		reflect_schema_grants(client),
 	)?;
 
-	use itertools::Itertools;
-	let mut typs_map = all_typs.into_iter().into_grouping_map().collect::<Set<_>>();
+	let mut typs_map = all_typs.into_iter()
+		.into_grouping_map()
+		.collect::<Set<_>>();
 
 	let schemas = schemas.into_iter().map(|s| {
 		let tables = tables_map.remove(&s.nspname).unwrap_or_default();
@@ -155,7 +157,7 @@ pub(crate) async fn reflect_user_tables(
 	client: &PgClient
 ) -> Result<HashMap<String, Set<TableState>>, postgres::Error> {
 	let tables_query = reflect_crate::queries::main::reflect_user_tables();
-	let (tables, all_columns, all_unique_constraints, grants_map, mut column_grants_map) = tokio::try_join!(
+	let (tables, all_columns, all_unique_constraints, grants_map, column_grants_map) = tokio::try_join!(
 		tables_query.bind(client)
 			.map(|t| {
 				(t.nspname.to_string(), TableState {
@@ -176,8 +178,11 @@ pub(crate) async fn reflect_user_tables(
 		reflect_column_grants(client),
 	)?;
 
-	use itertools::Itertools;
-	let mut tables = tables.into_iter().into_grouping_map().collect::<Set<_>>();
+	let mut tables = tables.into_iter()
+		.into_grouping_map()
+		.collect::<Set<_>>()
+		.into_iter()
+		.collect::<HashMap<_, _>>();
 
 	for ((schema_name, table_name), columns) in all_columns {
 		if let Some(tables_in_schema) = tables.get_mut(&schema_name) {
@@ -226,7 +231,6 @@ pub(crate) async fn reflect_user_tables(
 pub(crate) async fn reflect_table_grants(
 	client: &PgClient
 ) -> Result<HashMap<(String, String), HashMap<String, Vec<TableGrant>>>, postgres::Error> {
-	use itertools::Itertools;
 
 	let grants_map = reflect_crate::queries::main::reflect_table_grants().bind(client)
 		.map(|g| {
@@ -236,7 +240,9 @@ pub(crate) async fn reflect_table_grants(
 					(grantee.to_string(), TableGrant { privilege_type, is_grantable, grantor: grantor.to_string() })
 				})
 				.into_grouping_map()
-				.collect::<Vec<_>>();
+				.collect::<Vec<_>>()
+				.into_iter()
+				.collect::<HashMap<_, _>>();
 
 			((g.nspname.to_string(), g.relname.to_string()), user_grants)
 		})
@@ -250,7 +256,6 @@ pub(crate) async fn reflect_table_grants(
 pub(crate) async fn reflect_column_grants(
 	client: &PgClient
 ) -> Result<HashMap<(String, String, String), HashMap<String, Vec<TableColumnGrant>>>, postgres::Error> {
-	use itertools::Itertools;
 
 	let grants_map = reflect_crate::queries::main::reflect_column_grants().bind(client)
 		.map(|g| {
@@ -260,7 +265,9 @@ pub(crate) async fn reflect_column_grants(
 					(grantee.to_string(), TableColumnGrant { privilege_type, is_grantable, grantor: grantor.to_string() })
 				})
 				.into_grouping_map()
-				.collect::<Vec<_>>();
+				.collect::<Vec<_>>()
+				.into_iter()
+				.collect::<HashMap<_, _>>();
 
 			((g.nspname.to_string(), g.relname.to_string(), g.attname.to_string()), user_grants)
 		})
@@ -275,8 +282,6 @@ pub(crate) async fn reflect_column_grants(
 pub(crate) async fn reflect_user_table_columns(
 	client: &PgClient
 ) -> Result<HashMap<(String, String), Vec<Column>>, postgres::Error> {
-	use itertools::Itertools;
-
 	let columns = reflect_crate::queries::main::reflect_user_table_columns().bind(client)
 		.map(|a| {
 			// TODO attgenerated
@@ -292,7 +297,11 @@ pub(crate) async fn reflect_user_table_columns(
 		})
 		.all()
 		.await?
-		.into_iter().into_grouping_map().collect();
+		.into_iter()
+		.into_grouping_map()
+		.collect::<Vec<_>>()
+		.into_iter()
+		.collect::<HashMap<_, _>>();
 
 	Ok(columns)
 }
@@ -300,7 +309,6 @@ pub(crate) async fn reflect_user_table_columns(
 pub(crate) async fn reflect_user_table_unique_constraints(
 	client: &PgClient
 ) -> Result<HashMap<(String, String), Vec<(String, Set<String>)>>, postgres::Error> {
-	use itertools::Itertools;
 
 	let unique_constraints = reflect_crate::queries::main::reflect_user_table_unique_constraints().bind(client)
 		.map(|uc| {
@@ -313,7 +321,9 @@ pub(crate) async fn reflect_user_table_unique_constraints(
 		.await?
 		.into_iter()
 		.into_grouping_map()
-		.collect::<Vec<_>>();
+		.collect::<Vec<_>>()
+		.into_iter()
+		.collect::<HashMap<_, _>>();
 
 	Ok(unique_constraints)
 }
@@ -415,9 +425,7 @@ pub(crate) async fn reflect_enum_types(
 
 pub(crate) async fn reflect_type_grants(
 	client: &PgClient
-) -> Result<hashbrown::HashMap<Hash2Key, HashMap<String, Vec<TypeGrant>>>, postgres::Error> {
-	use itertools::Itertools;
-
+) -> Result<HashMap<Hash2Key, HashMap<String, Vec<TypeGrant>>>, postgres::Error> {
 	let grants_map = reflect_crate::queries::main::reflect_type_grants().bind(client)
 		.map(|g| {
 			let user_grants = itertools::izip!(g.grantees, g.is_grantables, g.grantors)
@@ -428,13 +436,15 @@ pub(crate) async fn reflect_type_grants(
 					)
 				})
 				.into_grouping_map()
-				.collect::<Vec<_>>();
+				.collect::<Vec<_>>()
+				.into_iter()
+				.collect::<HashMap<_, _>>();
 
 			(Hash2Key(g.nspname.to_string(), g.typname.to_string()), user_grants)
 		})
 		.all().await?
 		.into_iter()
-		.collect::<hashbrown::HashMap<_, _>>();
+		.collect::<HashMap<_, _>>();
 
 	Ok(grants_map)
 }
@@ -442,7 +452,6 @@ pub(crate) async fn reflect_type_grants(
 pub(crate) async fn reflect_functions(
 	client: &PgClient
 ) -> Result<HashMap<String, Set<Function>>, postgres::Error> {
-	use itertools::Itertools;
 
 	let grants_map = reflect_crate::queries::main::reflect_function_grants().bind(client)
 		.map(|g| {
@@ -451,14 +460,16 @@ pub(crate) async fn reflect_functions(
 					(grantee.to_string(), FunctionGrant { privilege_type: FunctionExecute, is_grantable, grantor: grantor.to_string() })
 				})
 				.into_grouping_map()
-				.collect::<Vec<_>>();
+				.collect::<Vec<_>>()
+				.into_iter()
+				.collect::<HashMap<_, _>>();
 
 			((g.nspname.to_string(), g.proname.to_string()), user_grants)
 		})
 		.all().await?
 		.into_iter().collect::<HashMap<_, _>>();
 
-	let mut functions = reflect_crate::queries::main::reflect_functions().bind(client)
+	let functions = reflect_crate::queries::main::reflect_functions().bind(client)
 		.map(|f| {
 			let args = itertools::izip!(f.arg_modes, f.arg_names, f.arg_types, f.arg_type_schemas, f.arg_defaults)
 				.map(|(mode, name, typ, typ_schema, default)| {
@@ -487,10 +498,12 @@ pub(crate) async fn reflect_functions(
 				},
 			)
 		})
-		.all().await?
-		.into_iter()
+		.all().await?;
+	let mut functions = functions.into_iter()
 		.into_grouping_map()
-		.collect::<Set<_>>();
+		.collect::<Set<_>>()
+		.into_iter()
+		.collect::<HashMap<_, _>>();
 
 	for ((schema_name, function_name), grants) in grants_map {
 		if let Some(functions_in_schema) = functions.get_mut(&schema_name) {

@@ -1,7 +1,6 @@
 use crate::ConnectionSettings;
 
 use super::*;
-use std::collections::HashMap;
 
 // async fn pg_con(config: &PgConfig) -> Result<PgClient, postgres::Error> {
 // 	let (client, conn) = config.connect(postgres::NoTls).await?;
@@ -238,7 +237,7 @@ fn empty_schema(schema_name: &str, owner: &str) -> SchemaState {
 	SchemaState {
 		name: schema_name.to_string(), owner: s(owner),
 		tables: Set::new(), typs: Set::new(), functions: Set::new(),
-		grants: std::collections::HashMap::new(),
+		grants: HashMap::new(),
 	}
 }
 
