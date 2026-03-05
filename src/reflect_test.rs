@@ -8,8 +8,8 @@ use super::*;
 // 	Ok(client)
 // }
 
-fn s(val: &str) -> String {
-	val.to_string()
+fn s(val: &str) -> Str {
+	val.into()
 }
 
 fn r(ref_name: &str) -> Ref {
@@ -20,7 +20,7 @@ fn re(schema_name: &str, name: &str) -> Ref {
 }
 
 fn connection_settings(search_path: Vec<&str>) -> ConnectionSettings {
-	ConnectionSettings { search_path: search_path.into_iter().map(str::to_string).collect() }
+	ConnectionSettings { search_path: search_path.into_iter().map(s).collect() }
 }
 
 
@@ -235,7 +235,7 @@ async fn test_reflect_role_memberships() -> anyhow::Result<()> {
 
 fn empty_schema(schema_name: &str, owner: &str) -> SchemaState {
 	SchemaState {
-		name: schema_name.to_string(), owner: s(owner),
+		name: s(schema_name), owner: s(owner),
 		tables: Set::new(), typs: Set::new(), functions: Set::new(),
 		grants: HashMap::new(),
 	}
@@ -310,7 +310,7 @@ async fn test_reflect_user_schemas() -> anyhow::Result<()> {
 fn empty_table(table_name: &str) -> TableState {
 	// TODO unique and primary keys
 	TableState {
-		name: table_name.to_string(), owner: s("tempuser"), columns: Set::new(),
+		name: s(table_name), owner: s("tempuser"), columns: Set::new(),
 		primary_key: None, unique_constraints: HashMap::new(),
 		grants: HashMap::new(),
 	}
@@ -329,7 +329,7 @@ async fn test_reflect_user_tables_empty() -> anyhow::Result<()> {
 		"#).await?;
 		let tables = reflect::reflect_user_tables(&client).await?;
 		assert_eq!(tables, HashMap::from([
-			("public".to_string(), Set::from([
+			(s("public"), Set::from([
 				empty_table("aaa"),
 				empty_table("bbb"),
 				empty_table("big things poppin"),
@@ -342,7 +342,7 @@ async fn test_reflect_user_tables_empty() -> anyhow::Result<()> {
 		"#).await?;
 		let tables = reflect::reflect_user_tables(&client).await?;
 		assert_eq!(tables, HashMap::from([
-			("public".to_string(), Set::from([
+			(s("public"), Set::from([
 				empty_table("bbb"),
 			])),
 		]));
@@ -355,7 +355,7 @@ async fn test_reflect_user_tables_empty() -> anyhow::Result<()> {
 
 fn tab(table_name: &'static str, columns: Set<Column>) -> TableState {
 	TableState {
-		name: table_name.to_string(), owner: s("tempuser"), columns,
+		name: s(table_name), owner: s("tempuser"), columns,
 		primary_key: None, unique_constraints: HashMap::new(),
 		grants: HashMap::new(),
 	}
@@ -364,8 +364,8 @@ fn tab(table_name: &'static str, columns: Set<Column>) -> TableState {
 
 fn col(name: &str, typ: &str, not_null: bool, default_expr: Option<&str>) -> Column {
 	Column {
-		name: name.to_string(), typ: Ref { schema_name: "pg_catalog".to_string(), name: typ.to_string() },
-		not_null, default_expr: default_expr.map(str::to_string),
+		name: s(name), typ: Ref { schema_name: s("pg_catalog"), name: s(typ) },
+		not_null, default_expr: default_expr.map(s),
 		grants: HashMap::new(),
 	}
 }
@@ -390,7 +390,7 @@ async fn test_reflect_user_table_columns() -> anyhow::Result<()> {
 
 		let tables = reflect::reflect_user_tables(&client).await?;
 		assert_eq!(tables, HashMap::from([
-			("public".to_string(), Set::from([
+			(s("public"), Set::from([
 				tab("aaa", Set::from([
 					col("id", "int4", true, None),
 					col("hey", "bool", false, Some("('hey there' IS NULL)")),
@@ -410,7 +410,7 @@ async fn test_reflect_user_table_columns() -> anyhow::Result<()> {
 
 		let tables = reflect::reflect_user_tables(&client).await?;
 		assert_eq!(tables, HashMap::from([
-			("public".to_string(), Set::from([
+			(s("public"), Set::from([
 				tab("bbb", Set::from([
 					col("heyhey", "int8", false, None),
 				])),
@@ -446,7 +446,7 @@ async fn test_reflect_user_table_constraints() -> anyhow::Result<()> {
 
 		let tables = reflect::reflect_user_tables(&client).await?;
 		assert_eq!(tables, HashMap::from([
-			("public".to_string(), Set::from([
+			(s("public"), Set::from([
 				TableState {
 					name: s("aaa"), owner: s("tempuser"), columns: Set::from([
 						col("a", "int4", true, None),
@@ -485,7 +485,7 @@ async fn test_reflect_user_table_constraints() -> anyhow::Result<()> {
 
 		let tables = reflect::reflect_user_tables(&client).await?;
 		assert_eq!(tables, HashMap::from([
-			("public".to_string(), Set::from([
+			(s("public"), Set::from([
 				TableState {
 					name: s("bbb"), owner: s("tempuser"), columns: Set::from([
 						col("heyhey", "int4", true, None),
@@ -528,7 +528,7 @@ async fn test_reflect_foreign_keys() -> anyhow::Result<()> {
 			);
 		"#).await?;
 		let mut foreign_keys = reflect::reflect_foreign_keys(&client).await?;
-		assert_eq!(foreign_keys.sort(), vec![
+		let mut expected = vec![
 			ForeignKey {
 				constraint_name: s("bbb_bbb_a_bbb_b_fkey"),
 				referring_schema: s("public"), referring_table: s("bbb"), referring_columns: vec![s("bbb_a"), s("bbb_b")],
@@ -539,21 +539,18 @@ async fn test_reflect_foreign_keys() -> anyhow::Result<()> {
 				referring_schema: s("public"), referring_table: s("bbb"), referring_columns: vec![s("bbb_c")],
 				referred_schema: s("public"), referred_table: s("aaa"), referred_columns: vec![s("aaa_c")],
 			},
-		].sort());
+		];
+		foreign_keys.sort();
+		expected.sort();
+		assert_eq!(foreign_keys, expected);
 
 		client.batch_execute(r#"
 			alter table aaa drop column aaa_a cascade;
 			alter table aaa rename column aaa_b to aaa_heyhey;
 			alter table aaa drop column aaa_c cascade;
 		"#).await?;
-		let mut foreign_keys = reflect::reflect_foreign_keys(&client).await?;
-		assert_eq!(foreign_keys.sort(), vec![
-			ForeignKey {
-				constraint_name: s("bbb_bbb_a_bbb_b_fkey"),
-				referring_schema: s("public"), referring_table: s("bbb"), referring_columns: vec![s("bbb_b")],
-				referred_schema: s("public"), referred_table: s("aaa"), referred_columns: vec![s("aaa_heyhey")],
-			},
-		].sort());
+		let foreign_keys = reflect::reflect_foreign_keys(&client).await?;
+		assert!(foreign_keys.is_empty());
 
 		client.batch_execute(r#"
 			alter table aaa drop column aaa_heyhey cascade;
@@ -696,7 +693,7 @@ async fn test_reflect_table_grants() -> anyhow::Result<()> {
 		let mut table_grants = reflect::reflect_table_grants(&client).await?;
 		table_grants.values_mut().for_each(|m| m.values_mut().for_each(|v| v.sort()));
 		assert_eq!(table_grants, HashMap::from([
-			((s("public"), s("aaa")), HashMap::from([
+			(Hash2Key(s("public"), s("aaa")), HashMap::from([
 				(s("guy"), vec![
 					TableGrant { privilege_type: TablePrivilege::INSERT, is_grantable: false, grantor: s("tempuser") },
 					TableGrant { privilege_type: TablePrivilege::SELECT, is_grantable: false, grantor: s("tempuser") },
@@ -739,12 +736,12 @@ async fn test_reflect_column_grants() -> anyhow::Result<()> {
 		let mut column_grants = reflect::reflect_column_grants(&client).await?;
 		column_grants.values_mut().for_each(|m| m.values_mut().for_each(|v| v.sort()));
 		assert_eq!(column_grants, HashMap::from([
-			((s("public"), s("aaa"), s("a")), HashMap::from([
+			(Hash3Key(s("public"), s("aaa"), s("a")), HashMap::from([
 				(s("guy"), vec![
 					TableColumnGrant { privilege_type: TableColumnPrivilege::SELECT, is_grantable: false, grantor: s("tempuser") },
 				]),
 			])),
-			((s("public"), s("aaa"), s("b")), HashMap::from([
+			(Hash3Key(s("public"), s("aaa"), s("b")), HashMap::from([
 				(s("public"), vec![
 					TableColumnGrant { privilege_type: TableColumnPrivilege::UPDATE, is_grantable: false, grantor: s("tempuser") },
 				]),
@@ -752,14 +749,14 @@ async fn test_reflect_column_grants() -> anyhow::Result<()> {
 		]));
 
 		let tables = reflect::reflect_user_tables(&client).await?;
-		let table = tables.get("public").unwrap().get(&"aaa").unwrap();
-		let a_col = table.columns.get(&"a").unwrap();
+		let table = tables.get("public").unwrap().get(&s("aaa")).unwrap();
+		let a_col = table.columns.get(&s("a")).unwrap();
 		assert_eq!(a_col.grants, HashMap::from([
 			(s("guy"), vec![
 				TableColumnGrant { privilege_type: TableColumnPrivilege::SELECT, is_grantable: false, grantor: s("tempuser") },
 			]),
 		]));
-		let b_col = table.columns.get(&"b").unwrap();
+		let b_col = table.columns.get(&s("b")).unwrap();
 		assert_eq!(b_col.grants, HashMap::from([
 			(s("public"), vec![
 				TableColumnGrant { privilege_type: TableColumnPrivilege::UPDATE, is_grantable: false, grantor: s("tempuser") },

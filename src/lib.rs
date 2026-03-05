@@ -2,6 +2,7 @@ pub use reflect::reflect_db_state;
 
 // use sqlparser::ast::Statement as SqlStatement;
 use pg_query::{Node, NodeEnum};
+pub(crate) use smol_str::SmolStr as Str;
 
 fn nodes_to_enum(nodes: Vec<Node>) -> Vec<NodeEnum> {
 	nodes.into_iter().filter_map(|n| n.node).collect()
@@ -10,7 +11,7 @@ fn nodes_to_enum(nodes: Vec<Node>) -> Vec<NodeEnum> {
 pub(crate) use reflect_crate::tokio_postgres::{self as postgres, /*Config as PgConfig,*/ Client as PgClient};
 
 pub type Set<T> = hashbrown::HashSet<T>;
-pub type Map<T> = hashbrown::HashMap<String, T>;
+pub type Map<T> = hashbrown::HashMap<Str, T>;
 pub(crate) use hashbrown::HashMap;
 
 mod reflect;
@@ -33,7 +34,7 @@ pub type SupportResult<T> = Result<T, NotSupportedError>;
 #[derive(thiserror::Error, Debug)]
 pub enum ApplyError {
 	#[error("tried to create a conflicting schema {0}")]
-	CreateConflictingSchema(String)
+	CreateConflictingSchema(Str)
 }
 
 pub struct ApplyOutcome {
@@ -65,17 +66,17 @@ pub(crate) fn apply_command(
 			=> { return Err(NotSupportedError::ManipulateDatabase) },
 
 		NodeEnum::CreateSchemaStmt(n::CreateSchemaStmt { schemaname, authrole: _, schema_elts, if_not_exists }) => {
-			let exists = db_state.schemas.contains(&schemaname.as_str());
+			let exists = db_state.schemas.contains(schemaname.as_str());
 
 			match (exists, if_not_exists) {
 				(false, _) => {
-					let mut schema = SchemaState { name: schemaname, owner: "TODO".to_string(), tables: Set::new(), typs: Set::new(), functions: Set::new(), grants: HashMap::new() };
+					let mut schema = SchemaState { name: schemaname.into(), owner: "TODO".into(), tables: Set::new(), typs: Set::new(), functions: Set::new(), grants: HashMap::new() };
 					add_nodes_to_schema(&mut flags, &mut errors, &mut schema, nodes_to_enum(schema_elts))?;
 					db_state.schemas.insert(schema);
 				}
 				(true, true) => { /* do nothing, ignore */ }
 				(true, false) => {
-					errors.push(ApplyError::CreateConflictingSchema(schemaname));
+					errors.push(ApplyError::CreateConflictingSchema(schemaname.into()));
 				}
 			};
 		},
@@ -94,7 +95,7 @@ fn add_nodes_to_schema(
 }
 
 
-pub type SqlBlock = String;
+pub type SqlBlock = Str;
 
 /// Walks through the blocks, assuming `db_settings` already applies from a create/alter database command that was issued to the database before the blocks.
 pub fn try_seq_db_settings(
@@ -115,7 +116,7 @@ pub fn try_seq_db_settings(
 }
 
 pub fn try_seq(sql_blocks: Vec<SqlBlock>, stop_on_error: bool) -> ApplyOutcome {
-	let db_settings = ConnectionSettings { search_path: vec!["\"$user\"".to_string(), "public".to_string()] };
+	let db_settings = ConnectionSettings { search_path: vec!["\"$user\"".into(), "public".into()] };
 
 	try_seq_db_settings(db_settings, sql_blocks, stop_on_error)
 }
@@ -135,7 +136,13 @@ macro_rules! impl_hash_and_equivalent {
 			}
 		}
 
-		impl hashbrown::Equivalent<$type> for &str {
+		impl hashbrown::Equivalent<$type> for str {
+			fn equivalent(&self, key: &$type) -> bool {
+				key.name == *self
+			}
+		}
+
+		impl hashbrown::Equivalent<$type> for Str {
 			fn equivalent(&self, key: &$type) -> bool {
 				key.name == *self
 			}
@@ -163,7 +170,7 @@ pub struct DbState {
 	pub default_settings: ConnectionSettings,
 	pub schemas: Set<SchemaState>,
 	pub foreign_keys: Vec<ForeignKey>,
-	pub grants: HashMap<String, Vec<DbGrant>>,
+	pub grants: HashMap<Str, Vec<DbGrant>>,
 	// pub languages: Set<Language>,
 
 	// TODO we assume that the "local" settings in connection params or whatever don't matter to us right?
@@ -175,9 +182,9 @@ pub struct DbState {
 // https://www.postgresql.org/docs/17/catalog-pg-auth-members.html
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct RoleMembership {
-	pub parent_role: String,
-	pub child_role: String,
-	pub grantor: String,
+	pub parent_role: Str,
+	pub child_role: Str,
+	pub grantor: Str,
 	pub can_regrant_option: bool,
 	pub does_auto_inherit: bool,
 	pub can_set_to: bool,
@@ -186,13 +193,13 @@ pub struct RoleMembership {
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub struct ForeignKey {
-	constraint_name: String,
-	referring_schema: String,
-	referring_table: String,
-	referring_columns: Vec<String>,
-	referred_schema: String,
-	referred_table: String,
-	referred_columns: Vec<String>,
+	constraint_name: Str,
+	referring_schema: Str,
+	referring_table: Str,
+	referring_columns: Vec<Str>,
+	referred_schema: Str,
+	referred_table: Str,
+	referred_columns: Vec<Str>,
 }
 
 
@@ -201,14 +208,14 @@ pub struct ForeignKey {
 // this means at the State level the schema_name should absolutely never be None
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Ref {
-	pub schema_name: String,
-	pub name: String,
+	pub schema_name: Str,
+	pub name: Str,
 }
 
 // https://www.postgresql.org/docs/current/sql-createrole.html
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Role {
-	pub name: String,
+	pub name: Str,
 	pub is_super: bool,
 	pub does_inherit: bool,
 	pub can_create_role: bool,
@@ -228,12 +235,12 @@ impl_hash_and_equivalent!(Role);
 // https://www.postgresql.org/docs/current/sql-createschema.html
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct SchemaState {
-	pub name: String,
-	pub owner: String,
+	pub name: Str,
+	pub owner: Str,
 	pub tables: Set<TableState>,
 	pub typs: Set<Typ>,
 	pub functions: Set<Function>,
-	pub grants: HashMap<String, Vec<SchemaGrant>>,
+	pub grants: HashMap<Str, Vec<SchemaGrant>>,
 }
 impl_hash_and_equivalent!(SchemaState);
 
@@ -241,22 +248,22 @@ impl_hash_and_equivalent!(SchemaState);
 // https://www.postgresql.org/docs/current/sql-createtype.html
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Typ {
-	pub name: String,
-	pub owner: String,
+	pub name: Str,
+	pub owner: Str,
 	pub body: TypBody,
-	pub grants: HashMap<String, Vec<TypeGrant>>,
+	pub grants: HashMap<Str, Vec<TypeGrant>>,
 }
 impl_hash_and_equivalent!(Typ);
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum TypBody {
-	Enum { values: Vec<String> },
+	Enum { values: Vec<Str> },
 	Composite { fields: Set<CompositeField> },
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct CompositeField {
-	pub name: String,
+	pub name: Str,
 	pub field_num: u16,
 	pub typ: Ref,
 }
@@ -266,24 +273,24 @@ impl_hash_and_equivalent!(CompositeField);
 // https://www.postgresql.org/docs/current/sql-createtable.html
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TableState {
-	pub name: String,
-	pub owner: String,
+	pub name: Str,
+	pub owner: Str,
 	pub columns: Set<Column>,
-	pub primary_key: Option<(String, Set<String>)>,
-	pub unique_constraints: HashMap<String, Set<String>>,
+	pub primary_key: Option<(Str, Set<Str>)>,
+	pub unique_constraints: HashMap<Str, Set<Str>>,
 	// foreign keys
-	pub grants: HashMap<String, Vec<TableGrant>>,
+	pub grants: HashMap<Str, Vec<TableGrant>>,
 }
 impl_hash_and_equivalent!(TableState);
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Column {
-	pub name: String,
+	pub name: Str,
 	pub typ: Ref,
 	pub not_null: bool,
-	pub default_expr: Option<String>,
+	pub default_expr: Option<Str>,
 	// pub attgenerated
-	pub grants: HashMap<String, Vec<TableColumnGrant>>,
+	pub grants: HashMap<Str, Vec<TableColumnGrant>>,
 }
 impl_hash_and_equivalent!(Column);
 
@@ -291,22 +298,22 @@ impl_hash_and_equivalent!(Column);
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Function {
-	pub name: String,
-	pub owner: String,
+	pub name: Str,
+	pub owner: Str,
 	pub args: Vec<FunctionArg>,
 	// TODO I think I'll want to actually parse the args and pull the out ones apart and put them in the return type
 	// so return type would be an enum of either a ref to some actual type or a description of the record type implied by the out args
 	pub return_typ: Ref,
 	pub kind: FunctionKind,
 	pub volatility: FunctionVolatility,
-	pub body: String,
+	pub body: Str,
 	pub has_sql_body: bool,
 	pub is_strict: bool,
 	pub returns_set: bool,
 	pub is_security_definer: bool,
 	pub is_leakproof: bool,
-	pub language: String,
-	pub grants: HashMap<String, Vec<FunctionGrant>>,
+	pub language: Str,
+	pub grants: HashMap<Str, Vec<FunctionGrant>>,
 }
 impl_hash_and_equivalent!(Function);
 
@@ -335,10 +342,10 @@ impl FunctionVolatility {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct FunctionArg {
-	pub name: Option<String>,
+	pub name: Option<Str>,
 	pub mode: ArgMode,
 	pub typ: Ref,
-	pub default: Option<String>,
+	pub default: Option<Str>,
 }
 
 // encoded as i for IN arguments, o for OUT arguments, b for INOUT arguments, v for VARIADIC arguments, t for TABLE arguments
@@ -357,14 +364,14 @@ impl ArgMode {
 // row_security?
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ConnectionSettings {
-	pub search_path: Vec<String>,
+	pub search_path: Vec<Str>,
 }
 // SHOW search_path ;
 // "$user",public
 
 pub fn make_default_settings() -> ConnectionSettings {
 	ConnectionSettings {
-		search_path: vec!["\"$user\"".to_string(), "public".to_string()]
+		search_path: vec!["\"$user\"".into(), "public".into()]
 	}
 }
 
@@ -426,7 +433,7 @@ pub fn make_default_settings() -> ConnectionSettings {
 #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 pub struct Grant<P> {
 	// pub grantee: String,
-	pub grantor: String,
+	pub grantor: Str,
 	pub privilege_type: P,
 	pub is_grantable: bool,
 }
@@ -541,19 +548,33 @@ pub struct TypeUsage;
 // MAINTAIN	m	TABLE
 
 
-#[derive(Debug, Eq, PartialEq)]
-pub(crate) struct Hash2Key(String, String);
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
+pub(crate) struct Hash2Key(pub Str, pub Str);
 
-impl std::hash::Hash for Hash2Key {
-	fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-		self.0.hash(state);
-		self.1.hash(state);
+impl hashbrown::Equivalent<Hash2Key> for (Str, Str) {
+	fn equivalent(&self, key: &Hash2Key) -> bool {
+		self.0 == key.0 && self.1 == key.1
 	}
 }
 
 impl hashbrown::Equivalent<Hash2Key> for (&str, &str) {
 	fn equivalent(&self, key: &Hash2Key) -> bool {
 		self.0 == key.0 && self.1 == key.1
+	}
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
+pub(crate) struct Hash3Key(pub Str, pub Str, pub Str);
+
+impl hashbrown::Equivalent<Hash3Key> for (Str, Str, Str) {
+	fn equivalent(&self, key: &Hash3Key) -> bool {
+		self.0 == key.0 && self.1 == key.1 && self.2 == key.2
+	}
+}
+
+impl hashbrown::Equivalent<Hash3Key> for (&str, &str, &str) {
+	fn equivalent(&self, key: &Hash3Key) -> bool {
+		self.0 == key.0 && self.1 == key.1 && self.2 == key.2
 	}
 }
 

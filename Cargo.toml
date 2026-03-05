@@ -15,6 +15,7 @@ rand_distr = "0.5"
 chrono = { version = "0.4", default-features = false, features = ["alloc", "std", "alloc", "clock", "now", "serde"] }
 hashbrown = "0.16"
 pg_query = "6.1"
+smol_str = "0.3"
 itertools = "0.14.0"
 anyhow = "1"
 
@@ -31,6 +32,7 @@ tokio = { workspace = true, features = ["full", "rt"] }
 chrono = { workspace = true, default-features = false, features = ["alloc", "std", "alloc", "clock", "now", "serde"] }
 thiserror.workspace = true
 pg_query.workspace = true
+smol_str.workspace = true
 itertools.workspace = true
 
 
