@@ -352,3 +352,10 @@ from
 	cross join lateral aclexplode(lanacl) with ordinality as a
 group by lanname
 ;
+
+
+-- --! reflect_languages_hmm : (aclitems?)
+-- select
+-- 	lanname::text, lanacl::text[] as aclitems
+-- from pg_catalog.pg_language
+-- ;

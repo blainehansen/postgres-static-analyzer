@@ -1,5 +1,20 @@
-create role a;
-create role b;
+create role guy;
+grant usage on language plpgsql to guy;
+
+select
+	lanname::text, lanacl::text[] as aclitems, lanacl is null,
+	acldefault('l', 'devuser'::regrole::oid)::text[]
+from pg_catalog.pg_language
+;
+
+revoke usage on language plpgsql from guy;
+revoke usage on language plpgsql from public;
+revoke usage on language plpgsql from devuser;
+select
+	lanname::text, lanacl::text[] as aclitems, lanacl is null,
+	acldefault('l', 'devuser'::regrole::oid)::text[]
+from pg_catalog.pg_language
+;
 
 -- we have a couple layers here:
 -- - target_role: Change default privileges for objects created by the target_role, or the current role if unspecified.
