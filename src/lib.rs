@@ -171,13 +171,23 @@ pub struct DbState {
 	pub schemas: Set<SchemaState>,
 	pub foreign_keys: Vec<ForeignKey>,
 	pub grants: HashMap<Str, Vec<DbGrant>>,
-	// pub languages: Set<Language>,
+	pub languages: Set<Language>,
 
 	// TODO we assume that the "local" settings in connection params or whatever don't matter to us right?
 	// we assume we're checking for any possible future connection?
 	// which means if they're going to use different settings they have to pass them in the seq functions
 	// pub settings: ConnectionSettings,
 }
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Language {
+	pub name: Str,
+	pub owner: Str,
+	pub is_internal: bool,
+	pub is_trusted: bool,
+	pub grants: HashMap<Str, Vec<LanguageGrant>>,
+}
+impl_hash_and_equivalent!(Language);
 
 // https://www.postgresql.org/docs/17/catalog-pg-auth-members.html
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -469,11 +479,11 @@ pub struct FunctionExecute;
 // #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
 // pub struct ForeignServerUsage;
 
-// // LANGUAGE	U	U	\dL+
-// pub type LanguageGrant = Grant<LanguageUsage>;
-// #[allow(non_camel_case_types)]
-// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-// pub struct LanguageUsage;
+// LANGUAGE	U	U	\dL+
+pub type LanguageGrant = Grant<LanguageUsage>;
+#[allow(non_camel_case_types)]
+#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
+pub struct LanguageUsage;
 
 // // LARGE OBJECT	rw	none	\dl+
 // pub type LargeObjectGrant = Grant<LargeObjectPrivilege>;
