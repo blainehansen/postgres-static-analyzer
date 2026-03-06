@@ -226,6 +226,18 @@ group by sch.oid, fn.oid, return_typ.oid, return_typ_sch.oid, lang.oid
 ;
 
 
+--! reflect_languages
+select
+	lanname::text as name,
+	pg_get_userbyid(lanowner)::text as owner,
+	lanispl as is_external,
+	lanpltrusted as is_trusted
+from
+	pg_catalog.pg_language
+;
+
+
+
 
 -- TODO interesting behavior when granting/revoking from public: users who previously had the same rights as public or were basically "inheriting" them have their explicit acls added to ensure that the "cascade" to public is no longer used for them.
 --! reflect_db_grants
@@ -325,4 +337,18 @@ where
 	and not col.attisdropped
 	and col.attnum > 0
 group by col.attrelid, col.attnum, tab.oid, sch.oid
+;
+
+
+--! reflect_language_grants
+select
+	lanname::text,
+	array_agg(case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end order by a.ordinality) as grantees,
+	-- array_agg(privilege_type order by a.ordinality) as privilege_types,
+	array_agg(is_grantable order by a.ordinality) as is_grantables,
+	array_agg(pg_get_userbyid(grantor)::text order by a.ordinality) as grantors
+from
+	pg_catalog.pg_language
+	cross join lateral aclexplode(lanacl) with ordinality as a
+group by lanname
 ;

@@ -1034,3 +1034,36 @@ async fn test_reflect_functions() -> anyhow::Result<()> {
 
 	Ok(())
 }
+
+#[tokio::test]
+async fn test_reflect_languages() -> anyhow::Result<()> {
+	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
+		let languages = reflect::reflect_languages(&client).await?;
+		assert_eq!(languages, Set::from([
+			Language { name: s("c"), owner: s("tempuser"), is_external: false, is_trusted: false, grants: HashMap::new() },
+			Language { name: s("internal"), owner: s("tempuser"), is_external: false, is_trusted: false, grants: HashMap::new() },
+			Language { name: s("sql"), owner: s("tempuser"), is_external: false, is_trusted: true, grants: HashMap::new() },
+			Language { name: s("plpgsql"), owner: s("tempuser"), is_external: true, is_trusted: true, grants: HashMap::new() },
+		]));
+
+		client.batch_execute(r#"
+			create role guy;
+			grant usage on language plpgsql to guy;
+		"#).await?;
+		let languages = reflect::reflect_languages(&client).await?;
+		assert_eq!(languages, Set::from([
+			Language { name: s("c"), owner: s("tempuser"), is_external: false, is_trusted: false, grants: HashMap::new() },
+			Language { name: s("internal"), owner: s("tempuser"), is_external: false, is_trusted: false, grants: HashMap::new() },
+			Language { name: s("sql"), owner: s("tempuser"), is_external: false, is_trusted: true, grants: HashMap::new() },
+			Language { name: s("plpgsql"), owner: s("tempuser"), is_external: true, is_trusted: true, grants: HashMap::from([
+				(s("public"), vec![LanguageGrant { privilege_type: LanguageUsage, is_grantable: false, grantor: s("tempuser") }]),
+				(s("tempuser"), vec![LanguageGrant { privilege_type: LanguageUsage, is_grantable: false, grantor: s("tempuser") }]),
+				(s("guy"), vec![LanguageGrant { privilege_type: LanguageUsage, is_grantable: false, grantor: s("tempuser") }]),
+			]) },
+		]));
+
+		Ok::<_, postgres::Error>(())
+	}).await??;
+
+	Ok(())
+}

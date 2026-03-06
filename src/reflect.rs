@@ -1,5 +1,5 @@
 use crate::{
-	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, Hash2Key, Hash3Key, PgClient, Ref, Role, RoleMembership, SchemaGrant, SchemaPrivilege, SchemaState, Set, TableColumnGrant, TableColumnPrivilege, TableGrant, TablePrivilege, TableState, Typ, TypBody, TypeGrant, TypeUsage, make_default_settings, postgres, HashMap, GroupMapHb, Str,
+	ArgMode, Column, CompositeField, ConnectionSettings, DbGrant, DbPrivilege, DbState, ForeignKey, Function, FunctionArg, FunctionExecute, FunctionGrant, FunctionKind, FunctionVolatility, Hash2Key, Hash3Key, PgClient, Ref, Role, RoleMembership, SchemaGrant, SchemaPrivilege, SchemaState, Set, TableColumnGrant, TableColumnPrivilege, TableGrant, TablePrivilege, TableState, Typ, TypBody, TypeGrant, TypeUsage, Language, LanguageGrant, LanguageUsage, make_default_settings, postgres, HashMap, GroupMapHb, Str,
 };
 
 pub async fn reflect_db_state(
@@ -12,6 +12,7 @@ pub async fn reflect_db_state(
 		grants,
 		schemas,
 		foreign_keys,
+		languages,
 	) = tokio::try_join!(
 		reflect_roles(client),
 		reflect_role_memberships(client),
@@ -19,10 +20,11 @@ pub async fn reflect_db_state(
 		reflect_db_grants(client),
 		reflect_user_schemas(client),
 		reflect_foreign_keys(client),
+		reflect_languages(client),
 	)?;
 	let default_settings = default_settings.unwrap_or_else(make_default_settings);
 
-	Ok(DbState { roles, role_memberships, default_settings, schemas, foreign_keys, grants })
+	Ok(DbState { roles, role_memberships, default_settings, schemas, foreign_keys, grants, languages })
 }
 
 pub async fn reflect_role_memberships(
@@ -486,4 +488,55 @@ pub(crate) async fn reflect_functions(
 	}
 
 	Ok(functions)
+}
+
+pub(crate) async fn reflect_languages(
+	client: &PgClient
+) -> Result<Set<Language>, postgres::Error> {
+	let languages_query = reflect_crate::queries::main::reflect_languages();
+	let (languages, mut grants_map) = tokio::try_join!(
+		languages_query.bind(client)
+			.map(|l| {
+				Language {
+					name: l.name.into(),
+					owner: l.owner.into(),
+					is_external: l.is_external,
+					is_trusted: l.is_trusted,
+					grants: HashMap::new(),
+				}
+			}).all(),
+		reflect_language_grants(client),
+	)?;
+
+	let languages = languages.into_iter().map(|mut l| {
+		if let Some(grants) = grants_map.remove(l.name.as_str()) {
+			l.grants.extend(grants);
+		}
+		l
+	}).collect();
+
+	Ok(languages)
+}
+
+pub(crate) async fn reflect_language_grants(
+	client: &PgClient
+) -> Result<HashMap<Str, HashMap<Str, Vec<LanguageGrant>>>, postgres::Error> {
+	let grants_map = reflect_crate::queries::main::reflect_language_grants().bind(client)
+		.map(|g| {
+			let user_grants = itertools::izip!(g.grantees, g.is_grantables, g.grantors)
+				.map(|(grantee, is_grantable, grantor)| {
+					(
+						grantee.into(),
+						LanguageGrant { privilege_type: LanguageUsage, is_grantable, grantor: grantor.into() },
+					)
+				})
+				.into_group_map_hashbrown::<_, _, Vec<_>>();
+
+			(g.lanname.into(), user_grants)
+		})
+		.all().await?
+		.into_iter()
+		.collect::<HashMap<_, _>>();
+
+	Ok(grants_map)
 }

@@ -183,7 +183,7 @@ pub struct DbState {
 pub struct Language {
 	pub name: Str,
 	pub owner: Str,
-	pub is_internal: bool,
+	pub is_external: bool,
 	pub is_trusted: bool,
 	pub grants: HashMap<Str, Vec<LanguageGrant>>,
 }
