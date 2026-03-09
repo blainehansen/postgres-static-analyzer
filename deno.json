@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"noImplicitAny": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
+		"exactOptionalPropertyTypes": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": false,
+		"noPropertyAccessFromIndexSignature": true,
+		"noUnusedLocals": false,
+		"noUnusedParameters": false
+	},
+	"lint": {
+		"rules": {
+			"exclude": ["no-import-prefix"]
+		}
+	}
+}

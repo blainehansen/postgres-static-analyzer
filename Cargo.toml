@@ -18,6 +18,8 @@ pg_query = "6.1"
 smol_str = "0.3"
 itertools = "0.14.0"
 anyhow = "1"
+nom = "8"
+paste = "1"
 
 
 [package]
@@ -30,11 +32,13 @@ reflect_crate = { path = "./reflect_crate" }
 hashbrown.workspace = true
 tokio = { workspace = true, features = ["full", "rt"] }
 chrono = { workspace = true, default-features = false, features = ["alloc", "std", "alloc", "clock", "now", "serde"] }
-thiserror.workspace = true
+# thiserror.workspace = true
 pg_query.workspace = true
 smol_str.workspace = true
 itertools.workspace = true
-
+nom.workspace = true
+paste.workspace = true
+futures.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true

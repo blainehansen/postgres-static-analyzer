@@ -1,12 +1,4 @@
-pub use reflect::reflect_db_state;
-
-// use sqlparser::ast::Statement as SqlStatement;
-use pg_query::{Node, NodeEnum};
 pub(crate) use smol_str::SmolStr as Str;
-
-fn nodes_to_enum(nodes: Vec<Node>) -> Vec<NodeEnum> {
-	nodes.into_iter().filter_map(|n| n.node).collect()
-}
 
 pub(crate) use reflect_crate::tokio_postgres::{self as postgres, /*Config as PgConfig,*/ Client as PgClient};
 
@@ -18,602 +10,334 @@ mod reflect;
 #[cfg(test)]
 mod reflect_test;
 
+pub use reflect::{reflect_pg_state, reflect_pg_class};
 
-/// This error is given when a sql block contains statements that either *can't* be supported or *won't* be supported.
-#[derive(thiserror::Error, Debug)]
-pub enum NotSupportedError {
-	#[error(transparent)]
-	SqlParserError(#[from] pg_query::Error),
-
-	#[error("Create or alter database commands can't be analyzed by postgres-static-analyzer, which requires all statements happen within the context of a single database.")]
-	ManipulateDatabase,
-}
-pub type SupportResult<T> = Result<T, NotSupportedError>;
-
-
-#[derive(thiserror::Error, Debug)]
-pub enum ApplyError {
-	#[error("tried to create a conflicting schema {0}")]
-	CreateConflictingSchema(Str)
-}
-
-pub struct ApplyOutcome {
-	pub db_state: DbState,
-	pub flags: ApplyFlags,
-	pub errors: Vec<ApplyError>,
-}
-
-pub struct ApplyFlags {
-	pub destroys_objects: bool,
-	pub mutates_objects: bool,
-	pub destroys_data: bool,
-	pub mutates_data: bool,
-}
-
-
-pub(crate) fn apply_command(
-	_db_settings: ConnectionSettings,
-	mut db_state: DbState,
-	sql_statement: NodeEnum,
-) -> SupportResult<ApplyOutcome> {
-	use pg_query::protobuf as n;
-
-	let mut errors = vec![];
-	let mut flags = ApplyFlags { destroys_objects: false, mutates_objects: false, destroys_data: false, mutates_data: false };
-
-	match sql_statement {
-		NodeEnum::CreatedbStmt(_)  | NodeEnum::AlterDatabaseStmt(_) | NodeEnum::AlterDatabaseSetStmt(_) | NodeEnum::AlterDatabaseRefreshCollStmt(_)
-			=> { return Err(NotSupportedError::ManipulateDatabase) },
-
-		NodeEnum::CreateSchemaStmt(n::CreateSchemaStmt { schemaname, authrole: _, schema_elts, if_not_exists }) => {
-			let exists = db_state.schemas.contains(schemaname.as_str());
-
-			match (exists, if_not_exists) {
-				(false, _) => {
-					let mut schema = SchemaState { name: schemaname.into(), owner: "TODO".into(), tables: Set::new(), typs: Set::new(), functions: Set::new(), grants: HashMap::new() };
-					add_nodes_to_schema(&mut flags, &mut errors, &mut schema, nodes_to_enum(schema_elts))?;
-					db_state.schemas.insert(schema);
-				}
-				(true, true) => { /* do nothing, ignore */ }
-				(true, false) => {
-					errors.push(ApplyError::CreateConflictingSchema(schemaname.into()));
-				}
-			};
-		},
-
-		_ => unimplemented!(),
-	};
-
-	Ok(ApplyOutcome { db_state, flags, errors })
-}
-
-fn add_nodes_to_schema(
-	flags: &mut ApplyFlags, errors: &mut Vec<ApplyError>, schema: &mut SchemaState,
-	nodes: Vec<NodeEnum>,
-) -> SupportResult<ApplyOutcome> {
-	unimplemented!()
-}
-
-
-pub type SqlBlock = Str;
-
-/// Walks through the blocks, assuming `db_settings` already applies from a create/alter database command that was issued to the database before the blocks.
-pub fn try_seq_db_settings(
-	db_settings: ConnectionSettings,
-	sql_blocks: Vec<SqlBlock>,
-	stop_on_error: bool,
-) -> ApplyOutcome {
-
-	// destroys_objects
-	// mutates_objects
-	// destroys_data
-	// mutates_data
-	// errors
-
-	// sqlparser::parser::Parser::parse_sql(&sqlparser::dialect::PostgreSqlDialect, sql);
-
-	unimplemented!()
-}
-
-pub fn try_seq(sql_blocks: Vec<SqlBlock>, stop_on_error: bool) -> ApplyOutcome {
-	let db_settings = ConnectionSettings { search_path: vec!["\"$user\"".into(), "public".into()] };
-
-	try_seq_db_settings(db_settings, sql_blocks, stop_on_error)
-}
-
-
-// https://www.postgresql.org/docs/current/sql-commands.html
-// https://www.postgresql.org/docs/current/config-setting.html#CONFIG-SETTING-SQL
-
-
+mod aclitem;
 
 //  ($type:ty, $field:ident) => {
 macro_rules! impl_hash_and_equivalent {
-	($type:ty) => {
+	($type:ty, $field:ident) => {
 		impl std::hash::Hash for $type {
 			fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-				self.name.hash(state);
+				self.$field.hash(state);
 			}
 		}
 
 		impl hashbrown::Equivalent<$type> for str {
 			fn equivalent(&self, key: &$type) -> bool {
-				key.name == *self
+				key.$field == *self
 			}
 		}
 
 		impl hashbrown::Equivalent<$type> for Str {
 			fn equivalent(&self, key: &$type) -> bool {
-				key.name == *self
+				key.$field == *self
 			}
 		}
 	};
 }
-macro_rules! impl_pg_from_str {
-	($type:ident, $($variant:ident),+ $(,)?) => {
-		impl $type {
-			fn pg_from_str(s: &str) -> $type {
-				match s {
-					$(stringify!($variant) => $type::$variant,)+
-					_ => panic!("Postgres returned unexpected {} variant: {}", stringify!($type), s),
+// macro_rules! impl_pg_from_str {
+// 	($type:ident, $($variant:ident),+ $(,)?) => {
+// 		impl $type {
+// 			fn pg_from_str(s: &str) -> $type {
+// 				match s {
+// 					$(stringify!($variant) => $type::$variant,)+
+// 					_ => panic!("Postgres returned unexpected {} variant: {}", stringify!($type), s),
+// 				}
+// 			}
+// 		}
+// 	};
+// }
+
+macro_rules! pg_enum {
+	($name:ident { $($char:literal => $variant:ident),* $(,)? }) => {
+		#[derive(Debug, PartialEq, Eq, Clone)]
+		pub enum $name {
+			$($variant),*
+		}
+
+		impl $name {
+			fn pg_from_char(c: i8) -> $name {
+				match c as u8 as char {
+					$($char => $name::$variant,)*
+					_ => panic!(
+						"Postgres returned an unknown {} variant: {}",
+						stringify!($name),
+						c as u8 as char
+					),
 				}
 			}
 		}
 	};
 }
 
+pg_enum!(FunctionKind { 'f' => Function, 'p' => Procedure, 'a' => Aggregate, 'w' => Window });
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct DbState {
-	pub roles: Set<Role>,
-	pub role_memberships: Vec<RoleMembership>,
-	pub default_settings: ConnectionSettings,
-	pub schemas: Set<SchemaState>,
-	pub foreign_keys: Vec<ForeignKey>,
-	pub grants: HashMap<Str, Vec<DbGrant>>,
-	pub languages: Set<Language>,
+// provolatile tells whether the function's result depends only on its input arguments, or is affected by outside factors. It is i for “immutable” functions, which always deliver the same result for the same inputs. It is s for “stable” functions, whose results (for fixed inputs) do not change within a scan. It is v for “volatile” functions, whose results might change at any time. (Use v also for functions with side-effects, so that calls to them cannot get optimized away.)
+pg_enum!(FunctionVolatilty { 'i' => Immutable, 's' => Stable, 'v' => Volatile });
 
-	// TODO we assume that the "local" settings in connection params or whatever don't matter to us right?
-	// we assume we're checking for any possible future connection?
-	// which means if they're going to use different settings they have to pass them in the seq functions
-	// pub settings: ConnectionSettings,
-}
+// encoded as i for IN arguments, o for OUT arguments, b for INOUT arguments, v for VARIADIC arguments, t for TABLE arguments
+pg_enum!(ArgMode { 'i' => In, 'o' => Out, 'b' => InOut, 'v' => Variadic, 't' => Table });
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Language {
-	pub name: Str,
-	pub owner: Str,
-	pub is_external: bool,
-	pub is_trusted: bool,
-	pub grants: HashMap<Str, Vec<LanguageGrant>>,
-}
-impl_hash_and_equivalent!(Language);
+// p = permanent table/sequence, u = unlogged table/sequence, t = temporary table/sequence
+pg_enum!(ClassPersistence { 'p' => Permanant, 'u' => Unlogged, 't' => Temporary });
 
-// https://www.postgresql.org/docs/17/catalog-pg-auth-members.html
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct RoleMembership {
-	pub parent_role: Str,
-	pub child_role: Str,
-	pub grantor: Str,
-	pub can_regrant_option: bool,
-	pub does_auto_inherit: bool,
-	pub can_set_to: bool,
+// r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table, I = partitioned index
+pg_enum!(ClassKind { 'r' => Table, 'i' => Index, 'S' => Sequence, 't' => Toast, 'v' => View, 'm' => MaterializedView, 'c' => CompositeType, 'f' => ForeignTable, 'p' => PartitionedTable, 'I' => PartitionedIndex });
 
-}
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
-pub struct ForeignKey {
-	constraint_name: Str,
-	referring_schema: Str,
-	referring_table: Str,
-	referring_columns: Vec<Str>,
-	referred_schema: Str,
-	referred_table: Str,
-	referred_columns: Vec<Str>,
-}
-
-
-// a Ref with a nullable schema name is inherently an *ast* concept
-// if we're actually putting together a real State, it's implied that we must have been able to figure out the fully qualified name as we're doing the checking. for example if we're doing a seq over a create table command, then any unqualified type names in the ast we absolutely must be able to use the connection settings/search path to look in our list of types and figure out which one it really is
-// this means at the State level the schema_name should absolutely never be None
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Ref {
 	pub schema_name: Str,
 	pub name: Str,
 }
 
-// https://www.postgresql.org/docs/current/sql-createrole.html
+#[derive(Debug)]
+pub struct PgState {
+	pub pg_class: Set<PgClass>,
+}
+
+
+// `pg_aggregate`: https://www.postgresql.org/docs/17/catalog-pg-aggregate.html
+
+
+// `pg_am`: https://www.postgresql.org/docs/17/catalog-pg-am.html
+
+
+// `pg_amop`: https://www.postgresql.org/docs/17/catalog-pg-amop.html
+
+
+// `pg_amproc`: https://www.postgresql.org/docs/17/catalog-pg-amproc.html
+
+
+// `pg_attrdef`: https://www.postgresql.org/docs/17/catalog-pg-attrdef.html
+
+
+// `pg_attribute`: https://www.postgresql.org/docs/17/catalog-pg-attribute.html
+
+
+// `pg_authid`: https://www.postgresql.org/docs/17/catalog-pg-authid.html
+
+
+// `pg_auth_members`: https://www.postgresql.org/docs/17/catalog-pg-auth-members.html
+
+
+// `pg_cast`: https://www.postgresql.org/docs/17/catalog-pg-cast.html
+
+
+// `pg_class`: https://www.postgresql.org/docs/17/catalog-pg-class.html
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Role {
-	pub name: Str,
-	pub is_super: bool,
-	pub does_inherit: bool,
-	pub can_create_role: bool,
-	pub can_create_db: bool,
-	pub can_login: bool,
-	pub is_replication: bool,
-	pub does_bypass_rls: bool,
-	// rolconnlimit int4
-	pub valid_until: Option<chrono::DateTime<chrono::FixedOffset>>,
-
-	pub default_search_path: Option<ConnectionSettings>,
-	pub db_search_path: Option<ConnectionSettings>,
+pub struct PgClass {
+	// relname name -- Name of the table, index, view, etc.
+	relname: Str,
+	// relnamespace oid -- The OID of the namespace that contains this relation
+	relnamespace: Str,
+	// reltype oid -- The OID of the data type that corresponds to this table's row type, if any; zero for indexes, sequences, and toast tables, which have no pg_type entry
+	reltype: Option<Ref>,
+	// reloftype oid -- For typed tables, the OID of the underlying composite type; zero for all other relations
+	reloftype: Option<Ref>,
+	// relowner oid -- Owner of the relation
+	relowner: Str,
+	// relam oid -- The access method used to access this table or index. Not meaningful if the relation is a sequence or has no on-disk file, except for partitioned tables, where, if set, it takes precedence over default_table_access_method when determining the access method to use for partitions created when one is not specified in the creation command.
+	// relam: Option<Str>,
+	// relfilenode oid -- Name of the on-disk file of this relation; zero means this is a “mapped” relation whose disk file name is determined by low-level state
+	// reltablespace oid -- The tablespace in which this relation is stored. If zero, the database's default tablespace is implied. Not meaningful if the relation has no on-disk file, except for partitioned tables, where this is the tablespace in which partitions will be created when one is not specified in the creation command.
+	reltablespace: Option<Str>,
+	// relpages int4 -- Size of the on-disk representation of this table in pages (of size BLCKSZ). This is only an estimate used by the planner. It is updated by VACUUM, ANALYZE, and a few DDL commands such as CREATE INDEX.
+	// reltuples float4 -- Number of live rows in the table. This is only an estimate used by the planner. It is updated by VACUUM, ANALYZE, and a few DDL commands such as CREATE INDEX. If the table has never yet been vacuumed or analyzed, reltuples contains -1 indicating that the row count is unknown.
+	// relallvisible int4 -- Number of pages that are marked all-visible in the table's visibility map. This is only an estimate used by the planner. It is updated by VACUUM, ANALYZE, and a few DDL commands such as CREATE INDEX.
+	// reltoastrelid oid -- OID of the TOAST table associated with this table, zero if none. The TOAST table stores large attributes “out of line” in a secondary table.
+	// relhasindex bool -- True if this is a table and it has (or recently had) any indexes
+	// relisshared bool -- True if this table is shared across all databases in the cluster. Only certain system catalogs (such as pg_database) are shared.
+	relisshared: bool,
+	// relpersistence char -- p = permanent table/sequence, u = unlogged table/sequence, t = temporary table/sequence
+	relpersistence: ClassPersistence,
+	// relkind char -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table, I = partitioned index
+	relkind: ClassKind,
+	// relnatts int2 -- Number of user columns in the relation (system columns not counted). There must be this many corresponding entries in pg_attribute. See also pg_attribute.attnum.
+	// relchecks int2 -- Number of CHECK constraints on the table; see pg_constraint catalog
+	// relhasrules bool -- True if table has (or once had) rules; see pg_rewrite catalog
+	// relhastriggers bool -- True if table has (or once had) triggers; see pg_trigger catalog
+	// relhassubclass bool -- True if table or index has (or once had) any inheritance children or partitions
+	// relrowsecurity bool -- True if table has row-level security enabled; see pg_policy catalog
+	relrowsecurity: bool,
+	// relforcerowsecurity bool -- True if row-level security (when enabled) will also apply to table owner; see pg_policy catalog
+	relforcerowsecurity: bool,
+	// relispopulated bool -- True if relation is populated (this is true for all relations other than some materialized views)
+	// relreplident char -- Columns used to form “replica identity” for rows: d = default (primary key, if any), n = nothing, f = all columns, i = index with indisreplident set (same as nothing if the index used has been dropped)
+	// relispartition bool -- True if table or index is a partition
+	relispartition: bool,
+	// relrewrite oid -- For new relations being written during a DDL operation that requires a table rewrite, this contains the OID of the original relation; otherwise zero. That state is only visible internally; this field should never contain anything other than zero for a user-visible relation.
+	// relfrozenxid xid -- All transaction IDs before this one have been replaced with a permanent (“frozen”) transaction ID in this table. This is used to track whether the table needs to be vacuumed in order to prevent transaction ID wraparound or to allow pg_xact to be shrunk. Zero (InvalidTransactionId) if the relation is not a table.
+	// relminmxid xid -- All multixact IDs before this one have been replaced by a transaction ID in this table. This is used to track whether the table needs to be vacuumed in order to prevent multixact ID wraparound or to allow pg_multixact to be shrunk. Zero (InvalidMultiXactId) if the relation is not a table.
+	// relacl aclitem[] -- Access privileges; see Section 5.8 for details
+	relacl: Vec<aclitem::TableAclItem>,
+	// reloptions text[] -- Access-method-specific options, as “keyword=value” strings
+	reloptions: Vec<Str>,
+	// relpartbound pg_node_tree -- If table is a partition (see relispartition), internal representation of the partition bound
+	// relpartbound: Option<Str>,
 }
-impl_hash_and_equivalent!(Role);
+impl_hash_and_equivalent!(PgClass, relname);
 
 
-// https://www.postgresql.org/docs/current/sql-createschema.html
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct SchemaState {
-	pub name: Str,
-	pub owner: Str,
-	pub tables: Set<TableState>,
-	pub typs: Set<Typ>,
-	pub functions: Set<Function>,
-	pub grants: HashMap<Str, Vec<SchemaGrant>>,
-}
-impl_hash_and_equivalent!(SchemaState);
+// `pg_collation`: https://www.postgresql.org/docs/17/catalog-pg-collation.html
 
 
-// https://www.postgresql.org/docs/current/sql-createtype.html
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Typ {
-	pub name: Str,
-	pub owner: Str,
-	pub body: TypBody,
-	pub grants: HashMap<Str, Vec<TypeGrant>>,
-}
-impl_hash_and_equivalent!(Typ);
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum TypBody {
-	Enum { values: Vec<Str> },
-	Composite { fields: Set<CompositeField> },
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct CompositeField {
-	pub name: Str,
-	pub field_num: u16,
-	pub typ: Ref,
-}
-impl_hash_and_equivalent!(CompositeField);
+// `pg_constraint`: https://www.postgresql.org/docs/17/catalog-pg-constraint.html
 
 
-// https://www.postgresql.org/docs/current/sql-createtable.html
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct TableState {
-	pub name: Str,
-	pub owner: Str,
-	pub columns: Set<Column>,
-	pub primary_key: Option<(Str, Set<Str>)>,
-	pub unique_constraints: HashMap<Str, Set<Str>>,
-	// foreign keys
-	pub grants: HashMap<Str, Vec<TableGrant>>,
-}
-impl_hash_and_equivalent!(TableState);
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Column {
-	pub name: Str,
-	pub typ: Ref,
-	pub not_null: bool,
-	pub default_expr: Option<Str>,
-	// pub attgenerated
-	pub grants: HashMap<Str, Vec<TableColumnGrant>>,
-}
-impl_hash_and_equivalent!(Column);
+// `pg_conversion`: https://www.postgresql.org/docs/17/catalog-pg-conversion.html
 
 
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Function {
-	pub name: Str,
-	pub owner: Str,
-	pub args: Vec<FunctionArg>,
-	// TODO I think I'll want to actually parse the args and pull the out ones apart and put them in the return type
-	// so return type would be an enum of either a ref to some actual type or a description of the record type implied by the out args
-	pub return_typ: Ref,
-	pub kind: FunctionKind,
-	pub volatility: FunctionVolatility,
-	pub body: Str,
-	pub has_sql_body: bool,
-	pub is_strict: bool,
-	pub returns_set: bool,
-	pub is_security_definer: bool,
-	pub is_leakproof: bool,
-	pub language: Str,
-	pub grants: HashMap<Str, Vec<FunctionGrant>>,
-}
-impl_hash_and_equivalent!(Function);
-
-// f for a normal function, p for a procedure, a for an aggregate function, or w for a window function
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum FunctionKind { Function, Procedure, Aggregate, Window }
-impl FunctionKind {
-	fn pg_from_char(c: i8) -> FunctionKind {
-		match c as u8 as char {
-			'f' => FunctionKind::Function, 'p' => FunctionKind::Procedure, 'a' => FunctionKind::Aggregate, 'w' => FunctionKind::Window,
-			_ => panic!("Postgres returned an unknown function variant: {}", c as u8 as char),
-		}
-	}
-}
-// provolatile tells whether the function's result depends only on its input arguments, or is affected by outside factors. It is i for “immutable” functions, which always deliver the same result for the same inputs. It is s for “stable” functions, whose results (for fixed inputs) do not change within a scan. It is v for “volatile” functions, whose results might change at any time. (Use v also for functions with side-effects, so that calls to them cannot get optimized away.)
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum FunctionVolatility { Immutable, Stable, Volatile }
-impl FunctionVolatility {
-	fn pg_from_char(c: i8) -> FunctionVolatility {
-		match c as u8 as char {
-			'i' => FunctionVolatility::Immutable, 's' => FunctionVolatility::Stable, 'v' => FunctionVolatility::Volatile,
-			_ => panic!("Postgres returned an unknown function volatility: {}", c as u8 as char),
-		}
-	}
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct FunctionArg {
-	pub name: Option<Str>,
-	pub mode: ArgMode,
-	pub typ: Ref,
-	pub default: Option<Str>,
-}
-
-// encoded as i for IN arguments, o for OUT arguments, b for INOUT arguments, v for VARIADIC arguments, t for TABLE arguments
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub enum ArgMode { In, Out, InOut, Variadic, Table }
-impl ArgMode {
-	fn pg_from_char(c: i8) -> ArgMode {
-		match c as u8 as char {
-			'i' => ArgMode::In, 'o' => ArgMode::Out, 'b' => ArgMode::InOut, 'v' => ArgMode::Variadic, 't' => ArgMode::Table,
-			_ => panic!("Postgres returned an unknown arg mode: {}", c as u8 as char),
-		}
-	}
-}
-
-// https://www.postgresql.org/docs/current/runtime-config-client.html
-// row_security?
-#[derive(Debug, PartialEq, Eq, Clone)]
-pub struct ConnectionSettings {
-	pub search_path: Vec<Str>,
-}
-// SHOW search_path ;
-// "$user",public
-
-pub fn make_default_settings() -> ConnectionSettings {
-	ConnectionSettings {
-		search_path: vec!["\"$user\"".into(), "public".into()]
-	}
-}
+// `pg_database`: https://www.postgresql.org/docs/17/catalog-pg-database.html
 
 
-// At the database level -- only takes affect for new sessions: ALTER DATABASE mydb SET search_path = public, utility;
-// At the server user level -- only takes affect for new sessions: ALTER ROLE postgres SET search_path = public,utility;
-// At the database user level - only takes affect for new sessions: ALTER ROLE postgres IN DATABASE mydb SET search_path = public, utility;
-// At the session level - only lasts for the life of the session: set search_path=public,utility;
-// At the function level - only lasts for life of execution of function within function: ALTER FUNCTION some_func() SET search_path=public,utility;
-
-// https://www.janbasktraining.com/community/sql-server/what-is-the-postgres-set-search-path-for-a-given-database-and-user
-// SELECT boot_val FROM pg_settings WHERE name='search_path';
-// SELECT reset_val FROM pg_settings WHERE name='search_path';
-
-// https://www.postgresql.org/docs/current/catalog-pg-db-role-setting.html
-// "or zero if not role/database-specific"
-// SELECT setconfig
-// FROM pg_db_role_setting
-// WHERE setdatabase = (SELECT oid FROM pg_database WHERE datname = 'your_database_name')
-// 	AND setrole = 0;
-
-// SELECT setconfig
-// FROM pg_db_role_setting
-// WHERE setrole = (SELECT oid FROM pg_roles WHERE rolname = 'username')
-//   AND setdatabase = 0;
-
-// SELECT setconfig
-// FROM pg_db_role_setting
-// WHERE setdatabase = (SELECT oid FROM pg_database WHERE datname = 'your_database_name')
-//   AND setrole = (SELECT oid FROM pg_roles WHERE rolname = 'username');
-
-// SELECT proname, pronamespace, proconfig
-// FROM pg_proc
-// WHERE proconfig IS NOT NULL
-//   AND array_to_string(proconfig, ',') LIKE '%search_path%';
+// `pg_db_role_setting`: https://www.postgresql.org/docs/17/catalog-pg-db-role-setting.html
 
 
-// SELECT current_schemas(true);  -- includes implicit schemas like pg_catalog
-// SHOW search_path;              -- shows the raw search_path setting
+// `pg_default_acl`: https://www.postgresql.org/docs/17/catalog-pg-default-acl.html
 
 
-
-// the big question is where to store all these grants. where will we want them when we need them?
-// what questions will we be asking when we need to look at grants?
-// the main one will be "for this user who is implied to be logged in for this query, are they allowed to do it? so for the database in general, and then the database objects that this query acts upon, are each of those actions allowed". so that will always
-// another possibly useful question is "can this database object be acted on in this family of ways (mutation, deletion) by anyone in or out of this set of roles", which is usefully distinct from "can this database object be acted on in this particular way by this particular role" which is the question we're asking above
-// my options for where to put these grant objects:
-// - in one big list. this is actually *not* even how postgres does it! this is simple to query though, since I just do the big union all. and when answering the most common question of "can this role do this thing", I'd have to look separately in this list. however it makes "can this wildcard thing be done by this wildcard role on this wildcard object" much more comparatively easy
-// - on the database objects they apply to (HashMap<RoleName, TableGrant>). this is more type work, but it means that when I'm answering the question of "can this person do this", it's very simple since I have to look up the specific object anyway to see if what they're doing is well-structured, so the grant information comes along naturally. I only have to "multiplex" to make sure I check for all roles they have access to
-// however this structure complicates the querying for these objects greatly. either you have to modify the existing queries that get the information about the object (which could be much more difficult because the acl items are stored as a list and need to be unnested), or a separate query that we then correlate back to the objects (which sounds annoying and inefficient)
-
-// what about the default grants? they go in a sequence from schema-specific to database-wide to postgres-default
-// when we're answering "can this person do this thing to this object" we perhaps *start* by looking at the object itself, if we find nothing cascade up to the schema level, and then the database level, then the postgres-default (or not? only if the schema/database defaults don't exist?)
-
-// https://www.cybertec-postgresql.com/en/postgresql-alter-default-privileges-permissions-explained/
-// Default privileges are the privileges on an object right after you created it. On all object types, the default privileges allow everything to the object owner. On most objects, nobody else has any privileges by default. But on some objects, PUBLIC (everybody) has certain privileges:
+// `pg_depend`: https://www.postgresql.org/docs/17/catalog-pg-depend.html
 
 
-#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-pub struct Grant<P> {
-	// pub grantee: String,
-	pub grantor: Str,
-	pub privilege_type: P,
-	pub is_grantable: bool,
-}
-
-// DATABASE	CTc	Tc	\l
-pub type DbGrant = Grant<DbPrivilege>;
-#[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-pub enum DbPrivilege { CREATE, CONNECT, TEMPORARY }
-impl_pg_from_str!(DbPrivilege, CREATE, CONNECT, TEMPORARY);
-
-// // DOMAIN  U  U  \dD+
-// pub type DomainGrant = Grant<DomainUsage>;
-// #[allow(non_camel_case_types)]
-// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-// pub struct DomainUsage;
-
-// FUNCTION or PROCEDURE	X	X	\df+
-pub type FunctionGrant = Grant<FunctionExecute>;
-#[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-pub struct FunctionExecute;
-
-// // FOREIGN DATA WRAPPER	U	none	\dew+
-// pub type ForeignDataWrapperGrant = Grant<ForeignDataWrapperUsage>;
-// #[allow(non_camel_case_types)]
-// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-// pub struct ForeignDataWrapperUsage;
-
-// // FOREIGN SERVER	U	none	\des+
-// pub type ForeignServerGrant = Grant<ForeignServerUsage>;
-// #[allow(non_camel_case_types)]
-// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-// pub struct ForeignServerUsage;
-
-// LANGUAGE	U	U	\dL+
-pub type LanguageGrant = Grant<LanguageUsage>;
-#[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-pub struct LanguageUsage;
-
-// // LARGE OBJECT	rw	none	\dl+
-// pub type LargeObjectGrant = Grant<LargeObjectPrivilege>;
-// #[allow(non_camel_case_types)]
-// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-// pub enum LargeObjectPrivilege { SELECT, UPDATE }
-// impl_pg_from_str!(LargeObjectPrivilege, SELECT, UPDATE);
-
-// // PARAMETER	sA	none	\dconfig+
-// pub type ParameterGrant = Grant<ParameterPrivilege>;
-// #[allow(non_camel_case_types)]
-// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-// pub enum ParameterPrivilege { SET, ALTER_SYSTEM }
-// impl_pg_from_str!(ParameterPrivilege, SET, ALTER_SYSTEM);
-
-// SCHEMA	UC	none	\dn+
-pub type SchemaGrant = Grant<SchemaPrivilege>;
-#[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-pub enum SchemaPrivilege { USAGE, CREATE }
-impl_pg_from_str!(SchemaPrivilege, USAGE, CREATE);
-
-// // SEQUENCE	rwU	none	\dp
-// pub type SequenceGrant = Grant<SequencePrivilege>;
-// #[allow(non_camel_case_types)]
-// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-// pub enum SequencePrivilege { SELECT, UPDATE, USAGE }
-// impl_pg_from_str!(SequencePrivilege, SELECT, UPDATE, USAGE);
-
-// TABLE (and table-like objects)	arwdDxtm	none	\dp
-pub type TableGrant = Grant<TablePrivilege>;
-#[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-pub enum TablePrivilege { INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN }
-impl_pg_from_str!(TablePrivilege, INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN);
-
-// Table column	arwx	none	\dp
-pub type TableColumnGrant = Grant<TableColumnPrivilege>;
-#[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-pub enum TableColumnPrivilege { INSERT, SELECT, UPDATE, REFERENCES }
-impl_pg_from_str!(TableColumnPrivilege, INSERT, SELECT, UPDATE, REFERENCES);
-
-// // TABLESPACE	C	none	\db+
-// pub type TablespaceGrant = Grant<TablespaceCreate>;
-// #[allow(non_camel_case_types)]
-// #[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-// pub struct TablespaceCreate;
-
-// TYPE	U	U	\dT+
-pub type TypeGrant = Grant<TypeUsage>;
-#[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
-pub struct TypeUsage;
+// `pg_description`: https://www.postgresql.org/docs/17/catalog-pg-description.html
 
 
-
-// SELECT	r (“read”)	LARGE OBJECT, SEQUENCE, TABLE (and table-like objects), table column
-// INSERT	a (“append”)	TABLE, table column
-// UPDATE	w (“write”)	LARGE OBJECT, SEQUENCE, TABLE, table column
-// DELETE	d	TABLE
-// TRUNCATE	D	TABLE
-// REFERENCES	x	TABLE, table column
-// TRIGGER	t	TABLE
-// CREATE	C	DATABASE, SCHEMA, TABLESPACE
-// CONNECT	c	DATABASE
-// TEMPORARY	T	DATABASE
-// EXECUTE	X	FUNCTION, PROCEDURE
-// USAGE	U	DOMAIN, FOREIGN DATA WRAPPER, FOREIGN SERVER, LANGUAGE, SCHEMA, SEQUENCE, TYPE
-// SET	s	PARAMETER
-// ALTER SYSTEM	A	PARAMETER
-// MAINTAIN	m	TABLE
+// `pg_enum`: https://www.postgresql.org/docs/17/catalog-pg-enum.html
 
 
-#[derive(Debug, Eq, PartialEq, Clone, Hash)]
-pub(crate) struct Hash2Key(pub Str, pub Str);
-
-impl hashbrown::Equivalent<Hash2Key> for (Str, Str) {
-	fn equivalent(&self, key: &Hash2Key) -> bool {
-		self.0 == key.0 && self.1 == key.1
-	}
-}
-
-impl hashbrown::Equivalent<Hash2Key> for (&str, &str) {
-	fn equivalent(&self, key: &Hash2Key) -> bool {
-		self.0 == key.0 && self.1 == key.1
-	}
-}
-
-#[derive(Debug, Eq, PartialEq, Clone, Hash)]
-pub(crate) struct Hash3Key(pub Str, pub Str, pub Str);
-
-impl hashbrown::Equivalent<Hash3Key> for (Str, Str, Str) {
-	fn equivalent(&self, key: &Hash3Key) -> bool {
-		self.0 == key.0 && self.1 == key.1 && self.2 == key.2
-	}
-}
-
-impl hashbrown::Equivalent<Hash3Key> for (&str, &str, &str) {
-	fn equivalent(&self, key: &Hash3Key) -> bool {
-		self.0 == key.0 && self.1 == key.1 && self.2 == key.2
-	}
-}
+// `pg_event_trigger`: https://www.postgresql.org/docs/17/catalog-pg-event-trigger.html
 
 
-pub(crate) trait GroupMapHb: Iterator + Sized {
-	fn into_group_map_hashbrown<K, V, C>(self) -> HashMap<K, C>
-	where
-		Self: Iterator<Item = (K, V)>,
-		K: std::hash::Hash + Eq,
-		C: Default + Extend<V>,
-	{
-		self.fold(HashMap::new(), |mut acc, (k, v)| {
-			acc.entry(k).or_default().extend(std::iter::once(v));
-			acc
-		})
-	}
+// `pg_extension`: https://www.postgresql.org/docs/17/catalog-pg-extension.html
 
-	// fn into_group_map_by_hb<K, V, C, F>(self, f: F) -> HashMap<K, C>
-	// where
-	// 	Self: Iterator<Item = V>,
-	// 	K: std::hash::Hash + Eq,
-	// 	C: Default + Extend<V>,
-	// 	F: Fn(&V) -> K,
-	// {
-	// 	self.fold(HashMap::new(), |mut acc, v| {
-	// 		acc.entry(f(&v)).or_default().extend(std::iter::once(v));
-	// 		acc
-	// 	})
-	// }
-}
 
-impl<T: Iterator> GroupMapHb for T {}
+// `pg_foreign_data_wrapper`: https://www.postgresql.org/docs/17/catalog-pg-foreign-data-wrapper.html
+
+
+// `pg_foreign_server`: https://www.postgresql.org/docs/17/catalog-pg-foreign-server.html
+
+
+// `pg_foreign_table`: https://www.postgresql.org/docs/17/catalog-pg-foreign-table.html
+
+
+// `pg_index`: https://www.postgresql.org/docs/17/catalog-pg-index.html
+
+
+// `pg_inherits`: https://www.postgresql.org/docs/17/catalog-pg-inherits.html
+
+
+// `pg_init_privs`: https://www.postgresql.org/docs/17/catalog-pg-init-privs.html
+
+
+// `pg_language`: https://www.postgresql.org/docs/17/catalog-pg-language.html
+
+
+// `pg_largeobject`: https://www.postgresql.org/docs/17/catalog-pg-largeobject.html
+
+
+// `pg_largeobject_metadata`: https://www.postgresql.org/docs/17/catalog-pg-largeobject-metadata.html
+
+
+// `pg_namespace`: https://www.postgresql.org/docs/17/catalog-pg-namespace.html
+
+
+// `pg_opclass`: https://www.postgresql.org/docs/17/catalog-pg-opclass.html
+
+
+// `pg_operator`: https://www.postgresql.org/docs/17/catalog-pg-operator.html
+
+
+// `pg_opfamily`: https://www.postgresql.org/docs/17/catalog-pg-opfamily.html
+
+
+// `pg_parameter_acl`: https://www.postgresql.org/docs/17/catalog-pg-parameter-acl.html
+
+
+// `pg_partitioned_table`: https://www.postgresql.org/docs/17/catalog-pg-partitioned-table.html
+
+
+// `pg_policy`: https://www.postgresql.org/docs/17/catalog-pg-policy.html
+
+
+// `pg_proc`: https://www.postgresql.org/docs/17/catalog-pg-proc.html
+
+
+// `pg_publication`: https://www.postgresql.org/docs/17/catalog-pg-publication.html
+
+
+// `pg_publication_namespace`: https://www.postgresql.org/docs/17/catalog-pg-publication-namespace.html
+
+
+// `pg_publication_rel`: https://www.postgresql.org/docs/17/catalog-pg-publication-rel.html
+
+
+// `pg_range`: https://www.postgresql.org/docs/17/catalog-pg-range.html
+
+
+// `pg_replication_origin`: https://www.postgresql.org/docs/17/catalog-pg-replication-origin.html
+
+
+// `pg_rewrite`: https://www.postgresql.org/docs/17/catalog-pg-rewrite.html
+
+
+// `pg_seclabel`: https://www.postgresql.org/docs/17/catalog-pg-seclabel.html
+
+
+// `pg_sequence`: https://www.postgresql.org/docs/17/catalog-pg-sequence.html
+
+
+// `pg_shdepend`: https://www.postgresql.org/docs/17/catalog-pg-shdepend.html
+
+
+// `pg_shdescription`: https://www.postgresql.org/docs/17/catalog-pg-shdescription.html
+
+
+// `pg_shseclabel`: https://www.postgresql.org/docs/17/catalog-pg-shseclabel.html
+
+
+// `pg_statistic`: https://www.postgresql.org/docs/17/catalog-pg-statistic.html
+
+
+// `pg_statistic_ext`: https://www.postgresql.org/docs/17/catalog-pg-statistic-ext.html
+
+
+// `pg_statistic_ext_data`: https://www.postgresql.org/docs/17/catalog-pg-statistic-ext-data.html
+
+
+// `pg_subscription`: https://www.postgresql.org/docs/17/catalog-pg-subscription.html
+
+
+// `pg_subscription_rel`: https://www.postgresql.org/docs/17/catalog-pg-subscription-rel.html
+
+
+// `pg_tablespace`: https://www.postgresql.org/docs/17/catalog-pg-tablespace.html
+
+
+// `pg_transform`: https://www.postgresql.org/docs/17/catalog-pg-transform.html
+
+
+// `pg_trigger`: https://www.postgresql.org/docs/17/catalog-pg-trigger.html
+
+
+// `pg_ts_config`: https://www.postgresql.org/docs/17/catalog-pg-ts-config.html
+
+
+// `pg_ts_config_map`: https://www.postgresql.org/docs/17/catalog-pg-ts-config-map.html
+
+
+// `pg_ts_dict`: https://www.postgresql.org/docs/17/catalog-pg-ts-dict.html
+
+
+// `pg_ts_parser`: https://www.postgresql.org/docs/17/catalog-pg-ts-parser.html
+
+
+// `pg_ts_template`: https://www.postgresql.org/docs/17/catalog-pg-ts-template.html
+
+
+// `pg_type`: https://www.postgresql.org/docs/17/catalog-pg-type.html
+
+
+// `pg_user_mapping`: https://www.postgresql.org/docs/17/catalog-pg-user-mapping.html
+
+
