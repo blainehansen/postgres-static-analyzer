@@ -17,7 +17,23 @@
 
 
 -- `pg_authid`: https://www.postgresql.org/docs/17/catalog-pg-authid.html
-
+-- `pg_roles`: https://www.postgresql.org/docs/17/view-pg-roles.html
+--! reflect_pg_roles : (rolconnlimit?, rolvaliduntil?, rolconfig?)
+select
+	pg_get_userbyid(oid)::text as rolname, -- name  Role name
+	rolsuper, -- bool  Role has superuser privileges
+	rolinherit, -- bool  Role automatically inherits privileges of roles it is a member of
+	rolcreaterole, -- bool  Role can create more roles
+	rolcreatedb, -- bool  Role can create databases
+	rolcanlogin, -- bool  Role can log in. That is, this role can be given as the initial session authorization identifier
+	rolreplication, -- bool  Role is a replication role. A replication role can initiate replication connections and create and drop replication slots.
+	case when rolconnlimit < 0 then null else rolconnlimit end as rolconnlimit, -- int4  For roles that can log in, this sets maximum number of concurrent connections this role can make. -1 means no limit.
+	rolvaliduntil, -- timestamptz  Password expiry time (only used for password authentication); null if no expiration
+	rolbypassrls, -- bool  Role bypasses every row-level security policy, see Section 5.9 for more information.
+	rolconfig -- text[]  Role-specific defaults for run-time configuration variables
+from pg_roles
+where pg_get_userbyid(pg_roles.oid) not in ('pg_database_owner', 'pg_read_all_data', 'pg_write_all_data', 'pg_monitor', 'pg_read_all_settings', 'pg_read_all_stats', 'pg_stat_scan_tables', 'pg_read_server_files', 'pg_write_server_files', 'pg_execute_server_program', 'pg_signal_backend', 'pg_checkpoint', 'pg_maintain', 'pg_use_reserved_connections', 'pg_create_subscription')
+;
 
 -- `pg_auth_members`: https://www.postgresql.org/docs/17/catalog-pg-auth-members.html
 
@@ -26,24 +42,41 @@
 
 
 -- `pg_class`: https://www.postgresql.org/docs/17/catalog-pg-class.html
---! reflect_pg_class : (reltype_schema_name?, reltype_name?, reloftype_schema_name?, reloftype_name?, reltablespace?)
+--! reflect_pg_class : (reltype_schema_name?, reltype_name?, reloftype_schema_name?, reloftype_name?, reltablespace?, relacl?, reloptions?, relpartbound?)
 select
-	relname::text, -- Str,
-	pg_namespace.nspname::text as relnamespace, -- Str,
-	reltype_typ_sch.nspname::text as reltype_schema_name, reltype_typ.typname::text as reltype_name, -- Option<Ref>,
-	reloftype_typ_sch.nspname::text as reloftype_schema_name, reloftype_typ.typname::text as reloftype_name, -- Option<Ref>,
-	pg_get_userbyid(relowner)::text as relowner, -- Str,
-	-- relam, -- Option<Str>,
-	pg_tablespace.spcname::text as reltablespace, -- Option<Str>,
-	relisshared, -- bool,
-	relpersistence, -- ClassPersistence,
-	relkind, -- ClassKind,
-	relrowsecurity, -- bool,
-	relforcerowsecurity, -- bool,
-	relispartition, -- bool,
-	relacl::text[] as relacl, -- Vec<AclItem>,
-	reloptions::text[] -- Vec<Str>,
-	-- relpartbound -- Option<Str>,
+	relname::text, -- name  Name of the table, index, view, etc.
+	pg_namespace.nspname::text as relnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this relation
+	reltype_typ_sch.nspname::text as reltype_schema_name, reltype_typ.typname::text as reltype_name, -- oid (references pg_type.oid) The OID of the data type that corresponds to this table's row type, if any; zero for indexes, sequences, and toast tables, which have no pg_type entry
+	reloftype_typ_sch.nspname::text as reloftype_schema_name, reloftype_typ.typname::text as reloftype_name, -- oid (references pg_type.oid) For typed tables, the OID of the underlying composite type; zero for all other relations
+	pg_get_userbyid(relowner)::text as relowner, -- oid (references pg_authid.oid) Owner of the relation
+	-- relam -- oid (references pg_am.oid) The access method used to access this table or index. Not meaningful if the relation is a sequence or has no on-disk file, except for partitioned tables, where, if set, it takes precedence over default_table_access_method when determining the access method to use for partitions created when one is not specified in the creation command.
+	-- relfilenode -- oid  Name of the on-disk file of this relation; zero means this is a “mapped” relation whose disk file name is determined by low-level state
+	pg_tablespace.spcname::text as reltablespace, -- oid (references pg_tablespace.oid) The tablespace in which this relation is stored. If zero, the database's default tablespace is implied. Not meaningful if the relation has no on-disk file, except for partitioned tables, where this is the tablespace in which partitions will be created when one is not specified in the creation command.
+	-- relpages -- int4  Size of the on-disk representation of this table in pages (of size BLCKSZ). This is only an estimate used by the planner. It is updated by VACUUM, ANALYZE, and a few DDL commands such as CREATE INDEX.
+	-- reltuples -- float4  Number of live rows in the table. This is only an estimate used by the planner. It is updated by VACUUM, ANALYZE, and a few DDL commands such as CREATE INDEX. If the table has never yet been vacuumed or analyzed, reltuples contains -1 indicating that the row count is unknown.
+	-- relallvisible -- int4  Number of pages that are marked all-visible in the table's visibility map. This is only an estimate used by the planner. It is updated by VACUUM, ANALYZE, and a few DDL commands such as CREATE INDEX.
+	-- reltoastrelid -- oid (references pg_class.oid) OID of the TOAST table associated with this table, zero if none. The TOAST table stores large attributes “out of line” in a secondary table.
+	-- relhasindex -- bool  True if this is a table and it has (or recently had) any indexes
+	relisshared, -- bool  True if this table is shared across all databases in the cluster. Only certain system catalogs (such as pg_database) are shared.
+	relpersistence, -- char  p = permanent table/sequence, u = unlogged table/sequence, t = temporary table/sequence
+	relkind, -- char  r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table, I = partitioned index
+	-- relnatts -- int2  Number of user columns in the relation (system columns not counted). There must be this many corresponding entries in pg_attribute. See also pg_attribute.attnum.
+	-- relchecks -- int2  Number of CHECK constraints on the table; see pg_constraint catalog
+	-- relhasrules -- bool  True if table has (or once had) rules; see pg_rewrite catalog
+	-- relhastriggers -- bool  True if table has (or once had) triggers; see pg_trigger catalog
+	-- relhassubclass -- bool  True if table or index has (or once had) any inheritance children or partitions
+	relrowsecurity, -- bool  True if table has row-level security enabled; see pg_policy catalog
+	relforcerowsecurity, -- bool  True if row-level security (when enabled) will also apply to table owner; see pg_policy catalog
+	-- relispopulated -- bool  True if relation is populated (this is true for all relations other than some materialized views)
+	-- relreplident -- char  Columns used to form “replica identity” for rows: d = default (primary key, if any), n = nothing, f = all columns, i = index with indisreplident set (same as nothing if the index used has been dropped)
+	relispartition, -- bool  True if table or index is a partition
+	-- relrewrite -- oid (references pg_class.oid) For new relations being written during a DDL operation that requires a table rewrite, this contains the OID of the original relation; otherwise zero. That state is only visible internally; this field should never contain anything other than zero for a user-visible relation.
+	-- relfrozenxid -- xid  All transaction IDs before this one have been replaced with a permanent (“frozen”) transaction ID in this table. This is used to track whether the table needs to be vacuumed in order to prevent transaction ID wraparound or to allow pg_xact to be shrunk. Zero (InvalidTransactionId) if the relation is not a table.
+	-- relminmxid -- xid  All multixact IDs before this one have been replaced by a transaction ID in this table. This is used to track whether the table needs to be vacuumed in order to prevent multixact ID wraparound or to allow pg_multixact to be shrunk. Zero (InvalidMultiXactId) if the relation is not a table.
+	relacl::text[] as relacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	reloptions::text[], -- text[]  Access-method-specific options, as “keyword=value” strings
+	pg_get_expr(relpartbound, pg_class.oid) as relpartbound -- pg_node_tree  If table is a partition (see relispartition), internal representation of the partition bound
+
 from
 	pg_catalog.pg_class
 

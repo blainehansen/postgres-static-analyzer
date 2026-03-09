@@ -19,7 +19,7 @@ args = ["test", "-p", "temp_container_utils"]
 command = "clorinde"
 install_crate = "clorinde"
 install_crate_args = ["--version", "^1.3"]
-condition = { files_modified = { input = ["./reflect_queries/**/*"], output = ["./reflect_crate/**/*"] } }
+condition = { files_modified = { input = ["./reflect_queries/**/*", "./clorinde.toml"], output = ["./reflect_crate/**/*"] } }
 args = [
 	"schema", "empty.sql",
 	"--podman", "true",
@@ -28,6 +28,10 @@ args = [
 	"--destination", "reflect_crate",
 	"--container-wait", "500",
 ]
+
+[tasks.extract_pg_info]
+command = "deno"
+args = ["run", "--allow-net", "extract_pg_info.ts", "${@}"]
 
 
 # [tasks.test]

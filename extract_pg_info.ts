@@ -40,11 +40,17 @@ for (const row of targetTable.querySelectorAll("tbody tr")) {
 	const colName = fieldEl.textContent.trim()
 	const colType = typeEl.textContent.trim()
 
+	const colDefText = (colDef.textContent ?? "").trim().replace(/\s+/g, " ")
+	const refPart = colDefText
+		.replace(colName, "")
+		.replace(colType, "")
+		.trim()
+
 	// Collect all <p> elements that are NOT the column_definition paragraph
 	const description = Array.from(td.querySelectorAll("p"))
 		.filter((p) => !p.classList.contains("column_definition"))
 		.map((p) => (p.textContent ?? "").trim().replace(/\s+/g, " "))
 		.join(" ")
 
-	console.log(`${colName} ${colType} -- ${description}`)
+	console.log(`${colName}, -- ${colType} ${refPart} ${description}`)
 }

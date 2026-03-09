@@ -1,3 +1,19 @@
+--! reflect_pg_roles : (rolconnlimit?, rolvaliduntil?, rolconfig?)
+select
+	pg_get_userbyid(oid)::text as rolname, -- name  Role name
+	rolsuper, -- bool  Role has superuser privileges
+	rolinherit, -- bool  Role automatically inherits privileges of roles it is a member of
+	rolcreaterole, -- bool  Role can create more roles
+	rolcreatedb, -- bool  Role can create databases
+	rolcanlogin, -- bool  Role can log in. That is, this role can be given as the initial session authorization identifier
+	rolreplication, -- bool  Role is a replication role. A replication role can initiate replication connections and create and drop replication slots.
+	case when rolconnlimit < 0 then null else rolconnlimit end, -- int4  For roles that can log in, this sets maximum number of concurrent connections this role can make. -1 means no limit.
+	rolvaliduntil, -- timestamptz  Password expiry time (only used for password authentication); null if no expiration
+	rolbypassrls, -- bool  Role bypasses every row-level security policy, see Section 5.9 for more information.
+	rolconfig -- text[]  Role-specific defaults for run-time configuration variables
+from pg_roles
+where pg_get_userbyid(pg_roles.oid) not in ('pg_database_owner', 'pg_read_all_data', 'pg_write_all_data', 'pg_monitor', 'pg_read_all_settings', 'pg_read_all_stats', 'pg_stat_scan_tables', 'pg_read_server_files', 'pg_write_server_files', 'pg_execute_server_program', 'pg_signal_backend', 'pg_checkpoint', 'pg_maintain', 'pg_use_reserved_connections', 'pg_create_subscription')
+
 
 
 -- we have a couple layers here:
