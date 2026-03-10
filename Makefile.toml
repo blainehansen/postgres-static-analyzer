@@ -31,7 +31,7 @@ args = [
 
 [tasks.extract_pg_info]
 command = "deno"
-args = ["run", "--allow-net", "extract_pg_info.ts", "${@}"]
+args = ["run", "--allow-net=www.postgresql.org", "--allow-write", "--allow-read", "extract_pg_info.ts"]
 
 
 # [tasks.test]

@@ -1,4 +1,5 @@
-use crate::{ClassKind, ClassPersistence, PgClass, PgClient, PgRoles, PgState, Ref, Set, aclitem::{TableGrantParser, aclitem}, postgres};
+use crate::*;
+use crate::aclitem::*;
 use futures::TryStreamExt;
 
 fn make_ref(schema_name: &str, name: &str) -> Ref {
@@ -38,7 +39,7 @@ pub async fn reflect_pg_roles(
 				rolbypassrls: pg_role.rolbypassrls,
 				rolconnlimit: pg_role.rolconnlimit.map(i32::unsigned_abs),
 				rolvaliduntil: pg_role.rolvaliduntil.into(),
-				rolconfig: pg_role.rolconfig.map(|config| config.map(Into::into).collect()),
+				rolconfig: pg_role.rolconfig.map(|items| items.map(Into::into).collect()),
 			}
 		})
 		.iter()
