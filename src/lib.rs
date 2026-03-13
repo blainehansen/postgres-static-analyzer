@@ -14,8 +14,7 @@ pub use reflect::{reflect_pg_state, reflect_pg_roles, reflect_pg_class};
 
 mod aclitem;
 
-//  ($type:ty, $field:ident) => {
-macro_rules! impl_hash_and_equivalent {
+macro_rules! impl_name_hash_and_equivalent {
 	($type:ty, $field:ident) => {
 		impl std::hash::Hash for $type {
 			fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -36,6 +35,30 @@ macro_rules! impl_hash_and_equivalent {
 		}
 	};
 }
+
+macro_rules! impl_qual_hash_and_equivalent {
+	($type:ty) => {
+		impl std::hash::Hash for $type {
+			fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+				self.oid.schema_name.hash(state);
+				self.oid.name.hash(state);
+			}
+		}
+
+		impl hashbrown::Equivalent<$type> for (&str, &str) {
+			fn equivalent(&self, key: &$type) -> bool {
+				key.oid.schema_name == *self.0 && key.oid.name == *self.1
+			}
+		}
+
+		impl hashbrown::Equivalent<$type> for (&Str, &Str) {
+			fn equivalent(&self, key: &$type) -> bool {
+				key.oid.schema_name == *self.0 && key.oid.name == *self.1
+			}
+		}
+	};
+}
+
 // macro_rules! impl_pg_from_str {
 // 	($type:ident, $($variant:ident),+ $(,)?) => {
 // 		impl $type {
@@ -80,10 +103,15 @@ pg_char_enum!(FunctionVolatilty { 'i' => Immutable, 's' => Stable, 'v' => Volati
 pg_char_enum!(ArgMode { 'i' => In, 'o' => Out, 'b' => InOut, 'v' => Variadic, 't' => Table });
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Ref {
+pub struct Qual {
 	pub schema_name: Str,
 	pub name: Str,
 }
+// impl<T: AsRef<str>> hashbrown::Equivalent<Qual> for (&T, &T) {
+// 	fn equivalent(&self, key: &Qual) -> bool {
+// 		key.schema_name == self.0.as_ref() && key.name == self.1.as_ref()
+// 	}
+// }
 
 #[derive(Debug)]
 pub struct PgState {
@@ -95,7 +123,7 @@ pub struct PgState {
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct PgAggregate {
 	// aggfnoid regproc -- pg_proc OID of the aggregate function
-	aggfnoid: Ref,
+	aggfnoid: Qual,
 	// aggkind char -- Aggregate kind: n for “normal” aggregates, o for “ordered-set” aggregates, or h for “hypothetical-set” aggregates
 	// aggnumdirectargs int2 -- Number of direct (non-aggregated) arguments of an ordered-set or hypothetical-set aggregate, counting a variadic array as one argument. If equal to pronargs, the aggregate must be variadic and the variadic array describes the aggregated arguments as well as the final direct arguments. Always zero for normal aggregates.
 	// aggtransfn regproc -- Transition function
@@ -150,7 +178,7 @@ pub struct PgRoles {
 	pub rolbypassrls: bool, // rolbypassrls, -- bool  Role bypasses every row-level security policy, see Section 5.9 for more information.
 	pub rolconfig: Option<Vec<Str>>, // rolconfig -- text[]  Role-specific defaults for run-time configuration variables
 }
-impl_hash_and_equivalent!(PgRoles, rolname);
+impl_name_hash_and_equivalent!(PgRoles, rolname);
 
 // `pg_auth_members`: https://www.postgresql.org/docs/17/catalog-pg-auth-members.html
 
@@ -163,8 +191,8 @@ impl_hash_and_equivalent!(PgRoles, rolname);
 pub struct PgClass {
 	relname: Str, // relname::text, -- name  Name of the table, index, view, etc.
 	relnamespace: Str, // pg_namespace.nspname::text as relnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this relation
-	reltype: Option<Ref>, // reltype_typ_sch.nspname::text as reltype_schema_name, reltype_typ.typname::text as reltype_name, -- oid (references pg_type.oid) The OID of the data type that corresponds to this table's row type, if any; zero for indexes, sequences, and toast tables, which have no pg_type entry
-	reloftype: Option<Ref>, // reloftype_typ_sch.nspname::text as reloftype_schema_name, reloftype_typ.typname::text as reloftype_name, -- oid (references pg_type.oid) For typed tables, the OID of the underlying composite type; zero for all other relations
+	reltype: Option<Qual>, // reltype_typ_sch.nspname::text as reltype_schema_name, reltype_typ.typname::text as reltype_name, -- oid (references pg_type.oid) The OID of the data type that corresponds to this table's row type, if any; zero for indexes, sequences, and toast tables, which have no pg_type entry
+	reloftype: Option<Qual>, // reloftype_typ_sch.nspname::text as reloftype_schema_name, reloftype_typ.typname::text as reloftype_name, -- oid (references pg_type.oid) For typed tables, the OID of the underlying composite type; zero for all other relations
 	relowner: Str, // pg_get_userbyid(relowner)::text as relowner, -- oid (references pg_authid.oid) Owner of the relation
 	// -- relam -- oid (references pg_am.oid) The access method used to access this table or index. Not meaningful if the relation is a sequence or has no on-disk file, except for partitioned tables, where, if set, it takes precedence over default_table_access_method when determining the access method to use for partitions created when one is not specified in the creation command.
 	// -- relfilenode -- oid  Name of the on-disk file of this relation; zero means this is a “mapped” relation whose disk file name is determined by low-level state
@@ -194,7 +222,7 @@ pub struct PgClass {
 	reloptions: Option<Vec<Str>>, // reloptions::text[], -- text[]  Access-method-specific options, as “keyword=value” strings
 	relpartbound: Option<Str>, // pg_get_expr(relpartbound, pg_class.oid) as relpartbound -- pg_node_tree  If table is a partition (see relispartition), internal representation of the partition bound
 }
-impl_hash_and_equivalent!(PgClass, relname);
+impl_name_hash_and_equivalent!(PgClass, relname);
 
 // p = permanent table/sequence, u = unlogged table/sequence, t = temporary table/sequence
 pg_char_enum!(ClassPersistence { 'p' => Permanant, 'u' => Unlogged, 't' => Temporary });

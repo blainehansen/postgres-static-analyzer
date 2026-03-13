@@ -2,20 +2,32 @@ use crate::*;
 use crate::aclitem::*;
 use futures::TryStreamExt;
 
-fn make_ref(schema_name: &str, name: &str) -> Ref {
-	Ref { schema_name: schema_name.into(), name: name.into() }
+fn make_ref(schema_name: &str, name: &str) -> Qual {
+	Qual { schema_name: schema_name.into(), name: name.into() }
 }
 
-fn maybe_ref(schema_name: Option<&str>, name: Option<&str>) -> Option<Ref> {
+fn maybe_ref(schema_name: Option<&str>, name: Option<&str>) -> Option<Qual> {
 	match (schema_name, name) {
 		(Some(schema_name), Some(name)) => Some(make_ref(schema_name, name)),
 		_ => None,
 	}
 }
 
+fn parse_ref(qualified: &str) -> Qual {
+	// TODO this needs to be smarter to account for complex quoted identifiers that could contain .
+	let (schema_name, name) = qualified.split_once(".").unwrap_or(("pg_catalog", qualified));
+	Qual { schema_name: schema_name.into(), name: name.into() }
+}
+
+fn maybe_parse_ref(qualified: Option<&str>) -> Option<Qual> {
+	qualified.map(parse_ref)
+}
+
 pub async fn reflect_pg_state(
 	client: &PgClient
 ) -> Result<PgState, postgres::Error> {
+	client.batch_execute("set search_path = '';").await?;
+
 	let (pg_class,) = tokio::try_join!(
 		reflect_pg_class(client),
 	)?;

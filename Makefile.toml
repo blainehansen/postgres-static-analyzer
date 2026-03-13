@@ -19,7 +19,6 @@ args = ["test", "-p", "temp_container_utils"]
 command = "clorinde"
 install_crate = "clorinde"
 install_crate_args = ["--version", "^1.3"]
-condition = { files_modified = { input = ["./reflect_queries/**/*", "./clorinde.toml"], output = ["./reflect_crate/**/*"] } }
 args = [
 	"schema", "empty.sql",
 	"--podman", "true",
@@ -28,20 +27,39 @@ args = [
 	"--destination", "reflect_crate",
 	"--container-wait", "500",
 ]
+condition = { files_modified = { input = ["./reflect_queries/**/*", "./clorinde.toml"], output = ["./reflect_crate/**/*"] } }
+
 
 [tasks.extract_pg_info]
 command = "deno"
 args = ["run", "--allow-net=www.postgresql.org", "--allow-write", "--allow-read", "extract_pg_info.ts"]
+condition = { files_modified = { input = ["extract_pg_info.ts"], output = ["./extract_pg_info.local.json"] } }
+# extracts the info itself, making minimal decisions
+# produces ./extract_pg_info.local.json, which isn't checked in
 
+[tasks.gen_pg_info_decisions]
+dependencies = ["extract_pg_info"]
+command = "deno"
+args = ["run", "--allow-write", "--allow-read", "gen_pg_info_decisions.ts"]
+# generates the decisions, using all the heuristics and overrides
+# reads ./extract_pg_info.local.json
+# reads ./gen_pg_info_decisions.overrides.toml, which is checked in and sparse
+# produces ./gen_pg_info_decisions.toml, using heuristics and overrides
+# checked in just to produce clarity and allowing always running gen_pg_info clean, even though it doesn't strictly have to be
 
-# [tasks.test]
-# command = "cargo"
-# args = ["test"]
-# dependencies = ["clean"]
+[tasks.gen_pg_info]
+command = "deno"
+args = ["run", "--allow-write", "--allow-read", "gen_pg_info.ts"]
+# processes decisions into code, making minimal decisions
+# reads ./gen_pg_info_decisions.toml
+# produces ./reflect_queries/main.sql, which is checked in
+# produces ./lib/pg_structs.rs, which is checked in
+# produces ./lib/pg_structs_reflect.rs
+# produces ./lib/pg_structs_reflect_test.rs
 
-# [tasks.my-flow]
+# [tasks.fully_gen_pg_info]
 # dependencies = [
-# 	"format",
-# 	"build",
-# 	"test"
+# 	"extract_pg_info",
+# 	"gen_pg_info_decisions",
+# 	"gen_pg_info"
 # ]

@@ -3,11 +3,11 @@ use super::*;
 fn s(val: &str) -> Str {
 	val.into()
 }
-fn r(ref_name: &str) -> Ref {
-	Ref { schema_name: s("pg_catalog"), name: s(ref_name) }
+fn q(ref_name: &str) -> Qual {
+	Qual { schema_name: s("pg_catalog"), name: s(ref_name) }
 }
-fn re(schema_name: &str, name: &str) -> Ref {
-	Ref { schema_name: s(schema_name), name: s(name) }
+fn qu(schema_name: &str, name: &str) -> Qual {
+	Qual { schema_name: s(schema_name), name: s(name) }
 }
 
 #[tokio::test]
@@ -77,7 +77,7 @@ fn bland_table(table_name: &str) -> PgClass {
 	PgClass {
     relname: s(table_name),
     relnamespace: s("public"),
-    reltype: Some(re("public", table_name)),
+    reltype: Some(qu("public", table_name)),
     reloftype: None,
     relowner: s("tempuser"),
     reltablespace: None,

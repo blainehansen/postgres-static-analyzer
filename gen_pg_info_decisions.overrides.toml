@@ -1,0 +1,24 @@
+pg_attrdef = false
+# pg_attrdef.columns.adbin = { sel="pg_get_expr(adbin, adrelid) as adbin", ty="Str" }
+
+pg_attribute = false
+# pg_attribute.columns.attnum = { ty="u16", filters=["attnum > 0"] }
+# pg_attribute.columns.attisdropped = { filters=["not attisdropped"] }
+# pg_attribute.columns.attcacheoff.skip = true
+# pg_attribute.columns.attstattarget.skip = true
+
+pg_class = false
+# pg_class.columns.reltoastrelid.skip = true
+# pg_class.columns.relrewrite.skip = true
+# pg_class.columns.relpages.skip = true
+# pg_class.columns.relallvisible.skip = true
+
+pg_database = false
+# pg_database.columns.encoding = { sel="pg_encoding_to_char(encoding)", ty="Str" }
+
+pg_proc = false
+
+pg_roles = false
+# pg_roles.columns.rolpassword.skip = true
+
+pg_type = false

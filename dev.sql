@@ -1,11 +1,53 @@
+-- create table a(
+-- 	aaa text default ''
+-- );
+
+-- create function public.other_add(a integer) returns integer
+-- 	language sql stable return a;
+
+-- create type yay as enum('a', 'b');
+
+set search_path = '';
+-- show search_path;
+-- select current_schemas(true);
+
+-- show search_path;
+-- select current_schemas(true);
+
+
+-- conpfeqop
+-- conppeqop
+-- conffeqop
+-- conexclop
+
+
+
 select
-	oid, -- oid  Row identifier
-	amname::text, -- name  Name of the access method
-	amhandler, -- regproc (references pg_proc.oid) OID of a handler function that is responsible for supplying information about the access method
-	amtype -- char  t = table (including materialized views), i = index.
-from
-	pg_am
+	oid::regtype,
+	-- typname,
+	-- typnamespace::regnamespace,
+	-- typtype,
+	typinput::regproc as typinput,
+	case when typelem = 0 then null else typelem::regtype end as typelem,
+	case when typarray = 0 then null else typarray::regtype end as typarray,
+	case when typbasetype = 0 then null else typbasetype::regtype end as typbasetype
+from pg_type
+where typnamespace::regnamespace not in ('pg_catalog', 'information_schema', 'pg_toast');
+
+
+-- proallargtypes is oid[] on pg_proc
+select
+	oid::regproc,
+	oid::regprocedure,
+	proname, *
+	-- proallargtypes::regtype[]  as arg_type_names
+from pg_proc
+where
+	-- proallargtypes is not null
+	-- pronamespace::regnamespace not in ('pg_catalog', 'information_schema', 'pg_toast')
+	oid::regproc = 'record_in'::regproc
 ;
+
 
 
 

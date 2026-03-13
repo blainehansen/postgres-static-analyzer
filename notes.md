@@ -1,3 +1,36 @@
+There are some entire *tables* that are just too complex or important (or easy enough!) to leave to this automation. So I should have a table decision option of just "false", to skip that table entirely in the automation.
+
+When I'm done I'll have:
+
+- A big "integration test" `reflect_total_test.rs` that literally just runs the reflection over the entire database. I'm thinking it could be a snapshot test, so I can see what what I have is producing
+- `reflect_queries/reflect.sql`, `src/reflect.rs` for the tables I implement manually, which contains the top level reflect function and star imports all the generated functions
+- `reflect_queries/reflect_gen.sql`, `src/reflect_gen.rs` for the tables I leave to the automation
+- `src/lib.rs` that holds the common struct and macro definitions
+
+
+
+pg_database.oid should be filtered to `current_database` and not returned
+columns with type `regproc` aren't precise enough
+
+columns that have "reg" aliases can have a "qual" or something field that contains a Qual (renamed from Ref), and this Qual identifies them and acts as their hash identity
+Qual is equivalent to (str, str)
+
+we should have a single *snapshot* test that truly reflects the whole database, `pg_catalog` and `information_schema` included
+the only filtering we'll do is to the current database, and to objects that are actually "live" such as non-deleted columns
+
+
+columns referencing these things still need joins to get the name
+pg_am
+pg_tablespace
+pg_constraint
+pg_opclass
+pg_language
+
+actually things referencing pg_tablespace should just be skipped, since I'm skipping it, and that holds for all the other tables I'm skipping entirely
+so if I find a column that's referencing something, and that something isn't in the list of tables I'm going to reflect, I skip the column entirely
+
+
+
 crates:
 
 - state, for the dbstate etc structs
