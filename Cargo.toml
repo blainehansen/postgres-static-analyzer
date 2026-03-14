@@ -20,7 +20,8 @@ itertools = "0.14.0"
 anyhow = "1"
 nom = "8"
 paste = "1"
-
+insta = { version = "1.46", default-features = false, features = ["colors", "ron"] }
+serde = { version = "1", features = ["derive"] }
 
 [package]
 name = "postgres-static-analyzer"
@@ -39,7 +40,14 @@ itertools.workspace = true
 nom.workspace = true
 paste.workspace = true
 futures.workspace = true
+serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
 anyhow.workspace = true
+insta = { workspace = true, default-features = false, features = ["colors", "ron"] }
 temp_container_utils = { path = "./temp_container_utils" }
+
+[profile.dev.package.insta]
+opt-level = 3
+[profile.dev.package.similar]
+opt-level = 3

@@ -1,12 +1,8 @@
-There are some entire *tables* that are just too complex or important (or easy enough!) to leave to this automation. So I should have a table decision option of just "false", to skip that table entirely in the automation.
+tasks:
 
-When I'm done I'll have:
-
-- A big "integration test" `reflect_total_test.rs` that literally just runs the reflection over the entire database. I'm thinking it could be a snapshot test, so I can see what what I have is producing
-- `reflect_queries/reflect.sql`, `src/reflect.rs` for the tables I implement manually, which contains the top level reflect function and star imports all the generated functions
-- `reflect_queries/reflect_gen.sql`, `src/reflect_gen.rs` for the tables I leave to the automation
-- `src/lib.rs` that holds the common struct and macro definitions
-
+- get the `populate_all.sql` script fully working
+- make the decisions ts file more dumb for now, just get the first table working fully using the full_test script
+- then work through the tables in order, doing them manually
 
 
 pg_database.oid should be filtered to `current_database` and not returned

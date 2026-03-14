@@ -5,7 +5,7 @@ export const refToReg = {
 	pg_collation: "regcollation",	// collation name	"POSIX"
 	pg_ts_config: "regconfig",	// text search configuration	english
 	pg_ts_dict: "regdictionary",	// text search dictionary	simple
-	pg_namespace: "regnamespace",	// namespace name	pg_catalog
+	// pg_namespace: "regnamespace",	// namespace name	pg_catalog
 	// pg_operator: "regoper",	// operator name	+
 	pg_operator: "regoperator",	// operator with argument types	*(integer, integer) or -(NONE, integer)
 	// pg_proc: "regproc",	// function name	sum
@@ -14,12 +14,17 @@ export const refToReg = {
 	pg_type: "regtype",	// data type name	integer
 }
 
-export const RawColumn = z.strictObject({
-	name: z.string(),
+export const ColumnInfo = z.strictObject({
 	typ: z.string(),
 	ref: z.string(),
 	desc: z.string(),
 })
+export type ColumnInfo = z.infer<typeof ColumnInfo>
+
+export const RawColumn = z.intersection(
+	ColumnInfo,
+	z.strictObject({ name: z.string() }),
+)
 export type RawColumn = z.infer<typeof RawColumn>
 
 export const RawTable = z.strictObject({
@@ -30,41 +35,40 @@ export const RawTable = z.strictObject({
 export type RawTable = z.infer<typeof RawTable>
 
 
-export const SkipDecision = z.strictObject({
-	skip: z.literal(true),
-})
+export const SkipDecision = z.intersection(ColumnInfo, z.strictObject({ skip: z.literal(true) }))
 export type SkipDecision = z.infer<typeof SkipDecision>
 
 export const RealColumnDecision = z.strictObject({
 	sel: z.string().optional(),
 	ty: z.string(),
 	exp: z.string().optional(),
-	// test: z.string(),
 	joins: z.array(z.string()).optional(),
 	filters: z.array(z.string()).optional(),
 	pgEnum: z.string().optional(),
 })
 export type RealColumnDecision = z.infer<typeof RealColumnDecision>
 
-export const ColumnDecision = z.union([SkipDecision, RealColumnDecision])
+export const ColumnDecision = z.union([
+	SkipDecision,
+	z.intersection(ColumnInfo, RealColumnDecision),
+])
 export type ColumnDecision = z.infer<typeof ColumnDecision>
 
 export const TableDecision = z.strictObject({
-	totalQuery: z.string().optional(),
-	columns: z.record(z.string(), ColumnDecision),
 	hashCol: z.union([z.string(), z.literal(true)]).optional(),
+	columns: z.record(z.string(), ColumnDecision),
 })
 export type TableDecision = z.infer<typeof TableDecision>
 
-export const ColumnOverride = z.union([SkipDecision, z.intersection(
+export const ColumnOverride = z.union([z.literal('skip'), z.intersection(
 	RealColumnDecision.partial(),
 	z.strictObject({ zero: z.literal(true), nullable: z.literal(true) }).partial(),
 )])
 export type ColumnOverride = z.infer<typeof ColumnOverride>
-export const TableOverride = z.strictObject({
-	columns: z.record(z.string(), ColumnOverride).optional(),
-	hashCol: z.union([z.string(), z.literal(true)]).optional(),
-})
+export const TableOverride = z.union([
+	z.literal('manual'), z.literal('todo'),
+	z.record(z.string(), ColumnOverride),
+])
 export type TableOverride = z.infer<typeof TableOverride>
 
 

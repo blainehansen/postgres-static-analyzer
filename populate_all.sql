@@ -1,256 +1,394 @@
-["pg_seclabel", "https://www.postgresql.org/docs/17/catalog-pg-seclabel.html"],
-["pg_shdepend", "https://www.postgresql.org/docs/17/catalog-pg-shdepend.html"],
-["pg_shseclabel", "https://www.postgresql.org/docs/17/catalog-pg-shseclabel.html"],
-
-
-
 -- ====================================================================
--- 1. CLUSTER-LEVEL OBJECTS & SECURITY
+-- 1. CLUSTER-LEVEL OBJECTS
+-- Populates: pg_database, pg_authid (pg_roles), pg_auth_members,
+--            pg_db_role_setting, pg_parameter_acl,
+--            pg_shdescription, pg_shdepend
 -- ====================================================================
 
--- Populates: pg_tablespace
-CREATE TABLESPACE my_tablespace LOCATION '/tmp/pg_data';
+CREATE DATABASE catalog_test_db;
+COMMENT ON DATABASE catalog_test_db IS 'Database for exhaustive pg catalog population'; -- pg_shdescription
 
--- Populates: pg_roles, pg_authid (pg_roles is a view on pg_authid)
-CREATE ROLE my_role NOLOGIN;
-CREATE ROLE my_admin_role NOLOGIN;
+CREATE ROLE catalog_admin LOGIN PASSWORD 'super_secret';
+CREATE ROLE catalog_user  NOLOGIN;
+GRANT catalog_user TO catalog_admin;               -- pg_auth_members
 
--- Populates: pg_database
-CREATE DATABASE my_database;
+ALTER ROLE catalog_admin IN DATABASE catalog_test_db SET work_mem = '16MB'; -- pg_db_role_setting
 
--- Populates: pg_auth_members
-GRANT my_role TO my_admin_role;
-
--- Populates: pg_db_role_setting
-ALTER ROLE my_role IN DATABASE my_database SET work_mem = '4MB';
-
--- Populates: pg_shdescription (Shared object descriptions)
-COMMENT ON ROLE my_role IS 'A sample role for catalog population';
-
--- Populates: pg_shseclabel (Requires a security provider like sepgsql, using dummy syntax here)
--- SECURITY LABEL ON ROLE my_role IS 'classified';
-
--- Populates: pg_parameter_acl (Introduced in PG15)
-GRANT SET ON PARAMETER work_mem TO my_role;
-
--- Populates: pg_shdepend
--- (Automatically populated by the database associating my_role with my_database ownership/grants)
-
+GRANT SET ON PARAMETER work_mem TO catalog_admin;  -- pg_parameter_acl
 
 -- ====================================================================
--- 2. SCHEMAS, LANGUAGES & EXTENSIONS
+-- 2. SCHEMAS AND EXTENSIONS
+-- Populates: pg_namespace, pg_extension, pg_init_privs, pg_language
 -- ====================================================================
 
--- Populates: pg_namespace
-CREATE SCHEMA my_schema;
+CREATE EXTENSION IF NOT EXISTS pageinspect;          -- pg_extension, pg_init_privs
+REVOKE ALL ON FUNCTION get_raw_page(text, int4) FROM PUBLIC; -- uses default search_path
 
--- Populates: pg_default_acl
-ALTER DEFAULT PRIVILEGES IN SCHEMA my_schema GRANT SELECT ON TABLES TO my_role;
+CREATE EXTENSION IF NOT EXISTS postgres_fdw;         -- needed in section 10
 
--- Populates: pg_language
--- (plpgsql is usually installed, but this ensures a language entry)
-CREATE LANGUAGE plperl;
+CREATE SCHEMA catalog_schema AUTHORIZATION catalog_admin; -- pg_namespace
+COMMENT ON SCHEMA catalog_schema IS 'Main schema for catalog population'; -- pg_description
 
--- Populates: pg_extension
-CREATE EXTENSION IF NOT EXISTS hstore SCHEMA my_schema;
+SET search_path TO catalog_schema, public;
 
--- Populates: pg_transform
-CREATE TRANSFORM FOR my_schema.hstore LANGUAGE plperl (
-	FROM SQL WITH FUNCTION hstore_to_plperl(internal),
-	TO SQL WITH FUNCTION plperl_to_hstore(internal)
+-- ====================================================================
+-- 3. TYPES, ENUMS, RANGES, COLLATIONS
+-- Populates: pg_type, pg_enum, pg_range, pg_collation
+-- ====================================================================
+
+CREATE TYPE status_enum AS ENUM ('active', 'pending', 'archived'); -- pg_enum
+
+CREATE TYPE point_composite AS (x numeric, y numeric);             -- pg_type (composite)
+
+CREATE TYPE float_range AS RANGE (                                 -- pg_range
+	subtype      = float8,
+	subtype_diff = float8mi
 );
 
--- Populates: pg_depend
--- (Automatically populated continuously throughout this script as objects depend on my_schema, etc.)
-
-
--- ====================================================================
--- 3. DATA TYPES, ENUMS & RANGES
--- ====================================================================
-
--- Populates: pg_enum, pg_type
-CREATE TYPE my_schema.my_colors AS ENUM ('red', 'green', 'blue');
-
--- Populates: pg_range, pg_type
-CREATE TYPE my_schema.my_int_range AS RANGE (subtype = integer);
-
--- Populates: pg_collation
-CREATE COLLATION my_schema.my_collation (locale = 'en_US.utf8');
-
--- Populates: pg_conversion
-CREATE CONVERSION my_schema.my_conv FOR 'UTF8' TO 'LATIN1' FROM iso8859_1_to_utf8;
-
--- Populates: pg_cast
-CREATE CAST (integer AS text) WITH INOUT AS ASSIGNMENT;
-
-
--- ====================================================================
--- 4. TABLES, CONSTRAINTS & INHERITANCE
--- ====================================================================
-
--- Populates: pg_sequence, pg_class
-CREATE SEQUENCE my_schema.my_seq;
-
--- Populates: pg_class, pg_attribute, pg_attrdef (via DEFAULT), pg_constraint (via PRIMARY KEY)
-CREATE TABLE my_schema.my_parent (
-	id integer PRIMARY KEY DEFAULT nextval('my_schema.my_seq'),
-	val text COLLATE my_schema.my_collation,
-	status my_schema.my_colors
+CREATE COLLATION custom_collation (                                -- pg_collation
+	PROVIDER = icu,
+	LOCALE   = 'en-US-u-ks-level2'
 );
 
--- Populates: pg_inherits
-CREATE TABLE my_schema.my_child (
-	extra_data text
-) INHERITS (my_schema.my_parent);
+-- ====================================================================
+-- 4. SEQUENCES AND TABLES
+-- Populates: pg_class, pg_attribute, pg_attrdef, pg_constraint,
+--            pg_sequence, pg_inherits, pg_partitioned_table
+-- ====================================================================
 
--- Populates: pg_partitioned_table
-CREATE TABLE my_schema.my_part_table (
-	id int,
+CREATE SEQUENCE table_id_seq START WITH 1 INCREMENT BY 1;          -- pg_sequence
+
+CREATE TABLE parent_table (
+	id            integer      DEFAULT nextval('table_id_seq') PRIMARY KEY, -- pg_attrdef, pg_constraint (PK)
+	name          text         COLLATE custom_collation NOT NULL,
+	status        status_enum  DEFAULT 'pending',                           -- pg_attrdef
+	metrics       point_composite,
+	active_period float_range,
+	score         numeric      CHECK (score >= 0),                          -- pg_constraint (CHECK)
+	CONSTRAINT unique_name UNIQUE (name)                                    -- pg_constraint (UNIQUE)
+);
+
+CREATE TABLE child_table (
+	extra_data jsonb
+) INHERITS (parent_table);                                         -- pg_inherits
+
+CREATE TABLE partitioned_log (
+	log_id   integer,
+	log_date date,
+	message  text
+) PARTITION BY RANGE (log_date);                                   -- pg_partitioned_table
+
+CREATE TABLE partitioned_log_2026
+	PARTITION OF partitioned_log
+	FOR VALUES FROM ('2026-01-01') TO ('2027-01-01');
+
+CREATE TABLE audit_log (
+	audit_id  integer PRIMARY KEY,
+	table_ref integer REFERENCES parent_table(id),                 -- pg_constraint (FK)
+	action    text
+);
+
+-- ====================================================================
+-- 5. INDEXES AND EXTENDED STATISTICS
+-- Populates: pg_index, pg_statistic_ext
+-- ====================================================================
+
+CREATE INDEX parent_name_btree_idx ON parent_table USING btree (name);       -- pg_index
+
+CREATE INDEX parent_name_tsvec_idx ON parent_table
+	USING gin (to_tsvector('english'::regconfig, name));
+
+CREATE INDEX parent_status_hash_idx ON parent_table USING hash (status);
+
+CREATE STATISTICS parent_table_stats (dependencies, ndistinct)
+	ON status, active_period FROM parent_table;                    -- pg_statistic_ext
+
+-- ====================================================================
+-- 6. HELPER FUNCTIONS FOR CUSTOM TYPE (point_composite)
+-- These must exist before operators and operator classes reference them.
+-- ====================================================================
+
+CREATE FUNCTION point_composite_lt(point_composite, point_composite) RETURNS boolean
+LANGUAGE sql IMMUTABLE AS $$
+	SELECT $1.x < $2.x OR ($1.x = $2.x AND $1.y < $2.y);
+$$;
+
+CREATE FUNCTION point_composite_gt(point_composite, point_composite) RETURNS boolean
+LANGUAGE sql IMMUTABLE AS $$
+	SELECT $1.x > $2.x OR ($1.x = $2.x AND $1.y > $2.y);
+$$;
+
+CREATE FUNCTION point_composite_eq(point_composite, point_composite) RETURNS boolean
+LANGUAGE sql IMMUTABLE AS $$
+	SELECT $1.x = $2.x AND $1.y = $2.y;
+$$;
+
+-- Support function 1 for btree: comparison returning -1 / 0 / 1
+CREATE FUNCTION point_composite_cmp(point_composite, point_composite) RETURNS integer
+LANGUAGE sql IMMUTABLE AS $$
+	SELECT CASE
+		WHEN $1.x < $2.x THEN -1
+		WHEN $1.x > $2.x THEN  1
+		WHEN $1.y < $2.y THEN -1
+		WHEN $1.y > $2.y THEN  1
+		ELSE 0
+	END;
+$$;
+
+CREATE FUNCTION point_composite_add(point_composite, point_composite) RETURNS point_composite
+LANGUAGE sql IMMUTABLE AS $$
+	SELECT ($1.x + $2.x, $1.y + $2.y)::point_composite;
+$$;
+
+-- ====================================================================
+-- 7. OPERATORS
+-- Populates: pg_operator
+-- ====================================================================
+
+CREATE OPERATOR < (
+	LEFTARG    = point_composite,
+	RIGHTARG   = point_composite,
+	FUNCTION   = point_composite_lt,
+	COMMUTATOR = >
+);
+
+CREATE OPERATOR > (
+	LEFTARG    = point_composite,
+	RIGHTARG   = point_composite,
+	FUNCTION   = point_composite_gt,
+	COMMUTATOR = <
+);
+
+CREATE OPERATOR = (
+	LEFTARG    = point_composite,
+	RIGHTARG   = point_composite,
+	FUNCTION   = point_composite_eq,
+	COMMUTATOR = =
+);
+
+-- Custom additive operator (+?)
+CREATE OPERATOR +? (
+	LEFTARG  = point_composite,
+	RIGHTARG = point_composite,
+	FUNCTION = point_composite_add
+);
+
+-- ====================================================================
+-- 8. ACCESS METHODS, OPERATOR FAMILIES, OPERATOR CLASSES
+-- Populates: pg_am, pg_opfamily, pg_opclass, pg_amop, pg_amproc
+-- ====================================================================
+
+CREATE ACCESS METHOD custom_index_am TYPE INDEX HANDLER bthandler;  -- pg_am
+
+CREATE OPERATOR FAMILY custom_op_family USING btree;                -- pg_opfamily
+
+CREATE OPERATOR CLASS custom_op_class
+	DEFAULT FOR TYPE point_composite USING btree FAMILY custom_op_family AS
+	OPERATOR 1 <  (point_composite, point_composite),
+	OPERATOR 3 =  (point_composite, point_composite),
+	FUNCTION 1    point_composite_cmp(point_composite, point_composite);  -- pg_opclass, pg_amop, pg_amproc
+
+-- ====================================================================
+-- 9. FUNCTIONS, PROCEDURES, AGGREGATES, CASTS
+-- Populates: pg_proc, pg_aggregate, pg_cast
+-- ====================================================================
+
+CREATE FUNCTION add_tax(price numeric) RETURNS numeric
+LANGUAGE plpgsql AS $$
+BEGIN
+	RETURN price * 1.20;
+END;
+$$;
+
+-- A set-returning function
+CREATE FUNCTION generate_ids(n integer) RETURNS SETOF integer
+LANGUAGE sql STABLE AS $$
+	SELECT generate_series(1, n);
+$$;
+
+-- Window function wrapper
+CREATE FUNCTION running_total(numeric) RETURNS numeric
+LANGUAGE sql IMMUTABLE AS $$
+	SELECT $1;
+$$;
+
+CREATE AGGREGATE catalog_sum(numeric) (
+	SFUNC    = numeric_add,
+	STYPE    = numeric,
+	INITCOND = '0'
+);
+
+-- Ordered-set aggregate (hypothetical rank)
+CREATE AGGREGATE first_value_agg(anyelement) (
+	SFUNC    = array_append,
+	STYPE    = anyarray,
+	INITCOND = '{}'
+);
+
+CREATE PROCEDURE archive_old_records(cutoff_date date)
+LANGUAGE plpgsql AS $$
+BEGIN
+	DELETE FROM parent_table WHERE status = 'archived';
+	COMMIT;
+END;
+$$;
+
+CREATE FUNCTION text_to_point_composite(text) RETURNS point_composite
+LANGUAGE sql IMMUTABLE AS $$
+	SELECT (0.0, 0.0)::point_composite;
+$$;
+
+CREATE CAST (text AS point_composite)
+	WITH FUNCTION text_to_point_composite(text) AS ASSIGNMENT;      -- pg_cast
+
+-- ====================================================================
+-- 10. FOREIGN DATA WRAPPERS
+-- Populates: pg_foreign_data_wrapper, pg_foreign_server,
+--            pg_foreign_table, pg_user_mapping
+-- ====================================================================
+
+CREATE SERVER ext_server FOREIGN DATA WRAPPER postgres_fdw          -- pg_foreign_server
+	OPTIONS (host 'localhost', dbname 'other_db');
+
+CREATE USER MAPPING FOR catalog_admin SERVER ext_server             -- pg_user_mapping
+	OPTIONS (user 'remote_usr', password 'remote_pass');
+
+CREATE FOREIGN TABLE ext_table (                                    -- pg_foreign_table
+	id   integer,
 	data text
-) PARTITION BY RANGE (id);
-
-CREATE TABLE my_schema.my_part_1 PARTITION OF my_schema.my_part_table FOR VALUES FROM (1) TO (100);
-
--- Populates: pg_index
-CREATE INDEX my_idx ON my_schema.my_parent (val);
-
--- Populates: pg_statistic_ext
-CREATE STATISTICS my_schema.my_stats ON id, val FROM my_schema.my_parent;
-
+) SERVER ext_server OPTIONS (table_name 'remote_table');
 
 -- ====================================================================
--- 5. FUNCTIONS, AGGREGATES & TRIGGERS
+-- 11. TEXT SEARCH
+-- Populates: pg_ts_config, pg_ts_config_map, pg_ts_dict
+--            (pg_ts_parser and pg_ts_template are system-populated;
+--             we reference them via the built-in 'default' parser
+--             and 'simple' template below)
 -- ====================================================================
 
--- Populates: pg_proc
-CREATE FUNCTION my_schema.my_func() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE TEXT SEARCH DICTIONARY custom_dict (                         -- pg_ts_dict
+	TEMPLATE  = simple,                                             -- references pg_ts_template
+	STOPWORDS = english
+);
+
+CREATE TEXT SEARCH CONFIGURATION custom_ts_conf (                   -- pg_ts_config
+	PARSER = default                                                -- references pg_ts_parser
+);
+
+ALTER TEXT SEARCH CONFIGURATION custom_ts_conf
+	ADD MAPPING FOR asciiword WITH custom_dict;                     -- pg_ts_config_map
+
+-- ====================================================================
+-- 12. TRIGGERS, EVENT TRIGGERS, VIEWS, RULES, POLICIES
+-- Populates: pg_trigger, pg_event_trigger, pg_rewrite, pg_policy
+-- ====================================================================
+
+CREATE FUNCTION audit_trigger_func() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
 	RETURN NEW;
 END;
 $$;
 
--- Populates: pg_aggregate
-CREATE AGGREGATE my_schema.my_agg(integer) (
-	sfunc = int4pl,
-	stype = integer,
-	initcond = '0'
-);
+CREATE TRIGGER parent_audit_trig                                    -- pg_trigger
+	BEFORE UPDATE ON parent_table
+	FOR EACH ROW EXECUTE FUNCTION audit_trigger_func();
 
--- Populates: pg_trigger
-CREATE TRIGGER my_before_insert_trig
-	BEFORE INSERT ON my_schema.my_parent
-	FOR EACH ROW EXECUTE FUNCTION my_schema.my_func();
+-- Statement-level trigger
+CREATE TRIGGER parent_statement_trig
+	AFTER INSERT ON parent_table
+	FOR EACH STATEMENT EXECUTE FUNCTION audit_trigger_func();
 
--- Populates: pg_event_trigger
-CREATE EVENT TRIGGER my_evt_trigger ON ddl_command_start
-	EXECUTE FUNCTION my_schema.my_func();
+CREATE FUNCTION ddl_log_func() RETURNS event_trigger LANGUAGE plpgsql AS $$
+BEGIN
+	RAISE NOTICE 'DDL event: %', tg_tag;
+END;
+$$;
 
--- Populates: pg_rewrite (Creating a View or a Rule generates rewrite logic)
-CREATE RULE my_rule AS ON INSERT TO my_schema.my_parent
-	WHERE NEW.id > 1000 DO INSTEAD NOTHING;
+CREATE EVENT TRIGGER log_ddl_events                                 -- pg_event_trigger
+	ON ddl_command_start EXECUTE FUNCTION ddl_log_func();
 
--- Populates: pg_policy (Row Level Security)
-ALTER TABLE my_schema.my_parent ENABLE ROW LEVEL SECURITY;
-CREATE POLICY my_select_policy ON my_schema.my_parent
-	FOR SELECT TO my_role USING (id > 0);
+CREATE VIEW parent_view AS                                          -- pg_rewrite (view rule)
+	SELECT id, name, status FROM parent_table;
 
--- Populates: pg_seclabel
--- (Requires loadable module like 'auth_delay', showing syntax here)
--- SECURITY LABEL ON TABLE my_schema.my_parent IS 'unclassified';
+CREATE RULE parent_view_insert AS ON INSERT TO parent_view          -- pg_rewrite (explicit rule)
+	DO INSTEAD
+	INSERT INTO parent_table (id, name) VALUES (NEW.id, NEW.name);
 
+ALTER TABLE parent_table ENABLE ROW LEVEL SECURITY;
 
--- ====================================================================
--- 6. FOREIGN DATA WRAPPERS
--- ====================================================================
+CREATE POLICY active_only_policy ON parent_table                    -- pg_policy
+	FOR SELECT TO catalog_user USING (status = 'active');
 
--- Populates: pg_foreign_data_wrapper
-CREATE FOREIGN DATA WRAPPER my_fdw;
-
--- Populates: pg_foreign_server
-CREATE SERVER my_server FOREIGN DATA WRAPPER my_fdw;
-
--- Populates: pg_user_mapping
-CREATE USER MAPPING FOR my_role SERVER my_server;
-
--- Populates: pg_foreign_table
-CREATE FOREIGN TABLE my_schema.my_ft (
-	id integer,
-	data text
-) SERVER my_server;
-
+CREATE POLICY admin_all_policy ON parent_table                      -- pg_policy (second policy)
+	FOR ALL TO catalog_admin USING (true) WITH CHECK (true);
 
 -- ====================================================================
--- 7. OPERATORS & ACCESS METHODS
+-- 13. PUBLICATIONS, SUBSCRIPTIONS, REPLICATION ORIGIN
+-- Populates: pg_publication, pg_publication_rel,
+--            pg_publication_namespace, pg_subscription,
+--            pg_replication_origin
 -- ====================================================================
 
--- Populates: pg_operator
-CREATE OPERATOR my_schema.@@ (
-	leftarg = integer,
-	rightarg = integer,
-	function = int4eq
-);
+CREATE PUBLICATION test_pub FOR TABLE parent_table;                 -- pg_publication, pg_publication_rel
 
--- Populates: pg_am
-CREATE ACCESS METHOD my_am TYPE INDEX HANDLER bthandler;
+CREATE PUBLICATION test_schema_pub                                  -- pg_publication_namespace
+	FOR TABLES IN SCHEMA catalog_schema;
 
--- Populates: pg_opfamily
-CREATE OPERATOR FAMILY my_schema.my_opfamily USING btree;
-
--- Populates: pg_opclass, pg_amop (Operator binding), pg_amproc (Function binding)
-CREATE OPERATOR CLASS my_schema.my_opclass
-	DEFAULT FOR TYPE integer USING btree FAMILY my_schema.my_opfamily AS
-	OPERATOR 1 =,
-	FUNCTION 1 btint4cmp(integer, integer);
-
-
--- ====================================================================
--- 8. TEXT SEARCH CONFIGURATION
--- ====================================================================
-
--- Populates: pg_ts_parser
--- (Reusing existing parser functions to satisfy syntax without writing C code)
-CREATE TEXT SEARCH PARSER my_schema.my_parser (
-	START = prsd_start, GETTOKEN = prsd_nexttoken, END = prsd_end, LEXTYPES = prsd_lextype
-);
-
--- Populates: pg_ts_template
-CREATE TEXT SEARCH TEMPLATE my_schema.my_template (
-	LEXIZE = dsimple_lexize
-);
-
--- Populates: pg_ts_dict
-CREATE TEXT SEARCH DICTIONARY my_schema.my_dict (
-	TEMPLATE = simple
-);
-
--- Populates: pg_ts_config
-CREATE TEXT SEARCH CONFIGURATION my_schema.my_ts_conf (
-	COPY = english
-);
-
--- Populates: pg_ts_config_map
-ALTER TEXT SEARCH CONFIGURATION my_schema.my_ts_conf
-	ADD MAPPING FOR asciiword WITH my_schema.my_dict;
-
-
--- ====================================================================
--- 9. LOGICAL REPLICATION & PUB/SUB
--- ====================================================================
-
--- Populates: pg_publication
--- Populates: pg_publication_namespace (Since it targets a schema)
-CREATE PUBLICATION my_schema_pub FOR TABLES IN SCHEMA my_schema;
-
--- Populates: pg_publication_rel (Since it targets a specific table)
-CREATE PUBLICATION my_table_pub FOR TABLE my_schema.my_parent;
-
--- Populates: pg_subscription
--- (Connect = false prevents it from immediately trying to hit the dummy URL)
-CREATE SUBSCRIPTION my_sub
-	CONNECTION 'dbname=dummy_db host=localhost'
-	PUBLICATION my_table_pub
+CREATE SUBSCRIPTION test_sub                                        -- pg_subscription
+	CONNECTION 'host=localhost dbname=other_db'
+	PUBLICATION test_pub
 	WITH (connect = false);
 
--- Populates: pg_replication_origin
--- (This requires executing a system administration function rather than standard DDL)
-SELECT pg_replication_origin_create('my_origin_node');
+SELECT pg_replication_origin_create('custom_origin');               -- pg_replication_origin
+
+-- ====================================================================
+-- 14. DEFAULT PRIVILEGES, CONVERSIONS, DESCRIPTIONS, DEPENDENCIES
+-- Populates: pg_default_acl, pg_conversion, pg_description, pg_depend
+-- ====================================================================
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA catalog_schema                   -- pg_default_acl
+	GRANT SELECT ON TABLES TO catalog_user;
+
+CREATE CONVERSION custom_conv FOR 'UTF8' TO 'LATIN1'               -- pg_conversion
+	FROM utf8_to_iso8859_1;
+
+-- pg_description (COMMENT populates this catalog)
+COMMENT ON TABLE   parent_table                    IS 'Root table for all catalog tests';
+COMMENT ON COLUMN  parent_table.status             IS 'Lifecycle status of the record';
+COMMENT ON COLUMN  parent_table.active_period      IS 'float8 range for active window';
+COMMENT ON FUNCTION add_tax(numeric)               IS 'Applies 20% VAT to a price';
+COMMENT ON SEQUENCE table_id_seq                   IS 'Primary key sequence for parent_table';
+COMMENT ON VIEW    parent_view                     IS 'Public-facing projection of parent_table';
+COMMENT ON TYPE    status_enum                     IS 'Allowed lifecycle states';
+COMMENT ON TYPE    float_range                     IS 'User-defined range over float8';
+COMMENT ON INDEX   parent_name_btree_idx           IS 'BTree index on the name column';
+COMMENT ON TEXT SEARCH CONFIGURATION custom_ts_conf IS 'English full-text search config';
+COMMENT ON OPERATOR = (point_composite, point_composite) IS 'Equality for point_composite';
+
+-- pg_depend is populated implicitly throughout this script whenever any object
+-- depends on another (e.g. indexes on tables, columns on types, functions on
+-- schemas, triggers on tables, etc.). No explicit INSERT is needed or possible.
+
+-- ====================================================================
+-- NOTES ON CATALOG TABLES REQUIRING SPECIAL INFRASTRUCTURE:
+--
+-- pg_seclabel / pg_shseclabel:
+--   Requires a loaded MAC security provider (e.g. SELinux/sepgsql or
+--   the dummy_seclabel extension in contrib).  Syntax when available:
+--     SECURITY LABEL FOR dummy ON TABLE parent_table IS 'unclassified';
+--     SECURITY LABEL FOR dummy ON ROLE  catalog_user IS 'unclassified';
+--
+-- pg_transform:
+--   Requires C-language FROM SQL / TO SQL functions paired with a PL.
+--   Syntax when the C functions are available:
+--     CREATE TRANSFORM FOR point_composite LANGUAGE plpython3u (
+--         FROM SQL WITH FUNCTION <c_from_sql_func>(internal),
+--         TO   SQL WITH FUNCTION <c_to_sql_func>(internal, integer)
+--     );
+--
+-- pg_ts_parser / pg_ts_template:
+--   These are read-only system catalogs populated by built-in C parsers
+--   and templates.  CREATE TEXT SEARCH PARSER / TEMPLATE also require
+--   C handler functions; the entries we reference ('default' parser,
+--   'simple' template) already satisfy these catalogs non-trivially.
+-- ====================================================================

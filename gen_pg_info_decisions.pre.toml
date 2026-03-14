@@ -1,0 +1,126 @@
+pg_aggregate = 'todo'
+
+pg_am = 'todo'
+
+pg_amop = 'todo'
+
+pg_amproc = 'todo'
+
+pg_attrdef = 'todo'
+# pg_attrdef.columns.adbin = { sel="pg_get_expr(adbin, adrelid) as adbin", ty="Str" }
+
+pg_attribute = 'todo'
+# pg_attribute.columns.attnum = { ty="u16", filters=["attnum > 0"] }
+# pg_attribute.columns.attisdropped = { filters=["not attisdropped"] }
+# pg_attribute.columns.attcacheoff.skip = true
+# pg_attribute.columns.attstattarget.skip = true
+
+pg_roles = 'todo'
+# pg_roles.columns.rolpassword.skip = true
+
+pg_auth_members = 'todo'
+
+pg_cast = 'todo'
+
+pg_class = 'todo'
+# pg_class.columns.reltoastrelid.skip = true
+# pg_class.columns.relrewrite.skip = true
+# pg_class.columns.relpages.skip = true
+# pg_class.columns.relallvisible.skip = true
+
+pg_collation = 'todo'
+
+pg_constraint = 'todo'
+
+pg_conversion = 'todo'
+
+pg_database = 'todo'
+# pg_database.columns.encoding = { sel="pg_encoding_to_char(encoding)", ty="Str" }
+
+pg_db_role_setting = 'todo'
+
+pg_default_acl = 'todo'
+
+pg_depend = 'todo'
+
+pg_description = 'todo'
+
+pg_enum = 'todo'
+
+pg_event_trigger = 'todo'
+
+pg_extension = 'todo'
+
+pg_foreign_data_wrapper = 'todo'
+
+pg_foreign_server = 'todo'
+
+pg_foreign_table = 'todo'
+
+pg_index = 'todo'
+
+pg_inherits = 'todo'
+
+pg_init_privs = 'todo'
+
+pg_language = 'todo'
+
+pg_namespace = 'todo'
+
+pg_opclass = 'todo'
+
+pg_operator = 'todo'
+
+pg_opfamily = 'todo'
+
+pg_parameter_acl = 'todo'
+
+pg_partitioned_table = 'todo'
+
+pg_policy = 'todo'
+
+pg_proc = 'todo'
+
+pg_publication = 'todo'
+
+pg_publication_namespace = 'todo'
+
+pg_publication_rel = 'todo'
+
+pg_range = 'todo'
+
+pg_replication_origin = 'todo'
+
+pg_rewrite = 'todo'
+
+pg_seclabel = 'todo'
+
+pg_sequence = 'todo'
+
+pg_shdepend = 'todo'
+
+pg_shdescription = 'todo'
+
+pg_shseclabel = 'todo'
+
+pg_statistic_ext = 'todo'
+
+pg_subscription = 'todo'
+
+pg_transform = 'todo'
+
+pg_trigger = 'todo'
+
+pg_ts_config = 'todo'
+
+pg_ts_config_map = 'todo'
+
+pg_ts_dict = 'todo'
+
+pg_ts_parser = 'todo'
+
+pg_ts_template = 'todo'
+
+pg_type = 'todo'
+
+pg_user_mapping = 'todo'
