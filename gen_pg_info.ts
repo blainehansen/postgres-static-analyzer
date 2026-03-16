@@ -71,7 +71,7 @@ function formatTable(
 		hashCol === true ? `\n\t\timpl_qual_hash_and_equivalent!(${structName});`
 		: hashCol ? `\n\t\timpl_name_hash_and_equivalent!(${structName}, ${hashCol});`
 		: ''
-	const pgEnumsPortion = !allPgEnums.length ? '' : '\n\n' + allPgEnums.map(j => `\t\t${j};`).join("\n")
+	const pgEnumsPortion = !allPgEnums.length ? '' : '\n\n' + allPgEnums.map(j => `\t\tpg_char_enum!(${j});`).join("\n")
 	const collection = hashCol ? 'Set' : 'Vec'
 	const reflect = dedent(`
 		#[derive(Debug, PartialEq, Eq, Clone)]

@@ -1,4 +1,10 @@
-pg_aggregate = 'todo'
+# pg_aggregate = 'todo'
+# Aggregate kind: n for “normal” aggregates, o for “ordered-set” aggregates, or h for “hypothetical-set” aggregates
+pg_aggregate.aggkind = { ty="PgAggregateAggkind", exp="PgAggregateAggkind::pg_from_char(pg_aggregate.aggkind)", pgEnum="PgAggregateAggkind { { 'n' => Normal, 'o' => OrderedSet, 'h' => HypotheticalSet } }" }
+# Whether aggfinalfn modifies the transition state value: r if it is read-only, s if the aggtransfn cannot be applied after the aggfinalfn, or w if it writes on the value
+pg_aggregate.aggfinalmodify = { ty="PgAggregateAggfinalmodify", exp="PgAggregateAggfinalmodify::pg_from_char(pg_aggregate.aggfinalmodify)", pgEnum="PgAggregateAggfinalmodify { 'r' => ReadOnly, 's' => CannotApply, 'w' => Writes }" }
+# Like aggfinalmodify, but for the aggmfinalfn
+pg_aggregate.aggmfinalmodify = { ty="PgAggregateAggmfinalmodify", exp="PgAggregateAggmfinalmodify::pg_from_char(pg_aggregate.aggmfinalmodify)", pgEnum="PgAggregateAggmfinalmodify { 'r' => ReadOnly, 's' => CannotApply, 'w' => Writes }" }
 
 pg_am = 'todo'
 
@@ -110,6 +116,7 @@ pg_subscription = 'todo'
 pg_transform = 'todo'
 
 pg_trigger = 'todo'
+# pg_trigger.tgtype = { ty="i16" }
 
 pg_ts_config = 'todo'
 
@@ -122,5 +129,6 @@ pg_ts_parser = 'todo'
 pg_ts_template = 'todo'
 
 pg_type = 'todo'
+# pg_type.typlen = { ty="i16" }
 
 pg_user_mapping = 'todo'

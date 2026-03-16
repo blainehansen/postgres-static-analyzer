@@ -21,32 +21,35 @@ set search_path = '';
 -- conexclop
 
 
-
-select
-	oid::regtype,
-	-- typname,
-	-- typnamespace::regnamespace,
-	-- typtype,
-	typinput::regproc as typinput,
-	case when typelem = 0 then null else typelem::regtype end as typelem,
-	case when typarray = 0 then null else typarray::regtype end as typarray,
-	case when typbasetype = 0 then null else typbasetype::regtype end as typbasetype
-from pg_type
-where typnamespace::regnamespace not in ('pg_catalog', 'information_schema', 'pg_toast');
+select aggfnoid::regproc
+from pg_aggregate
 
 
--- proallargtypes is oid[] on pg_proc
-select
-	oid::regproc,
-	oid::regprocedure,
-	proname, *
-	-- proallargtypes::regtype[]  as arg_type_names
-from pg_proc
-where
-	-- proallargtypes is not null
-	-- pronamespace::regnamespace not in ('pg_catalog', 'information_schema', 'pg_toast')
-	oid::regproc = 'record_in'::regproc
-;
+-- select
+-- 	oid::regtype,
+-- 	-- typname,
+-- 	-- typnamespace::regnamespace,
+-- 	-- typtype,
+-- 	typinput::regproc as typinput,
+-- 	case when typelem = 0 then null else typelem::regtype end as typelem,
+-- 	case when typarray = 0 then null else typarray::regtype end as typarray,
+-- 	case when typbasetype = 0 then null else typbasetype::regtype end as typbasetype
+-- from pg_type
+-- where typnamespace::regnamespace not in ('pg_catalog', 'information_schema', 'pg_toast');
+
+
+-- -- proallargtypes is oid[] on pg_proc
+-- select
+-- 	oid::regproc,
+-- 	oid::regprocedure,
+-- 	proname, *
+-- 	-- proallargtypes::regtype[]  as arg_type_names
+-- from pg_proc
+-- where
+-- 	-- proallargtypes is not null
+-- 	-- pronamespace::regnamespace not in ('pg_catalog', 'information_schema', 'pg_toast')
+-- 	oid::regproc = 'record_in'::regproc
+-- ;
 
 
 

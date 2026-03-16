@@ -3,6 +3,7 @@ import { z } from "jsr:@zod/zod@^4.3.6"
 import { RawTable, TableDecision, ColumnDecision, TableOverride, ColumnOverride, commonPrefix, refToReg, toPascalCase } from "./gen_pg_info.utils.ts"
 import { Ask } from "jsr:@sallai/ask@^2.0.2"
 import { dedent } from "npm:ts-dedent@^2.2.0"
+import { table } from "node:console";
 
 const ask = new Ask()
 
@@ -44,48 +45,50 @@ async function decideTable({ tableName, columns }: RawTable): Promise<TableDecis
 		return null
 
 	if (tableOverride === undefined) {
-		const { decision } = await ask.select({
-			name: "decision",
-			message: `How to handle ${tableName}`,
-			choices: [
-				{ message: "auto", value: "auto" },
-				{ message: "manual", value: "manual" },
-			],
-			default: "auto",
-		} as const)
-		console.log(decision)
+		console.log(tableName)
+		// columns.map(({ name, typ, ref, desc }) => ``)
+		// ``
 
-		if (decision === "manual") {
-			const { blankQuery, blankReflect } = generateBlanks(tableName, columns)
-			await Promise.all([
-				Deno.writeTextFile("./reflect_queries/reflect.sql", blankQuery, { append: true }),
-				Deno.writeTextFile("./src/reflect.rs", blankReflect, { append: true }),
-			])
-			Deno.exit(0)
-		}
-		if (decision === "auto") {
-			// if auto do nothing and start processing the columns, which will themselves append things to the file
-		}
+		// const { decision } = await ask.select({
+		// 	name: "decision",
+		// 	message: `How to handle ${tableName}`,
+		// 	choices: [
+		// 		{ message: "auto", value: "auto" },
+		// 		{ message: "manual", value: "manual" },
+		// 	],
+		// 	default: "auto",
+		// } as const)
+		// console.log(decision)
+
+		// if (decision === "manual") {
+		// 	const { blankQuery, blankReflect } = generateBlanks(tableName, columns)
+		// 	await Promise.all([
+		// 		Deno.writeTextFile("./reflect_queries/reflect.sql", blankQuery, { append: true }),
+		// 		Deno.writeTextFile("./src/reflect.rs", blankReflect, { append: true }),
+		// 	])
+		// 	Deno.exit(0)
+		// }
+		// if (decision === "auto") {
+		// 	// if auto do nothing and start processing the columns, which will themselves append things to the file
+		// }
 	}
-
-	// for each column, print out the final decision made if you can come to one, otherwise prompt what to do
-	// - if skip, output that to the toml and move on
-	// - if handle, Deno.exit(0)
 
 	const decidedColumns: Dict<ColumnDecision> = {}
 	let foundHashColumn: string | true | undefined = undefined
 	for (const { name, typ, ref, desc } of columns) {
-		if (name === "oid" && !(tableName in refToReg)) continue
-
-		if (name === "oid" && (tableName in refToReg)) foundHashColumn = true
-		// TODO how do I find the
-		// if (typ === "name" && name !== "conname") foundHashColumn = name
-
 		const columnOverride = (tableOverride ?? {})[name]
-		decidedColumns[name] = await decideColumn(tableName, name, typ, ref, desc, columnOverride)
+		const [hashColumn, decision] = await decideColumn(tableName, name, typ, ref, desc, columnOverride)
+		console.log('name:', name)
+		console.log('hashColumn:', hashColumn)
+		console.log('decision:', decision)
+		// const { confirm } = await ask.confirm({ name: "confirm", message: "look good?",  default: true,  } as const)
+		const input = prompt('look good?')
+		if (input) Deno.exit(1)
+		console.log('')
+		decidedColumns[name] = decision
+		foundHashColumn ??= hashColumn
 	}
 
-	// const hashCol = tableOverride?.hashCol ?? foundHashColumn
 	return { columns: decidedColumns, hashCol: foundHashColumn }
 }
 
@@ -93,11 +96,11 @@ async function decideColumn(
 	tableName: string,
 	name: string, typ: string, ref: string, desc: string,
 	override: ColumnOverride | undefined
-): Promise<ColumnDecision> {
+): Promise<[string | true | undefined, ColumnDecision]> {
 	if (override === 'skip')
-		return { typ, ref, desc, skip: true }
+		return [undefined, { typ, ref, desc, skip: true }]
 	if (tableName === "pg_attribute" && desc.includes(" copy of "))
-		return { typ, ref, desc, skip: true }
+		return [undefined, { typ, ref, desc, skip: true }]
 
 	const { nullable: ovNullable, zero: ovZero } = override ?? {}
 	if (override) {
@@ -106,97 +109,123 @@ async function decideColumn(
 	}
 
 	if (override && override.ty)
-		return { typ, ref, desc, ...override, ty: override.ty }
+		return [undefined, { typ, ref, desc, ...override, ty: override.ty }]
 
-	if (typ === "oid" && (tableName in refToReg)) {
-		const reg = refToReg[tableName as keyof typeof refToReg]
-		// TODO do we have to guard the selector itself here?
-		const sel = `${name}::${reg} as ${name}`
-		const [ty, exp] =
-			ovNullable || ovZero || /null/i.test(desc) ? ["Option<Qual>", "Qual"]
-			: [`Qual::maybe_parse(${tableName}.${name})`, `Qual::parse(${tableName}.${name})`]
-		return { typ, ref, desc, ...override, sel, ty, exp }
-	}
-	if (typ === "bool") {
-		return { typ, ref, desc, ...override, /*sel,*/ ty: "bool", /*exp,*/ }
-	}
 	if (typ === "name") {
+		const hashColumn = name !== "conname" ? name : undefined
+
 		const sel = `${name}::text as ${name}`
 		const [ty, exp, ] = makeStr(tableName, name, false)
-		return { typ, ref, desc, sel, ty, exp }
+		return [hashColumn, { typ, ref, desc, sel, ty, exp }]
+	}
+	if (name === "oid" && !(tableName in refToReg))
+		return [undefined, { typ, ref, desc, skip: true }]
+	if (name === "oid" && (tableName in refToReg)) {
+		const reg = refToReg[tableName as keyof typeof refToReg]
+		if (!reg) throw ''
+		const sel = `${name}::${reg} as ${name}`
+		const ty = "Qual"
+		const exp = `Qual::parse(${tableName}.${name})`
+		return [true, { typ, ref, desc, sel, ty, exp }]
+	}
+	if (typ === "regproc") {
+		const zeroable = ovZero ?? /zero/i.test(desc)
+		const nullable = ovNullable ?? zeroable ?? false
+		const sel = zeroable
+			? `case when ${name} = 0 then null else ${name}::regproc end as ${name}`
+			: `${name}::regproc as ${name}`
+		const ty = nullable ? `Option<Qual>` : `Qual`
+		const exp = `${nullable ? 'Qual::maybe_parse' : 'Qual::parse'}(${tableName}.${name})`
+		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
+	}
+	if (ref === "(references pg_authid.oid)") {
+		const zeroable = ovZero ?? /zero/i.test(desc)
+		const nullable = ovNullable ?? zeroable ?? false
+		const sel = zeroable
+			? `case when ${name} = 0 then null else pg_get_userbyid(${name})::text end as ${name}`
+			: `pg_get_userbyid(${name})::text as ${name}`
+		const [ty, exp, ] = makeStr(tableName, name, nullable)
+		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
+	}
+	if (typ === "oid" && ref === "(references pg_namespace.oid)") {
+		const zeroable = ovZero ?? /zero/i.test(desc)
+		const nullable = ovNullable ?? zeroable ?? false
+		const sel = zeroable
+			? `case when ${name} = 0 then null else ${name}::regnamespace::text end as ${name}`
+			: `${name}::regnamespace::text as ${name}`
+		const [ty, exp, ] = makeStr(tableName, name, nullable)
+		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
+	}
+	const genericReferences = ref.match(/\(references (\w+)\.oid\)/)
+	const genericReferencesTable = genericReferences && genericReferences[1]
+	console.log("genericReferencesTable:", genericReferencesTable)
+	if (typ === "oid" && genericReferencesTable && (genericReferencesTable in refToReg)) {
+		const reg = refToReg[genericReferencesTable as keyof typeof refToReg]
+		if (!reg) throw ''
+		const zeroable = ovZero ?? /zero/i.test(desc)
+		const nullable = ovNullable ?? zeroable ?? false
+		const sel = zeroable
+			? `case when ${name} = 0 then null else ${name}::${reg}::text end as ${name}`
+			: `${name}::${reg}::text as ${name}`
+		const ty = nullable ? "Option<Qual>" : "Qual"
+		const exp = `${nullable ? 'Qual::maybe_parse' : 'Qual::parse'}(${tableName}.${name})`
+		return [undefined, { typ, ref, desc, ...override, sel, ty, exp }]
+	}
+
+	if (typ === "char") {
+		const ty = `${toPascalCase(tableName)}${toPascalCase(name)}`
+		const exp = `${ty}::pg_from_char(${tableName}.${name})`
+		const pgEnum = `${ty} { TODO }`
+		const t = `\n# ${desc}\n${tableName}.${name} = { ty="${ty}", exp="${exp}", pgEnum="${pgEnum}" }`
+		await Deno.writeTextFile("./gen_pg_info_decisions.pre.toml", t, { append: true })
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, pgEnum }]
+	}
+
+	if (typ === "bool") {
+		return [undefined, { typ, ref, desc, ...override, /*sel,*/ ty: "bool", /*exp,*/ }]
 	}
 	if (typ === "text") {
 		const nullable = /null/i.test(desc)
 		const [ty, exp, ] = makeStr(tableName, name, nullable)
-		return { typ, ref, desc, /*sel,*/ ty, exp }
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
 	}
 	if (typ === "text[]" && desc.includes("keyword=value") || desc.includes("configuration variables")) {
 		const ty = "Option<Vec<Str>>"
 		const exp = `${tableName}.${name}.map(|items| items.map(Into::into).collect())`
-		return { typ, ref, desc, /*sel,*/ ty, exp }
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
 	}
 	if (typ === "aclitem[]") {
 		const aclPrefix = aclitemMapping[tableName]; if (!aclPrefix) throw `no acl for ${tableName}`
 		const sel = `${name}::text[] as ${name}`
 		const ty = `Option<Vec<aclitem::${aclPrefix}AclItem>>`
 		const exp = `${tableName}.${name}.map(|${name}| ${name}.map(|acl| aclitem(acl, &${aclPrefix}GrantParser)).collect())`
-		return { typ, ref, desc, sel, ty, exp }
+		return [undefined, { typ, ref, desc, sel, ty, exp }]
 	}
 	if (name === "attnum" || ref === "(references pg_attribute.attnum)") {
 		const [ty, exp, ] = makeAssumedU(tableName, name, 16, false)
 		// TODO filter?
-		return { typ, ref, desc, /*sel,*/ ty, exp, filters: [`${name} > 0`] }
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, filters: [`${name} > 0`] }]
 	}
+	if (typ === "int2") {
+		const nullable = ovNullable ?? /null/i.test(desc) ?? false
+		const [ty, exp, ] = makeAssumedU(tableName, name, 16, nullable)
 
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
+	}
 	if (typ === "int4" && !ref) {
-		const zeroable = override?.zero ?? /zero/i.test(desc)
+		throw "these are just awkward, override some of them or something"
+		const zeroable = ovZero ?? /zero/i.test(desc)
 		const negativeable = /-1/i.test(desc)
-		const nullable = override?.nullable ?? zeroable ?? negativeable ?? false
+		const nullable = ovNullable ?? zeroable ?? negativeable ?? false
 		const sel =
 			negativeable ? `case when ${name} >= 0 then ${name} else null end`
 			: zeroable ? `case when ${name} > 0 then ${name} else null end`
 			: undefined
 		const [ty, exp, ] = makeAssumedU(tableName, name, 32, nullable)
 
-		return { typ, ref, desc, sel, ty, exp }
+		return [undefined, { typ, ref, desc, sel, ty, exp }]
 	}
 
-	if (ref === "(references pg_authid.oid)") {
-		const zeroable = override?.zero ?? /zero/i.test(desc)
-		const nullable = override?.nullable ?? zeroable ?? false
-		const sel = zeroable
-			? `case when ${name} = 0 then null else pg_get_userbyid(${name})::text end as ${name}`
-			: `pg_get_userbyid(${name})::text as ${name}`
-		const [ty, exp, ] = makeStr(tableName, name, nullable)
-		return { typ, ref, desc, sel, ty, exp, filters: override?.filters }
-	}
-
-	if (ref === "(references pg_class.oid)") {
-		const zeroable = override?.zero ?? /zero/i.test(desc)
-		const nullable = override?.nullable ?? zeroable ?? false
-		const ty = nullable ? `Option<Qual>` : `Qual`
-		const sel = `${name}::regclass as ${name}`
-		const exp = `${nullable ? 'maybe_parse_ref' : 'make_parse_ref'}(${tableName}.${name})`
-		return { typ, ref, desc, sel, ty, exp }
-	}
-	if (typ === "oid" && ref === "(references pg_type.oid)") {
-		const zeroable = override?.zero ?? /zero/i.test(desc)
-		const nullable = override?.nullable ?? zeroable ?? false
-
-		const joinTableName = `${name}_pg_type`
-		const joinNamespaceName = `${name}_pg_namespace`
-
-		const ty = nullable ? `Option<Qual>` : `Qual`
-		const sel = `${joinNamespaceName}.nspname::text as ${name}_nsp_name, ${joinTableName}.typname::text as ${name}_name`
-		const exp = `${nullable ? 'maybe_ref' : 'make_ref'}(${tableName}.${name}_nsp_name, ${tableName}.${name}_name)`
-
-		const leftPortion = nullable ? 'left ' : ''
-		const joins = [
-			leftPortion + `join pg_type as ${joinTableName} on ${tableName}.${name} = ${joinTableName}.oid`,
-			leftPortion + `join pg_namespace as ${joinNamespaceName} on ${joinTableName}.typnamespace = ${joinNamespaceName}.oid`,
-		]
-		return { typ, ref, desc, sel, ty, exp, joins }
-	}
 	// if (typ === "pg_node_tree") {
 	// 	`pg_get_expr(adbin, adrelid)`
 	// }
@@ -209,10 +238,13 @@ async function decideColumn(
 
 	// }
 
-	console.log(`don't know how to handle ${tableName}.${name}: ${typ} ${ref} ${desc}`)
+
+	// for each column, print out the final decision made if you can come to one, otherwise prompt what to do
+	// - if skip, output that to the toml and move on
+	// - if handle, Deno.exit(0)
 	const { decision } = await ask.select({
 		name: "decision",
-		message: "What would you like to do?",
+		message: `don't know how to handle ${tableName}.${name}: ${typ} ${ref} ${desc}`,
 		choices: [
 			{ message: "skip", value: "skip" },
 			{ message: "handle", value: "handle" },
@@ -224,7 +256,7 @@ async function decideColumn(
 	if (decision === "skip") {
 		const t = `${tableName}.columns.${name}.skip = true`
 		await Deno.writeTextFile("./gen_pg_info_decisions.pre.toml", t, { append: true })
-		return { typ, ref, desc, skip: true }
+		return [undefined, { typ, ref, desc, skip: true }]
 	}
 	if (decision === "handle") {
 		const t = `# ${typ} ${ref} ${desc}\n${tableName}.columns.${name} = { sel="", ty="", expr="", pgEnum="", joins=[], filters=[], zero=false, nullable=false }`

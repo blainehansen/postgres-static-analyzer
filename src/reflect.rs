@@ -4,7 +4,7 @@ use futures::TryStreamExt;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct PgState {
-	// pub pg_aggregate,
+	pub pg_aggregate,
 	// pub pg_am,
 	// pub pg_amop,
 	// pub pg_amproc,
@@ -70,7 +70,7 @@ pub async fn reflect_pg_state(
 	client.batch_execute("set search_path = '';").await?;
 
 	let (
-		// pg_aggregate,
+		pg_aggregate,
 		// pg_am,
 		// pg_amop,
 		// pg_amproc,
@@ -129,7 +129,7 @@ pub async fn reflect_pg_state(
 		// pg_type,
 		// pg_user_mapping,
 	) = tokio::try_join!(
-		// reflect_pg_aggregate(client),
+		reflect_pg_aggregate(client),
 		// reflect_pg_am(client),
 		// reflect_pg_amop(client),
 		// reflect_pg_amproc(client),
@@ -190,7 +190,7 @@ pub async fn reflect_pg_state(
 	)?;
 
 	Ok(PgState {
-		// pg_aggregate,
+		pg_aggregate,
 		// pg_am,
 		// pg_amop,
 		// pg_amproc,
@@ -337,7 +337,7 @@ macro_rules! pg_char_enum {
 }
 
 // `pg_aggregate`: https://www.postgresql.org/docs/17/catalog-pg-aggregate.html
-// use reflect_gen::{PgAggregate, reflect_pg_aggregate};
+use reflect_gen::{PgAggregate, reflect_pg_aggregate};
 
 // `pg_am`: https://www.postgresql.org/docs/17/catalog-pg-am.html
 // use reflect_gen::{PgAm, reflect_pg_am};
@@ -390,8 +390,8 @@ macro_rules! pg_char_enum {
 // `pg_description`: https://www.postgresql.org/docs/17/catalog-pg-description.html
 // use reflect_gen::{PgDescription, reflect_pg_description};
 
-// `pg_char_enum`: https://www.postgresql.org/docs/17/catalog-pg-enum.html
-// use reflect_gen::{PgCharEnum, reflect_pg_char_enum};
+// `pg_enum`: https://www.postgresql.org/docs/17/catalog-pg-enum.html
+// use reflect_gen::{PgCharEnum, reflect_pg_enum};
 
 // `pg_event_trigger`: https://www.postgresql.org/docs/17/catalog-pg-event-trigger.html
 // use reflect_gen::{PgEventTrigger, reflect_pg_event_trigger};
