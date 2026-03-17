@@ -5,14 +5,11 @@
 --            pg_shdescription, pg_shdepend
 -- ====================================================================
 
-CREATE DATABASE catalog_test_db;
-COMMENT ON DATABASE catalog_test_db IS 'Database for exhaustive pg catalog population'; -- pg_shdescription
-
 CREATE ROLE catalog_admin LOGIN PASSWORD 'super_secret';
 CREATE ROLE catalog_user  NOLOGIN;
 GRANT catalog_user TO catalog_admin;               -- pg_auth_members
 
-ALTER ROLE catalog_admin IN DATABASE catalog_test_db SET work_mem = '16MB'; -- pg_db_role_setting
+ALTER ROLE catalog_admin SET work_mem = '16MB'; -- pg_db_role_setting
 
 GRANT SET ON PARAMETER work_mem TO catalog_admin;  -- pg_parameter_acl
 
@@ -22,7 +19,7 @@ GRANT SET ON PARAMETER work_mem TO catalog_admin;  -- pg_parameter_acl
 -- ====================================================================
 
 CREATE EXTENSION IF NOT EXISTS pageinspect;          -- pg_extension, pg_init_privs
-REVOKE ALL ON FUNCTION get_raw_page(text, int4) FROM PUBLIC; -- uses default search_path
+REVOKE ALL ON FUNCTION get_raw_page(text, bigint) FROM PUBLIC; -- uses default search_path
 
 CREATE EXTENSION IF NOT EXISTS postgres_fdw;         -- needed in section 10
 
@@ -219,9 +216,9 @@ CREATE AGGREGATE catalog_sum(numeric) (
 );
 
 -- Ordered-set aggregate (hypothetical rank)
-CREATE AGGREGATE first_value_agg(anyelement) (
+CREATE AGGREGATE first_value_agg(anycompatible) (
 	SFUNC    = array_append,
-	STYPE    = anyarray,
+	STYPE    = anycompatiblearray,
 	INITCOND = '{}'
 );
 

@@ -54,3 +54,9 @@ dependencies = [
 	"gen_pg_info",
 	"dev_test",
 ]
+
+[tasks.insta_review]
+command = "cargo"
+install_crate = "cargo-insta"
+install_crate_args = ["--version", "^1.46"]
+args = ["insta", "review"]

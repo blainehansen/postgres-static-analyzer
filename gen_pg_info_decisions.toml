@@ -1,0 +1,165 @@
+
+[pg_aggregate.columns.aggfnoid]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "pg_proc OID of the aggregate function"
+sel = "aggfnoid::regproc::text as aggfnoid"
+ty = "Qual"
+exp = "Qual::parse(pg_aggregate.aggfnoid)"
+
+[pg_aggregate.columns.aggkind]
+typ = "char"
+ref = ""
+desc = "Aggregate kind: n for “normal” aggregates, o for “ordered-set” aggregates, or h for “hypothetical-set” aggregates"
+ty = "PgAggregateAggkind"
+exp = "PgAggregateAggkind::pg_from_char(pg_aggregate.aggkind)"
+pgEnum = "'n' => Normal, 'o' => OrderedSet, 'h' => HypotheticalSet"
+
+[pg_aggregate.columns.aggnumdirectargs]
+typ = "int2"
+ref = ""
+desc = "Number of direct (non-aggregated) arguments of an ordered-set or hypothetical-set aggregate, counting a variadic array as one argument. If equal to pronargs, the aggregate must be variadic and the variadic array describes the aggregated arguments as well as the final direct arguments. Always zero for normal aggregates."
+ty = "u16"
+exp = "pg_aggregate.aggnumdirectargs.unsigned_abs()"
+
+[pg_aggregate.columns.aggtransfn]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "Transition function"
+sel = "aggtransfn::regproc::text as aggtransfn"
+ty = "Qual"
+exp = "Qual::parse(pg_aggregate.aggtransfn)"
+
+[pg_aggregate.columns.aggfinalfn]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "Final function (zero if none)"
+sel = "case when aggfinalfn = 0 then null else aggfinalfn::regproc::text end as aggfinalfn"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_aggregate.aggfinalfn)"
+
+[pg_aggregate.columns.aggcombinefn]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "Combine function (zero if none)"
+sel = "case when aggcombinefn = 0 then null else aggcombinefn::regproc::text end as aggcombinefn"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_aggregate.aggcombinefn)"
+
+[pg_aggregate.columns.aggserialfn]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "Serialization function (zero if none)"
+sel = "case when aggserialfn = 0 then null else aggserialfn::regproc::text end as aggserialfn"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_aggregate.aggserialfn)"
+
+[pg_aggregate.columns.aggdeserialfn]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "Deserialization function (zero if none)"
+sel = "case when aggdeserialfn = 0 then null else aggdeserialfn::regproc::text end as aggdeserialfn"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_aggregate.aggdeserialfn)"
+
+[pg_aggregate.columns.aggmtransfn]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "Forward transition function for moving-aggregate mode (zero if none)"
+sel = "case when aggmtransfn = 0 then null else aggmtransfn::regproc::text end as aggmtransfn"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_aggregate.aggmtransfn)"
+
+[pg_aggregate.columns.aggminvtransfn]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "Inverse transition function for moving-aggregate mode (zero if none)"
+sel = "case when aggminvtransfn = 0 then null else aggminvtransfn::regproc::text end as aggminvtransfn"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_aggregate.aggminvtransfn)"
+
+[pg_aggregate.columns.aggmfinalfn]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "Final function for moving-aggregate mode (zero if none)"
+sel = "case when aggmfinalfn = 0 then null else aggmfinalfn::regproc::text end as aggmfinalfn"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_aggregate.aggmfinalfn)"
+
+[pg_aggregate.columns.aggfinalextra]
+typ = "bool"
+ref = ""
+desc = "True to pass extra dummy arguments to aggfinalfn"
+ty = "bool"
+
+[pg_aggregate.columns.aggmfinalextra]
+typ = "bool"
+ref = ""
+desc = "True to pass extra dummy arguments to aggmfinalfn"
+ty = "bool"
+
+[pg_aggregate.columns.aggfinalmodify]
+typ = "char"
+ref = ""
+desc = "Whether aggfinalfn modifies the transition state value: r if it is read-only, s if the aggtransfn cannot be applied after the aggfinalfn, or w if it writes on the value"
+ty = "PgAggregateAggfinalmodify"
+exp = "PgAggregateAggfinalmodify::pg_from_char(pg_aggregate.aggfinalmodify)"
+pgEnum = "'r' => ReadOnly, 's' => CannotApply, 'w' => Writes"
+
+[pg_aggregate.columns.aggmfinalmodify]
+typ = "char"
+ref = ""
+desc = "Like aggfinalmodify, but for the aggmfinalfn"
+ty = "PgAggregateAggmfinalmodify"
+exp = "PgAggregateAggmfinalmodify::pg_from_char(pg_aggregate.aggmfinalmodify)"
+pgEnum = "'r' => ReadOnly, 's' => CannotApply, 'w' => Writes"
+
+[pg_aggregate.columns.aggsortop]
+typ = "oid"
+ref = "(references pg_operator.oid)"
+desc = "Associated sort operator (zero if none)"
+sel = "case when aggsortop = 0 then null else aggsortop::regoperator::text end as aggsortop"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_aggregate.aggsortop)"
+
+[pg_aggregate.columns.aggtranstype]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "Data type of the aggregate function's internal transition (state) data"
+sel = "aggtranstype::regtype::text as aggtranstype"
+ty = "Qual"
+exp = "Qual::parse(pg_aggregate.aggtranstype)"
+
+[pg_aggregate.columns.aggtransspace]
+typ = "int4"
+ref = ""
+desc = "Approximate average size (in bytes) of the transition state data, or zero to use a default estimate"
+skip = true
+
+[pg_aggregate.columns.aggmtranstype]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "Data type of the aggregate function's internal transition (state) data for moving-aggregate mode (zero if none)"
+sel = "case when aggmtranstype = 0 then null else aggmtranstype::regtype::text end as aggmtranstype"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_aggregate.aggmtranstype)"
+
+[pg_aggregate.columns.aggmtransspace]
+typ = "int4"
+ref = ""
+desc = "Approximate average size (in bytes) of the transition state data for moving-aggregate mode, or zero to use a default estimate"
+skip = true
+
+[pg_aggregate.columns.agginitval]
+typ = "text"
+ref = ""
+desc = "The initial value of the transition state. This is a text field containing the initial value in its external string representation. If this field is null, the transition state value starts out null."
+ty = "Option<Str>"
+exp = "pg_aggregate.agginitval.map(Into::into)"
+
+[pg_aggregate.columns.aggminitval]
+typ = "text"
+ref = ""
+desc = "The initial value of the transition state for moving-aggregate mode. This is a text field containing the initial value in its external string representation. If this field is null, the transition state value starts out null."
+ty = "Option<Str>"
+exp = "pg_aggregate.aggminitval.map(Into::into)"

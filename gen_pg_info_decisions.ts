@@ -3,7 +3,6 @@ import { z } from "jsr:@zod/zod@^4.3.6"
 import { RawTable, TableDecision, ColumnDecision, TableOverride, ColumnOverride, commonPrefix, refToReg, toPascalCase } from "./gen_pg_info.utils.ts"
 import { Ask } from "jsr:@sallai/ask@^2.0.2"
 import { dedent } from "npm:ts-dedent@^2.2.0"
-import { table } from "node:console";
 
 const ask = new Ask()
 
@@ -82,8 +81,8 @@ async function decideTable({ tableName, columns }: RawTable): Promise<TableDecis
 		console.log('hashColumn:', hashColumn)
 		console.log('decision:', decision)
 		// const { confirm } = await ask.confirm({ name: "confirm", message: "look good?",  default: true,  } as const)
-		const input = prompt('look good?')
-		if (input) Deno.exit(1)
+		// const input = prompt('look good?')
+		// if (input) Deno.exit(1)
 		console.log('')
 		decidedColumns[name] = decision
 		foundHashColumn ??= hashColumn
@@ -115,7 +114,7 @@ async function decideColumn(
 		const hashColumn = name !== "conname" ? name : undefined
 
 		const sel = `${name}::text as ${name}`
-		const [ty, exp, ] = makeStr(tableName, name, false)
+		const [ty, exp] = makeStr(tableName, name, false)
 		return [hashColumn, { typ, ref, desc, sel, ty, exp }]
 	}
 	if (name === "oid" && !(tableName in refToReg))
@@ -132,8 +131,8 @@ async function decideColumn(
 		const zeroable = ovZero ?? /zero/i.test(desc)
 		const nullable = ovNullable ?? zeroable ?? false
 		const sel = zeroable
-			? `case when ${name} = 0 then null else ${name}::regproc end as ${name}`
-			: `${name}::regproc as ${name}`
+			? `case when ${name} = 0 then null else ${name}::regproc::text end as ${name}`
+			: `${name}::regproc::text as ${name}`
 		const ty = nullable ? `Option<Qual>` : `Qual`
 		const exp = `${nullable ? 'Qual::maybe_parse' : 'Qual::parse'}(${tableName}.${name})`
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
@@ -144,7 +143,7 @@ async function decideColumn(
 		const sel = zeroable
 			? `case when ${name} = 0 then null else pg_get_userbyid(${name})::text end as ${name}`
 			: `pg_get_userbyid(${name})::text as ${name}`
-		const [ty, exp, ] = makeStr(tableName, name, nullable)
+		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
 	if (typ === "oid" && ref === "(references pg_namespace.oid)") {
@@ -153,7 +152,7 @@ async function decideColumn(
 		const sel = zeroable
 			? `case when ${name} = 0 then null else ${name}::regnamespace::text end as ${name}`
 			: `${name}::regnamespace::text as ${name}`
-		const [ty, exp, ] = makeStr(tableName, name, nullable)
+		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
 	const genericReferences = ref.match(/\(references (\w+)\.oid\)/)
@@ -175,7 +174,7 @@ async function decideColumn(
 	if (typ === "char") {
 		const ty = `${toPascalCase(tableName)}${toPascalCase(name)}`
 		const exp = `${ty}::pg_from_char(${tableName}.${name})`
-		const pgEnum = `${ty} { TODO }`
+		const pgEnum = 'TODO'
 		const t = `\n# ${desc}\n${tableName}.${name} = { ty="${ty}", exp="${exp}", pgEnum="${pgEnum}" }`
 		await Deno.writeTextFile("./gen_pg_info_decisions.pre.toml", t, { append: true })
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, pgEnum }]
@@ -186,7 +185,7 @@ async function decideColumn(
 	}
 	if (typ === "text") {
 		const nullable = /null/i.test(desc)
-		const [ty, exp, ] = makeStr(tableName, name, nullable)
+		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
 	}
 	if (typ === "text[]" && desc.includes("keyword=value") || desc.includes("configuration variables")) {
@@ -201,28 +200,29 @@ async function decideColumn(
 		const exp = `${tableName}.${name}.map(|${name}| ${name}.map(|acl| aclitem(acl, &${aclPrefix}GrantParser)).collect())`
 		return [undefined, { typ, ref, desc, sel, ty, exp }]
 	}
-	if (name === "attnum" || ref === "(references pg_attribute.attnum)") {
-		const [ty, exp, ] = makeAssumedU(tableName, name, 16, false)
-		// TODO filter?
+	if (name === "attnum" || (typ === "int2" && ref === "(references pg_attribute.attnum)")) {
+		const [ty, exp] = makeAssumedU(tableName, name, 16, false)
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, filters: [`${name} > 0`] }]
 	}
-	if (typ === "int2") {
-		const nullable = ovNullable ?? /null/i.test(desc) ?? false
-		const [ty, exp, ] = makeAssumedU(tableName, name, 16, nullable)
+	if (name.endsWith("encoding")) {
+		const negativeable = /-1/.test(desc)
+		const sel = negativeable
+			? `case when ${name} < 0 then null else pg_encoding_to_char(${name})::text end as ${name}`
+			: `pg_encoding_to_char(${name})::text as ${name}`
+		const [ty, exp] = makeStr(tableName, name, negativeable)
+		return [undefined, { typ, ref, desc, sel, ty, exp }]
+	}
 
+	// these two integer categories both assume unsigned. any others need to be overridden
+	if (typ === "int2") {
+		const nullable = /null/i.test(desc)
+		const [ty, exp] = makeAssumedU(tableName, name, 16, nullable)
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
 	}
 	if (typ === "int4" && !ref) {
-		throw "these are just awkward, override some of them or something"
-		const zeroable = ovZero ?? /zero/i.test(desc)
-		const negativeable = /-1/i.test(desc)
-		const nullable = ovNullable ?? zeroable ?? negativeable ?? false
-		const sel =
-			negativeable ? `case when ${name} >= 0 then ${name} else null end`
-			: zeroable ? `case when ${name} > 0 then ${name} else null end`
-			: undefined
-		const [ty, exp, ] = makeAssumedU(tableName, name, 32, nullable)
-
+		const negativeable = /-1/.test(desc)
+		const sel = negativeable ? `case when < 0 then null else ${name} end as ${name}` : undefined
+		const [ty, exp] = makeAssumedU(tableName, name, 32, negativeable)
 		return [undefined, { typ, ref, desc, sel, ty, exp }]
 	}
 
@@ -322,20 +322,18 @@ const aclitemMapping: Dict<string> = {
 // 	return [sel, ty, exp, '']
 // }
 
-function makeStr(tableName: string, name: string, nullable: boolean): [string, string, string] {
+function makeStr(tableName: string, name: string, nullable: boolean): [string, string] {
 	return nullable
-		? ["Option<Str>", `${tableName}.${name}.map(Into::into)`, "None"]
-		: ["Str", `${tableName}.${name}.into()`, "()"]
+		? ["Option<Str>", `${tableName}.${name}.map(Into::into)`]
+		: ["Str", `${tableName}.${name}.into()`]
 }
 
-function makeAssumedU(tableName: string, name: string, size: 8 | 16 | 32, nullable: boolean): [string, string, string] {
-	// TODO agh if it's zeroable or negative then we need to have a case statement
+function makeAssumedU(tableName: string, name: string, size: 8 | 16 | 32, nullable: boolean): [string, string] {
 	const u = `u${size}`
 	const i = `i${size}`
-
 	return nullable
-		? [`Option<${u}>`, `${tableName}.${name}.map(${i}::unsigned_abs)`, "None"]
-		: [u, `${tableName}.${name}.unsigned_abs()`, "()"]
+		? [`Option<${u}>`, `${tableName}.${name}.map(${i}::unsigned_abs)`]
+		: [u, `${tableName}.${name}.unsigned_abs()`]
 }
 
 

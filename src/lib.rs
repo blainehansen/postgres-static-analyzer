@@ -16,7 +16,7 @@ pub use reflect::*;
 
 mod aclitem;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct Qual {
 	pub schema_name: Str,
 	pub name: Str,

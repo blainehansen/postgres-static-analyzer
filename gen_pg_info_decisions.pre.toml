@@ -1,10 +1,12 @@
 # pg_aggregate = 'todo'
 # Aggregate kind: n for “normal” aggregates, o for “ordered-set” aggregates, or h for “hypothetical-set” aggregates
-pg_aggregate.aggkind = { ty="PgAggregateAggkind", exp="PgAggregateAggkind::pg_from_char(pg_aggregate.aggkind)", pgEnum="PgAggregateAggkind { { 'n' => Normal, 'o' => OrderedSet, 'h' => HypotheticalSet } }" }
+pg_aggregate.aggkind = { ty="PgAggregateAggkind", exp="PgAggregateAggkind::pg_from_char(pg_aggregate.aggkind)", pgEnum="'n' => Normal, 'o' => OrderedSet, 'h' => HypotheticalSet" }
 # Whether aggfinalfn modifies the transition state value: r if it is read-only, s if the aggtransfn cannot be applied after the aggfinalfn, or w if it writes on the value
-pg_aggregate.aggfinalmodify = { ty="PgAggregateAggfinalmodify", exp="PgAggregateAggfinalmodify::pg_from_char(pg_aggregate.aggfinalmodify)", pgEnum="PgAggregateAggfinalmodify { 'r' => ReadOnly, 's' => CannotApply, 'w' => Writes }" }
+pg_aggregate.aggfinalmodify = { ty="PgAggregateAggfinalmodify", exp="PgAggregateAggfinalmodify::pg_from_char(pg_aggregate.aggfinalmodify)", pgEnum="'r' => ReadOnly, 's' => CannotApply, 'w' => Writes" }
 # Like aggfinalmodify, but for the aggmfinalfn
-pg_aggregate.aggmfinalmodify = { ty="PgAggregateAggmfinalmodify", exp="PgAggregateAggmfinalmodify::pg_from_char(pg_aggregate.aggmfinalmodify)", pgEnum="PgAggregateAggmfinalmodify { 'r' => ReadOnly, 's' => CannotApply, 'w' => Writes }" }
+pg_aggregate.aggmfinalmodify = { ty="PgAggregateAggmfinalmodify", exp="PgAggregateAggmfinalmodify::pg_from_char(pg_aggregate.aggmfinalmodify)", pgEnum="'r' => ReadOnly, 's' => CannotApply, 'w' => Writes" }
+pg_aggregate.aggtransspace = 'skip'
+pg_aggregate.aggmtransspace = 'skip'
 
 pg_am = 'todo'
 
@@ -12,27 +14,25 @@ pg_amop = 'todo'
 
 pg_amproc = 'todo'
 
-pg_attrdef = 'todo'
-# pg_attrdef.columns.adbin = { sel="pg_get_expr(adbin, adrelid) as adbin", ty="Str" }
+pg_attrdef = 'manual'
+# pg_attrdef.adbin = { sel="pg_get_expr(adbin, adrelid) as adbin", ty="Str" }
 
-pg_attribute = 'todo'
-# pg_attribute.columns.attnum = { ty="u16", filters=["attnum > 0"] }
-# pg_attribute.columns.attisdropped = { filters=["not attisdropped"] }
-# pg_attribute.columns.attcacheoff.skip = true
-# pg_attribute.columns.attstattarget.skip = true
+pg_attribute = 'manual'
+# pg_attribute.attisdropped = { filters=["not attisdropped"] }
+# pg_attribute.attcacheoff = 'skip'
 
 pg_roles = 'todo'
-# pg_roles.columns.rolpassword.skip = true
+# pg_roles.rolpassword = 'skip'
 
 pg_auth_members = 'todo'
 
 pg_cast = 'todo'
 
 pg_class = 'todo'
-# pg_class.columns.reltoastrelid.skip = true
-# pg_class.columns.relrewrite.skip = true
-# pg_class.columns.relpages.skip = true
-# pg_class.columns.relallvisible.skip = true
+# pg_class.reltoastrelid = 'skip'
+# pg_class.relrewrite = 'skip'
+# pg_class.relpages = 'skip'
+# pg_class.relallvisible = 'skip'
 
 pg_collation = 'todo'
 
@@ -40,8 +40,9 @@ pg_constraint = 'todo'
 
 pg_conversion = 'todo'
 
-pg_database = 'todo'
-# pg_database.columns.encoding = { sel="pg_encoding_to_char(encoding)", ty="Str" }
+pg_database = 'manual'
+# pg_database.encoding = { sel="pg_encoding_to_char(encoding)::text", ty="Str" }
+# pg_database.datconnlimit = { ty="i32" }
 
 pg_db_role_setting = 'todo'
 
@@ -66,6 +67,7 @@ pg_foreign_table = 'todo'
 pg_index = 'todo'
 
 pg_inherits = 'todo'
+# pg_inherits.inhseqno
 
 pg_init_privs = 'todo'
 
@@ -99,7 +101,7 @@ pg_replication_origin = 'todo'
 
 pg_rewrite = 'todo'
 
-pg_seclabel = 'todo'
+# pg_seclabel = 'todo'
 
 pg_sequence = 'todo'
 
@@ -107,9 +109,10 @@ pg_shdepend = 'todo'
 
 pg_shdescription = 'todo'
 
-pg_shseclabel = 'todo'
+# pg_shseclabel = 'todo'
 
 pg_statistic_ext = 'todo'
+# pg_statistic_ext.stxstattarget = { nullable=true }
 
 pg_subscription = 'todo'
 
@@ -121,6 +124,8 @@ pg_trigger = 'todo'
 pg_ts_config = 'todo'
 
 pg_ts_config_map = 'todo'
+# pg_ts_config_map.maptokentype = { ty="i16" }
+# pg_ts_config_map.mapseqno = { ty="i16" }
 
 pg_ts_dict = 'todo'
 
