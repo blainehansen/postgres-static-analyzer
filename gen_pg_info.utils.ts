@@ -1,6 +1,6 @@
 import { z } from "jsr:@zod/zod@^4.3.6"
 
-export const refToReg = {
+export const refToReg: { [key: string]: string } = {
 	pg_class: "regclass",	// relation name	pg_type
 	pg_collation: "regcollation",	// collation name	"POSIX"
 	pg_ts_config: "regconfig",	// text search configuration	english
@@ -12,6 +12,25 @@ export const refToReg = {
 	pg_proc: "regprocedure",	// function with argument types	sum(int4)
 	// pg_authid: "regrole",	// role name	smithee
 	pg_type: "regtype",	// data type name	integer
+}
+
+// [pg_default_acl.defaclacl]
+// [pg_init_privs.initprivs]
+export const aclitemMapping: { [key: string]: string } = {
+	pg_database: "Db",
+	pg_domain: "Domain",
+	pg_proc: "Function",
+	pg_foreign_data_wrapper: "ForeignDataWrapper",
+	pg_foreign_server: "ForeignServer",
+	pg_language: "Language",
+	pg_largeobject_metadata: "LargeObject",
+	pg_parameter_acl: "Parameter",
+	pg_namespace: "Schema",
+	pg_sequence: "Sequence",
+	pg_class: "Table",
+	pg_attribute: "TableColumn",
+	pg_tablespace: "Tablespace",
+	pg_type: "Type",
 }
 
 export const ColumnInfo = z.strictObject({
@@ -66,7 +85,7 @@ export const ColumnOverride = z.union([z.literal('skip'), z.intersection(
 )])
 export type ColumnOverride = z.infer<typeof ColumnOverride>
 export const TableOverride = z.union([
-	z.literal('manual'), z.literal('todo'),
+	z.literal('review'), z.literal('manual'), z.literal('todo'),
 	z.record(z.string(), ColumnOverride),
 ])
 export type TableOverride = z.infer<typeof TableOverride>

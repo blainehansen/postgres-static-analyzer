@@ -1,4 +1,4 @@
-# pg_aggregate = 'todo'
+# pg_aggregate = 'auto'
 # Aggregate kind: n for “normal” aggregates, o for “ordered-set” aggregates, or h for “hypothetical-set” aggregates
 pg_aggregate.aggkind = { ty="PgAggregateAggkind", exp="PgAggregateAggkind::pg_from_char(pg_aggregate.aggkind)", pgEnum="'n' => Normal, 'o' => OrderedSet, 'h' => HypotheticalSet" }
 # Whether aggfinalfn modifies the transition state value: r if it is read-only, s if the aggtransfn cannot be applied after the aggfinalfn, or w if it writes on the value
@@ -40,9 +40,17 @@ pg_constraint = 'todo'
 
 pg_conversion = 'todo'
 
-pg_database = 'manual'
-# pg_database.encoding = { sel="pg_encoding_to_char(encoding)::text", ty="Str" }
-# pg_database.datconnlimit = { ty="i32" }
+# pg_database = 'auto'
+# Locale provider for this database: b = builtin, c = libc, i = icu
+pg_database.datname = { filters = ["datname = current_database()"] }
+pg_database.datlocprovider = { ty="PgDatabaseDatlocprovider", exp="PgDatabaseDatlocprovider::pg_from_char(pg_database.datlocprovider)", pgEnum="'b' => Builtin, 'c' => Libc, 'i' => Icu" }
+pg_database.dathasloginevt = 'skip'
+pg_database.datconnlimit = { nullable=true }
+pg_database.datcollate = { nullable=true }
+pg_database.datctype = { nullable=true }
+pg_database.datlocale = { nullable=true }
+pg_database.daticurules = { nullable=true }
+pg_database.datcollversion = { nullable=true }
 
 pg_db_role_setting = 'todo'
 

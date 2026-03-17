@@ -17,7 +17,7 @@ pub struct PgState {
 	// pub pg_collation: PgCollation,
 	// pub pg_constraint: PgConstraint,
 	// pub pg_conversion: PgConversion,
-	// pub pg_database: PgDatabase,
+	pub pg_database: Set<PgDatabase>,
 	// pub pg_db_role_setting: PgDbRoleSetting,
 	// pub pg_default_acl: PgDefaultAcl,
 	// pub pg_depend: PgDepend,
@@ -83,7 +83,7 @@ pub async fn reflect_pg_state(
 		// pg_collation,
 		// pg_constraint,
 		// pg_conversion,
-		// pg_database,
+		pg_database,
 		// pg_db_role_setting,
 		// pg_default_acl,
 		// pg_depend,
@@ -142,7 +142,7 @@ pub async fn reflect_pg_state(
 		// reflect_pg_collation(client),
 		// reflect_pg_constraint(client),
 		// reflect_pg_conversion(client),
-		// reflect_pg_database(client),
+		reflect_pg_database(client),
 		// reflect_pg_db_role_setting(client),
 		// reflect_pg_default_acl(client),
 		// reflect_pg_depend(client),
@@ -203,7 +203,7 @@ pub async fn reflect_pg_state(
 		// pg_collation,
 		// pg_constraint,
 		// pg_conversion,
-		// pg_database,
+		pg_database,
 		// pg_db_role_setting,
 		// pg_default_acl,
 		// pg_depend,
@@ -376,7 +376,7 @@ use reflect_gen::{PgAggregate, reflect_pg_aggregate};
 // use reflect_gen::{PgConversion, reflect_pg_conversion};
 
 // `pg_database`: https://www.postgresql.org/docs/17/catalog-pg-database.html
-// use reflect_gen::{PgDatabase, reflect_pg_database};
+use reflect_gen::{PgDatabase, reflect_pg_database};
 
 // `pg_db_role_setting`: https://www.postgresql.org/docs/17/catalog-pg-db-role-setting.html
 // use reflect_gen::{PgDbRoleSetting, reflect_pg_db_role_setting};

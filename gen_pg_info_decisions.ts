@@ -1,6 +1,6 @@
 import { parse as tomlParse, stringify as tomlStringify } from "jsr:@std/toml@^1.0.11"
 import { z } from "jsr:@zod/zod@^4.3.6"
-import { RawTable, TableDecision, ColumnDecision, TableOverride, ColumnOverride, commonPrefix, refToReg, toPascalCase } from "./gen_pg_info.utils.ts"
+import { RawTable, TableDecision, ColumnDecision, TableOverride, ColumnOverride, commonPrefix, refToReg, aclitemMapping, toPascalCase } from "./gen_pg_info.utils.ts"
 import { Ask } from "jsr:@sallai/ask@^2.0.2"
 import { dedent } from "npm:ts-dedent@^2.2.0"
 
@@ -43,47 +43,48 @@ async function decideTable({ tableName, columns }: RawTable): Promise<TableDecis
 	if (tableOverride === 'todo' || tableOverride === 'manual')
 		return null
 
+	const review = tableOverride === 'review'
+	const actualOverride = review ? {} : tableOverride
+	console.log(tableName)
+
 	if (tableOverride === undefined) {
-		console.log(tableName)
-		// columns.map(({ name, typ, ref, desc }) => ``)
-		// ``
+		const { decision } = await ask.select({
+			name: "decision",
+			message: `How to handle ${tableName}`,
+			choices: [
+				{ message: "auto", value: "auto" },
+				{ message: "manual", value: "manual" },
+			],
+			default: "auto",
+		} as const)
+		console.log(decision)
 
-		// const { decision } = await ask.select({
-		// 	name: "decision",
-		// 	message: `How to handle ${tableName}`,
-		// 	choices: [
-		// 		{ message: "auto", value: "auto" },
-		// 		{ message: "manual", value: "manual" },
-		// 	],
-		// 	default: "auto",
-		// } as const)
-		// console.log(decision)
-
-		// if (decision === "manual") {
-		// 	const { blankQuery, blankReflect } = generateBlanks(tableName, columns)
-		// 	await Promise.all([
-		// 		Deno.writeTextFile("./reflect_queries/reflect.sql", blankQuery, { append: true }),
-		// 		Deno.writeTextFile("./src/reflect.rs", blankReflect, { append: true }),
-		// 	])
-		// 	Deno.exit(0)
-		// }
-		// if (decision === "auto") {
-		// 	// if auto do nothing and start processing the columns, which will themselves append things to the file
-		// }
+		if (decision === "manual") {
+			const { blankQuery, blankReflect } = generateBlanks(tableName, columns)
+			await Promise.all([
+				Deno.writeTextFile("./reflect_queries/reflect.sql", blankQuery, { append: true }),
+				Deno.writeTextFile("./src/reflect.rs", blankReflect, { append: true }),
+			])
+			Deno.exit(0)
+		}
+		if (decision === "auto") {
+			// if auto do nothing and start processing the columns, which will themselves append things to the file
+		}
 	}
 
 	const decidedColumns: Dict<ColumnDecision> = {}
 	let foundHashColumn: string | true | undefined = undefined
 	for (const { name, typ, ref, desc } of columns) {
-		const columnOverride = (tableOverride ?? {})[name]
+		const columnOverride = (actualOverride ?? {})[name]
 		const [hashColumn, decision] = await decideColumn(tableName, name, typ, ref, desc, columnOverride)
-		console.log('name:', name)
-		console.log('hashColumn:', hashColumn)
-		console.log('decision:', decision)
-		// const { confirm } = await ask.confirm({ name: "confirm", message: "look good?",  default: true,  } as const)
-		// const input = prompt('look good?')
-		// if (input) Deno.exit(1)
-		console.log('')
+		if (review) {
+			console.log('name:', name)
+			console.log('hashColumn:', hashColumn)
+			console.log('decision:', decision)
+			const input = prompt('look good?')
+			if (input) Deno.exit(1)
+			console.log('')
+		}
 		decidedColumns[name] = decision
 		foundHashColumn ??= hashColumn
 	}
@@ -115,12 +116,14 @@ async function decideColumn(
 
 		const sel = `${name}::text as ${name}`
 		const [ty, exp] = makeStr(tableName, name, false)
-		return [hashColumn, { typ, ref, desc, sel, ty, exp }]
+		return [hashColumn, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
 	if (name === "oid" && !(tableName in refToReg))
 		return [undefined, { typ, ref, desc, skip: true }]
+	if (typ === "xid")
+		return [undefined, { typ, ref, desc, skip: true }]
 	if (name === "oid" && (tableName in refToReg)) {
-		const reg = refToReg[tableName as keyof typeof refToReg]
+		const reg = refToReg[tableName]
 		if (!reg) throw ''
 		const sel = `${name}::${reg} as ${name}`
 		const ty = "Qual"
@@ -157,7 +160,9 @@ async function decideColumn(
 	}
 	const genericReferences = ref.match(/\(references (\w+)\.oid\)/)
 	const genericReferencesTable = genericReferences && genericReferences[1]
-	console.log("genericReferencesTable:", genericReferencesTable)
+	const ignoredTables = new Set(["pg_largeobject", "pg_largeobject_metadata", "pg_seclabel", "pg_shseclabel", "pg_statistic", "pg_statistic_ext_data", "pg_subscription_rel", "pg_tablespace", "pg_transform", "pg_ts_parser", "pg_ts_template"])
+	if (typ === "oid" && genericReferencesTable && ignoredTables.has(genericReferencesTable))
+		return [undefined, { typ, ref, desc, skip: true }]
 	if (typ === "oid" && genericReferencesTable && (genericReferencesTable in refToReg)) {
 		const reg = refToReg[genericReferencesTable as keyof typeof refToReg]
 		if (!reg) throw ''
@@ -184,9 +189,9 @@ async function decideColumn(
 		return [undefined, { typ, ref, desc, ...override, /*sel,*/ ty: "bool", /*exp,*/ }]
 	}
 	if (typ === "text") {
-		const nullable = /null/i.test(desc)
+		const nullable = ovNullable ?? /null/i.test(desc)
 		const [ty, exp] = makeStr(tableName, name, nullable)
-		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, filters: override?.filters }]
 	}
 	if (typ === "text[]" && desc.includes("keyword=value") || desc.includes("configuration variables")) {
 		const ty = "Option<Vec<Str>>"
@@ -221,7 +226,7 @@ async function decideColumn(
 	}
 	if (typ === "int4" && !ref) {
 		const negativeable = /-1/.test(desc)
-		const sel = negativeable ? `case when < 0 then null else ${name} end as ${name}` : undefined
+		const sel = negativeable ? `case when ${name} < 0 then null else ${name} end as ${name}` : undefined
 		const [ty, exp] = makeAssumedU(tableName, name, 32, negativeable)
 		return [undefined, { typ, ref, desc, sel, ty, exp }]
 	}
@@ -277,26 +282,6 @@ async function decideColumn(
 // }).join('\n\n')
 
 
-// [pg_default_acl.defaclacl]
-// [pg_init_privs.initprivs]
-const aclitemMapping: Dict<string> = {
-	"pg_database": "Db",
-	"pg_domain": "Domain",
-	"pg_proc": "Function",
-	"pg_foreign_data_wrapper": "ForeignDataWrapper",
-	"pg_foreign_server": "ForeignServer",
-	"pg_language": "Language",
-	"pg_largeobject_metadata": "LargeObject",
-	"pg_parameter_acl": "Parameter",
-	"pg_namespace": "Schema",
-	"pg_sequence": "Sequence",
-	"pg_class": "Table",
-	"pg_attribute": "TableColumn",
-	"pg_tablespace": "Tablespace",
-	"pg_type": "Type",
-}
-
-
 
 // function decideZero(typ: string, name: string, desc: string) {
 // 	if (typ === "oid" && /zero/i.test(desc))
@@ -343,15 +328,15 @@ function generateBlanks(tableName: string, columns: RawTable['columns']) {
 	const formattedReflectColumns: string[] = []
 
 	for (const { name, typ, ref, desc } of columns) {
-		formattedQueryColumns.push(`\t\t\t${name} TODO as ${name} -- ${typ} ${ref} ${desc}`)
-		formattedStructColumns.push(`\t\t\t${name}: TODO, // ${typ} ${ref} ${desc}`)
-		formattedReflectColumns.push(`\t\t\t\t\t\t${name}: ${tableName}.${name}, // ${typ} ${ref} ${desc}`)
+		formattedQueryColumns.push(`${name} TODO as ${name} -- ${typ} ${ref} ${desc}`)
+		formattedStructColumns.push(`${name}: TODO, // ${typ} ${ref} ${desc}`)
+		formattedReflectColumns.push(`${name}: ${tableName}.${name}, // ${typ} ${ref} ${desc}`)
 	}
 
 	const blankQuery = dedent(`
 		--! reflect_${tableName} : (TODO nullable)
 		select
-			${formattedQueryColumns.join(",\n")}
+			${formattedQueryColumns.join(",\n\t\t\t")}
 		from
 			${tableName}
 			TODO join
@@ -363,7 +348,7 @@ function generateBlanks(tableName: string, columns: RawTable['columns']) {
 	const blankReflect = dedent(`
 		#[derive(Debug, PartialEq, Eq, Clone)]
 		pub struct ${structName} {
-			${formattedStructColumns.join("\n")}
+			${formattedStructColumns.join("\n\t\t\t")}
 		}
 		TODO_impl_hash!(${structName})
 
@@ -373,7 +358,7 @@ function generateBlanks(tableName: string, columns: RawTable['columns']) {
 			let ${tableName}_coll = reflect_crate::queries::reflect_gen::reflect_${tableName}().bind(client)
 				.map(|${tableName}| {
 					${structName} {
-						${formattedReflectColumns.join("\n")}
+						${formattedReflectColumns.join("\n\t\t\t\t\t\t")}
 					}
 				})
 				.iter()

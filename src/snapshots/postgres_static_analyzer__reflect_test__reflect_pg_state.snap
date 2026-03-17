@@ -6401,4 +6401,21 @@ PgState(
       aggminitval: None,
     ),
   ],
+  pg_database: [
+    PgDatabase(
+      datname: "tempdb",
+      datdba: "tempuser",
+      encoding: "UTF8",
+      datlocprovider: Libc,
+      datistemplate: false,
+      datallowconn: true,
+      datconnlimit: None,
+      datcollate: Some("en_US.utf8"),
+      datctype: Some("en_US.utf8"),
+      datlocale: None,
+      daticurules: None,
+      datcollversion: Some("2.41"),
+      datacl: None,
+    ),
+  ],
 )

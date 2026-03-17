@@ -1,13 +1,13 @@
 use crate::Str;
 
-#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub struct AclItem<G> {
 	pub grantee: Option<Str>, // None for public
 	pub grantor: Str,
 	pub grants: Vec<Grant<G>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub struct Grant<G> {
 	pub privilege: G,
 	pub with_grant_option: bool,
@@ -20,7 +20,7 @@ macro_rules! pg_acl {
 		paste! {
 			pub type [< $name AclItem >] = AclItem<[< $name Privilege >]>;
 
-			#[derive(Debug, PartialEq, Eq, Clone, Ord, PartialOrd)]
+			#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone, Ord, PartialOrd)]
 			pub enum [< $name Privilege >] {
 				$($variant),*
 			}
@@ -40,47 +40,41 @@ macro_rules! pg_acl {
 	};
 }
 
-// // DATABASE	CTc	Tc	\l
-// pg_acl!(Db { 'C' => Create, 'T' => Temporary, 'c' => Connect });
+// DATABASE	CTc	Tc	\l
+pg_acl!(Db { 'C' => Create, 'T' => Temporary, 'c' => Connect });
 
-// // DOMAIN  U  U  \dD+
-// pg_acl!(Domain { 'U' => Usage });
+// DOMAIN  U  U  \dD+
+pg_acl!(Domain { 'U' => Usage });
 
-// // FUNCTION or PROCEDURE	X	X	\df+
-// pg_acl!(Function { 'X' => Execute });
+// FUNCTION or PROCEDURE	X	X	\df+
+pg_acl!(Function { 'X' => Execute });
 
-// // FOREIGN DATA WRAPPER	U	none	\dew+
-// pg_acl!(ForeignDataWrapper { 'U' => Usage });
+// FOREIGN DATA WRAPPER	U	none	\dew+
+pg_acl!(ForeignDataWrapper { 'U' => Usage });
 
-// // FOREIGN SERVER	U	none	\des+
-// pg_acl!(ForeignServer { 'U' => Usage });
+// FOREIGN SERVER	U	none	\des+
+pg_acl!(ForeignServer { 'U' => Usage });
 
-// // LANGUAGE	U	U	\dL+
-// pg_acl!(Language { 'U' => Usage });
+// LANGUAGE	U	U	\dL+
+pg_acl!(Language { 'U' => Usage });
 
-// // LARGE OBJECT	rw	none	\dl+
-// pg_acl!(LargeObject { 'r' => Select, 'w' => Update });
+// PARAMETER	sA	none	\dconfig+
+pg_acl!(Parameter { 's' => Set, 'A' => AlterSystem });
 
-// // PARAMETER	sA	none	\dconfig+
-// pg_acl!(Parameter { 's' => Set, 'A' => AlterSystem });
+// SCHEMA	UC	none	\dn+
+pg_acl!(Schema { 'U' => Usage, 'C' => Create });
 
-// // SCHEMA	UC	none	\dn+
-// pg_acl!(Schema { 'U' => Usage, 'C' => Create });
-
-// // SEQUENCE	rwU	none	\dp
-// pg_acl!(Sequence { 'r' => Select, 'w' => Update, 'U' => Usage });
+// SEQUENCE	rwU	none	\dp
+pg_acl!(Sequence { 'r' => Select, 'w' => Update, 'U' => Usage });
 
 // TABLE (and table-like objects)	arwdDxtm	none	\dp
 pg_acl!(Table { 'a' => Insert, 'r' => Select, 'w' => Update, 'd' => Delete, 'D' => Truncate, 'x' => References, 't' => Trigger, 'm' => Maintain });
 
-// // Table column	arwx	none	\dp
-// pg_acl!(TableColumn { 'a' => Insert, 'r' => Select, 'w' => Update, 'x' => References });
+// Table column	arwx	none	\dp
+pg_acl!(TableColumn { 'a' => Insert, 'r' => Select, 'w' => Update, 'x' => References });
 
-// // TABLESPACE	C	none	\db+
-// pg_acl!(Tablespace { 'C' => Create });
-
-// // TYPE	U	U	\dT+
-// pg_acl!(Type { 'U' => Usage });
+// TYPE	U	U	\dT+
+pg_acl!(Type { 'U' => Usage });
 
 // SELECT	r (“read”)	LARGE OBJECT, SEQUENCE, TABLE (and table-like objects), table column
 // INSERT	a (“append”)	TABLE, table column
@@ -220,14 +214,14 @@ mod tests {
 		assert_eq!(item.grants.len(), 8);
 	}
 
-	// #[test]
-	// fn database_grants() {
-	// 	let (_, item) = parse_aclitem("app=Tc/admin", &DbGrantParser).unwrap();
-	// 	assert_eq!(item.grants, vec![
-	// 		Grant { privilege: DbPrivilege::Temporary, with_grant_option: false },
-	// 		Grant { privilege: DbPrivilege::Connect, with_grant_option: false },
-	// 	]);
-	// }
+	#[test]
+	fn database_grants() {
+		let (_, item) = parse_aclitem("app=Tc/admin", &DbGrantParser).unwrap();
+		assert_eq!(item.grants, vec![
+			Grant { privilege: DbPrivilege::Temporary, with_grant_option: false },
+			Grant { privilege: DbPrivilege::Connect, with_grant_option: false },
+		]);
+	}
 
 	#[test]
 	fn quoted_role_name() {
@@ -236,17 +230,17 @@ mod tests {
 		assert_eq!(item.grantor, "the owner");
 	}
 
-	// #[test]
-	// fn quoted_role_name_with_escaped_quote() {
-	// 	let (_, item) = parse_aclitem(r#""it's""complex"=U/admin"#, &LanguageGrantParser).unwrap();
-	// 	assert_eq!(item.grantee.as_deref(), Some(r#"it's"complex"#));
-	// }
+	#[test]
+	fn quoted_role_name_with_escaped_quote() {
+		let (_, item) = parse_aclitem(r#""it's""complex"=U/admin"#, &LanguageGrantParser).unwrap();
+		assert_eq!(item.grantee.as_deref(), Some(r#"it's"complex"#));
+	}
 
-	// #[test]
-	// fn function_execute_with_grant() {
-	// 	let (_, item) = parse_aclitem("analyst=X*/dba", &FunctionGrantParser).unwrap();
-	// 	assert_eq!(item.grants, vec![
-	// 		Grant { privilege: FunctionPrivilege::Execute, with_grant_option: true },
-	// 	]);
-	// }
+	#[test]
+	fn function_execute_with_grant() {
+		let (_, item) = parse_aclitem("analyst=X*/dba", &FunctionGrantParser).unwrap();
+		assert_eq!(item.grants, vec![
+			Grant { privilege: FunctionPrivilege::Execute, with_grant_option: true },
+		]);
+	}
 }

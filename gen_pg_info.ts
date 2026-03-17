@@ -10,7 +10,7 @@ const decisions = await Deno.readTextFile("./gen_pg_info_decisions.toml")
 const formatted = Object.entries(decisions).map(([tableName, tableDecision]) => formatTable(tableName, tableDecision))
 
 const queryText = formatted.map(({ query }) => `${query}\n\n`).join('\n')
-const reflectText = formatted.map(({ reflect }) => `${reflect}\n\n`).join('\n')
+const reflectText = 'use super::*;\nuse futures::TryStreamExt;use crate::aclitem::*;\n\n' + formatted.map(({ reflect }) => `${reflect}\n\n`).join('\n')
 
 await Promise.all([
 	Deno.writeTextFile("./reflect_queries/reflect_gen.sql", queryText),
@@ -58,11 +58,11 @@ function formatTable(
 	}
 
 	const joinsPortion = !allJoins.length ? '' : '\n' + allJoins.map(j => `\t\t\t${j}`).join("\n")
-	const filtersPortion = !allFilters.length ? '' : 'where ' + ('\n' + allFilters.map(f => `\t\t\t${f}`).join("\nand "))
+	const filtersPortion = !allFilters.length ? '' : '\n\t\twhere ' + ('\n' + allFilters.map(f => `\t\t\t${f}`).join("\nand "))
 	const finalFormattedQueryColumns = formattedQueryColumns.map((c, i) => {
 		const commentIndex = c.indexOf('--') - 1
 		return (commentIndex <= 0 || i === formattedQueryColumns.length - 1) ? c
-			:`${c.slice(0, commentIndex)}, ${c.slice(commentIndex + 1)}}`
+			:`${c.slice(0, commentIndex)}, ${c.slice(commentIndex + 1)}`
 	}).join("\n\t\t\t")
 	const query = dedent(`
 		--! reflect_${tableName} : (${nullableQueryColumns.map(f => `${f}?`).join(", ")})
@@ -82,9 +82,6 @@ function formatTable(
 		: '\n\n' + allPgEnums.map(([fieldStructName, members]) => `\t\tpg_char_enum!(${structName}${fieldStructName} { ${members} });`).join("\n")
 	const collection = hashCol ? 'Set' : 'Vec'
 	const reflect = dedent(`
-		use super::*;
-		use futures::TryStreamExt;
-
 		#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 		pub struct ${structName} {
 			${formattedStructColumns.join("\n\t\t\t")}

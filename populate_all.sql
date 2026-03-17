@@ -10,6 +10,9 @@ CREATE ROLE catalog_user  NOLOGIN;
 GRANT catalog_user TO catalog_admin;               -- pg_auth_members
 
 ALTER ROLE catalog_admin SET work_mem = '16MB'; -- pg_db_role_setting
+ALTER ROLE catalog_admin IN DATABASE tempdb SET work_mem = '14MB'; -- pg_db_role_setting
+
+COMMENT ON DATABASE tempdb IS 'Database for exhaustive pg catalog population'; -- pg_shdescription
 
 GRANT SET ON PARAMETER work_mem TO catalog_admin;  -- pg_parameter_acl
 

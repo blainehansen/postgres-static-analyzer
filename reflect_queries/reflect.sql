@@ -112,4 +112,3 @@
 -- `pg_type`: https://www.postgresql.org/docs/17/catalog-pg-type.html
 
 -- `pg_user_mapping`: https://www.postgresql.org/docs/17/catalog-pg-user-mapping.html
-

@@ -14,16 +14,9 @@ set search_path = '';
 -- show search_path;
 -- select current_schemas(true);
 
-
--- conpfeqop
--- conppeqop
--- conffeqop
--- conexclop
-
-
-select aggfnoid::regproc
-from pg_aggregate
-
+select *
+from pg_catalog.pg_database
+where datname = current_database();
 
 -- select
 -- 	oid::regtype,
