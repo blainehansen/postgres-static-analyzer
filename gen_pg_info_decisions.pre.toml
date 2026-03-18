@@ -8,7 +8,9 @@ pg_aggregate.aggmfinalmodify = { ty="PgAggregateAggmfinalmodify", exp="PgAggrega
 pg_aggregate.aggtransspace = 'skip'
 pg_aggregate.aggmtransspace = 'skip'
 
-pg_am = 'todo'
+# pg_am = 'auto'
+# t = table (including materialized views), i = index.
+pg_am.amtype = { ty="PgAmAmtype", exp="PgAmAmtype::pg_from_char(pg_am.amtype)", pgEnum="'t' => Table, 'i' => Index" }
 
 pg_amop = 'todo'
 

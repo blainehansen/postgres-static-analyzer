@@ -33,6 +33,20 @@ export const aclitemMapping: { [key: string]: string } = {
 	pg_type: "Type",
 }
 
+export const ignoredTables = new Set([
+	"pg_largeobject",
+	"pg_largeobject_metadata",
+	"pg_seclabel",
+	"pg_shseclabel",
+	"pg_statistic",
+	"pg_statistic_ext_data",
+	"pg_subscription_rel",
+	"pg_tablespace",
+	"pg_transform",
+	"pg_ts_parser",
+	"pg_ts_template",
+])
+
 export const ColumnInfo = z.strictObject({
 	typ: z.string(),
 	ref: z.string(),

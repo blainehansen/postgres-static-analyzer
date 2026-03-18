@@ -163,3 +163,36 @@ ref = ""
 desc = "The initial value of the transition state for moving-aggregate mode. This is a text field containing the initial value in its external string representation. If this field is null, the transition state value starts out null."
 ty = "Option<Str>"
 exp = "pg_aggregate.aggminitval.map(Into::into)"
+
+[pg_am]
+hashCol = "amname"
+
+[pg_am.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_am.columns.amname]
+typ = "name"
+ref = ""
+desc = "Name of the access method"
+sel = "amname::text as amname"
+ty = "Str"
+exp = "pg_am.amname.into()"
+
+[pg_am.columns.amhandler]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "OID of a handler function that is responsible for supplying information about the access method"
+sel = "amhandler::regproc::text as amhandler"
+ty = "Qual"
+exp = "Qual::parse(pg_am.amhandler)"
+
+[pg_am.columns.amtype]
+typ = "char"
+ref = ""
+desc = "t = table (including materialized views), i = index."
+ty = "PgAmAmtype"
+exp = "PgAmAmtype::pg_from_char(pg_am.amtype)"
+pgEnum = "'t' => Table, 'i' => Index"

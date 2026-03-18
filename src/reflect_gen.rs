@@ -88,3 +88,37 @@ pub async fn reflect_pg_aggregate(
 	Ok(pg_aggregate_coll)
 }
 
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgAm {
+	// oid oid  Row identifier
+	/// `name`  Name of the access method
+	amname: Str,
+	/// `regproc` `(references pg_proc.oid)` OID of a handler function that is responsible for supplying information about the access method
+	amhandler: Qual,
+	/// `char`  t = table (including materialized views), i = index.
+	amtype: PgAmAmtype,
+}
+impl_name_hash_and_equivalent!(PgAm, amname);
+
+pg_char_enum!(PgAmAmtype { 't' => Table, 'i' => Index });
+
+pub async fn reflect_pg_am(
+	client: &PgClient
+) -> Result<Set<PgAm>, postgres::Error> {
+	let pg_am_coll = reflect_crate::queries::reflect_gen::reflect_pg_am().bind(client)
+		.map(|pg_am| {
+			PgAm {
+				amname: pg_am.amname.into(),
+				amhandler: Qual::parse(pg_am.amhandler),
+				amtype: PgAmAmtype::pg_from_char(pg_am.amtype),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_am_coll)
+}
+

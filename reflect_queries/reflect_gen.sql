@@ -26,3 +26,14 @@ from
 	pg_aggregate
 ;
 
+
+--! reflect_pg_am : ()
+select
+	-- oid oid  Row identifier
+	amname::text as amname, -- name  Name of the access method
+	amhandler::regproc::text as amhandler, -- regproc (references pg_proc.oid) OID of a handler function that is responsible for supplying information about the access method
+	amtype -- char  t = table (including materialized views), i = index.
+from
+	pg_am
+;
+

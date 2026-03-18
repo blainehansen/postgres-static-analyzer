@@ -1,6 +1,6 @@
 import { parse as tomlParse, stringify as tomlStringify } from "jsr:@std/toml@^1.0.11"
 import { z } from "jsr:@zod/zod@^4.3.6"
-import { RawTable, TableDecision, ColumnDecision, TableOverride, ColumnOverride, commonPrefix, refToReg, aclitemMapping, toPascalCase } from "./gen_pg_info.utils.ts"
+import { RawTable, TableDecision, ColumnDecision, TableOverride, ColumnOverride, commonPrefix, refToReg, aclitemMapping, ignoredTables, toPascalCase } from "./gen_pg_info.utils.ts"
 import { Ask } from "jsr:@sallai/ask@^2.0.2"
 import { dedent } from "npm:ts-dedent@^2.2.0"
 
@@ -171,7 +171,6 @@ async function decideColumn(
 
 	const genericReferences = ref.match(/\(references (\w+)\.oid\)/)
 	const genericReferencesTable = genericReferences && genericReferences[1]
-	const ignoredTables = new Set(["pg_largeobject", "pg_largeobject_metadata", "pg_seclabel", "pg_shseclabel", "pg_statistic", "pg_statistic_ext_data", "pg_subscription_rel", "pg_tablespace", "pg_transform", "pg_ts_parser", "pg_ts_template"])
 	if (typ === "oid" && genericReferencesTable && ignoredTables.has(genericReferencesTable))
 		return [undefined, { typ, ref, desc, skip: true }]
 	if (typ === "oid" && genericReferencesTable && (genericReferencesTable in refToReg)) {
@@ -246,18 +245,6 @@ async function decideColumn(
 	// 	`pg_get_expr(adbin, adrelid)`
 	// }
 
-	// const referencesMatch = ref.match(/^\(references (\w+)\.oid\)$/)
-	// const references = referencesMatch && referencesMatch[1]
-	// if (references && references !== "pg_authid" && references !== "pg_namespace") {
-	// 	joinTableName = `${name}_${references}`
-	// 	joinNamespaceName = `${name}_${references}_sch`
-
-	// }
-
-
-	// for each column, print out the final decision made if you can come to one, otherwise prompt what to do
-	// - if skip, output that to the toml and move on
-	// - if handle, Deno.exit(0)
 	const { decision } = await ask.select({
 		name: "decision",
 		message: `don't know how to handle ${tableName}.${name}: ${typ} ${ref} ${desc}`,

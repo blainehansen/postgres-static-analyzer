@@ -5,7 +5,7 @@ use futures::TryStreamExt;
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct PgState {
 	pub pg_aggregate: Vec<PgAggregate>,
-	// pub pg_am: PgAm,
+	pub pg_am: Set<PgAm>,
 	// pub pg_amop: PgAmop,
 	// pub pg_amproc: PgAmproc,
 	// pub pg_attrdef: PgAttrdef,
@@ -71,7 +71,7 @@ pub async fn reflect_pg_state(
 
 	let (
 		pg_aggregate,
-		// pg_am,
+		pg_am,
 		// pg_amop,
 		// pg_amproc,
 		// pg_attrdef,
@@ -130,7 +130,7 @@ pub async fn reflect_pg_state(
 		// pg_user_mapping,
 	) = tokio::try_join!(
 		reflect_pg_aggregate(client),
-		// reflect_pg_am(client),
+		reflect_pg_am(client),
 		// reflect_pg_amop(client),
 		// reflect_pg_amproc(client),
 		// reflect_pg_attrdef(client),
@@ -191,7 +191,7 @@ pub async fn reflect_pg_state(
 
 	Ok(PgState {
 		pg_aggregate,
-		// pg_am,
+		pg_am,
 		// pg_amop,
 		// pg_amproc,
 		// pg_attrdef,
@@ -340,7 +340,7 @@ macro_rules! pg_char_enum {
 use reflect_gen::{PgAggregate, reflect_pg_aggregate};
 
 // `pg_am`: https://www.postgresql.org/docs/17/catalog-pg-am.html
-// use reflect_gen::{PgAm, reflect_pg_am};
+use reflect_gen::{PgAm, reflect_pg_am};
 
 // `pg_amop`: https://www.postgresql.org/docs/17/catalog-pg-amop.html
 // use reflect_gen::{PgAmop, reflect_pg_amop};

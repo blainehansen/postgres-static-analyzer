@@ -8,7 +8,12 @@ async fn test_reflect_pg_state() -> anyhow::Result<()> {
 
 		let pg_state = reflect_pg_state(&client).await?;
 
-		insta::assert_ron_snapshot!(pg_state);
+		insta::assert_ron_snapshot!(
+			pg_state,
+			{
+				".**" => insta::sorted_redaction(),
+			}
+		);
 
 		Ok::<_, anyhow::Error>(())
 	}).await??;
