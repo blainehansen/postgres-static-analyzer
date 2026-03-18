@@ -15,8 +15,8 @@ set search_path = '';
 -- select current_schemas(true);
 
 select *
-from pg_catalog.pg_database
-where datname = current_database();
+from pg_catalog.pg_db_role_setting
+where setdatabase = current_database();
 
 -- select
 -- 	oid::regtype,

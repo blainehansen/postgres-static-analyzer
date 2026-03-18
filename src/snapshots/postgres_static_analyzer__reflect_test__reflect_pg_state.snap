@@ -6401,21 +6401,42 @@ PgState(
       aggminitval: None,
     ),
   ],
-  pg_database: [
-    PgDatabase(
-      datname: "tempdb",
-      datdba: "tempuser",
-      encoding: "UTF8",
-      datlocprovider: Libc,
-      datistemplate: false,
-      datallowconn: true,
-      datconnlimit: None,
-      datcollate: Some("en_US.utf8"),
-      datctype: Some("en_US.utf8"),
-      datlocale: None,
-      daticurules: None,
-      datcollversion: Some("2.41"),
-      datacl: None,
+  pg_database: PgDatabase(
+    datname: "tempdb",
+    datdba: "tempuser",
+    encoding: "UTF8",
+    datlocprovider: Libc,
+    datistemplate: false,
+    datallowconn: true,
+    datconnlimit: None,
+    datcollate: Some("en_US.utf8"),
+    datctype: Some("en_US.utf8"),
+    datlocale: None,
+    daticurules: None,
+    datcollversion: Some("2.41"),
+    datacl: None,
+  ),
+  pg_db_role_setting: [
+    PgDbRoleSetting(
+      setdatabase: Some(()),
+      setrole: None,
+      setconfig: Some([
+        "work_mem=12MB",
+      ]),
+    ),
+    PgDbRoleSetting(
+      setdatabase: None,
+      setrole: Some("catalog_admin"),
+      setconfig: Some([
+        "work_mem=16MB",
+      ]),
+    ),
+    PgDbRoleSetting(
+      setdatabase: Some(()),
+      setrole: Some("catalog_admin"),
+      setconfig: Some([
+        "work_mem=14MB",
+      ]),
     ),
   ],
 )

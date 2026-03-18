@@ -9,6 +9,7 @@ CREATE ROLE catalog_admin LOGIN PASSWORD 'super_secret';
 CREATE ROLE catalog_user  NOLOGIN;
 GRANT catalog_user TO catalog_admin;               -- pg_auth_members
 
+ALTER DATABASE tempdb SET work_mem = '12MB'; -- pg_db_role_setting
 ALTER ROLE catalog_admin SET work_mem = '16MB'; -- pg_db_role_setting
 ALTER ROLE catalog_admin IN DATABASE tempdb SET work_mem = '14MB'; -- pg_db_role_setting
 

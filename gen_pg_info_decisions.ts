@@ -158,6 +158,17 @@ async function decideColumn(
 		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
+	// if (typ === "oid" && ref === "(references pg_database.oid)") {
+	// 	const zeroable = ovZero ?? /zero/i.test(desc)
+	// 	const nullable = ovNullable ?? zeroable ?? false
+	// 	const sel = zeroable
+	// 		? `case when ${name} = 0 then null else ${name}::regnamespace::text end as ${name}`
+	// 		: `${name}::regnamespace::text as ${name}`
+	// 	const [ty, exp] = makeStr(tableName, name, nullable)
+	// 	// select oid from pg_database where datname = current_database()
+	// 	return [undefined, { typ, ref, desc, sel, ty, exp, filters: [`${name} = current`] }]
+	// }
+
 	const genericReferences = ref.match(/\(references (\w+)\.oid\)/)
 	const genericReferencesTable = genericReferences && genericReferences[1]
 	const ignoredTables = new Set(["pg_largeobject", "pg_largeobject_metadata", "pg_seclabel", "pg_shseclabel", "pg_statistic", "pg_statistic_ext_data", "pg_subscription_rel", "pg_tablespace", "pg_transform", "pg_ts_parser", "pg_ts_template"])
@@ -189,7 +200,7 @@ async function decideColumn(
 		return [undefined, { typ, ref, desc, ...override, /*sel,*/ ty: "bool", /*exp,*/ }]
 	}
 	if (typ === "text") {
-		const nullable = ovNullable ?? /null/i.test(desc)
+		const nullable = ovNullable ?? (/optional/i.test(desc) || /null/i.test(desc))
 		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, filters: override?.filters }]
 	}
@@ -329,7 +340,8 @@ function generateBlanks(tableName: string, columns: RawTable['columns']) {
 
 	for (const { name, typ, ref, desc } of columns) {
 		formattedQueryColumns.push(`${name} TODO as ${name} -- ${typ} ${ref} ${desc}`)
-		formattedStructColumns.push(`${name}: TODO, // ${typ} ${ref} ${desc}`)
+		const prettyRef = ref ? `\`${ref}\`` : ref
+		formattedStructColumns.push(`/// \`${typ}\` ${prettyRef} ${desc}\n\t\t\t${name}: TODO,`)
 		formattedReflectColumns.push(`${name}: ${tableName}.${name}, // ${typ} ${ref} ${desc}`)
 	}
 
@@ -346,7 +358,7 @@ function generateBlanks(tableName: string, columns: RawTable['columns']) {
 
 	const structName = toPascalCase(tableName)
 	const blankReflect = dedent(`
-		#[derive(Debug, PartialEq, Eq, Clone)]
+		#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 		pub struct ${structName} {
 			${formattedStructColumns.join("\n\t\t\t")}
 		}

@@ -17,8 +17,8 @@ pub struct PgState {
 	// pub pg_collation: PgCollation,
 	// pub pg_constraint: PgConstraint,
 	// pub pg_conversion: PgConversion,
-	pub pg_database: Set<PgDatabase>,
-	// pub pg_db_role_setting: PgDbRoleSetting,
+	pub pg_database: PgDatabase,
+	pub pg_db_role_setting: Vec<PgDbRoleSetting>,
 	// pub pg_default_acl: PgDefaultAcl,
 	// pub pg_depend: PgDepend,
 	// pub pg_description: PgDescription,
@@ -84,7 +84,7 @@ pub async fn reflect_pg_state(
 		// pg_constraint,
 		// pg_conversion,
 		pg_database,
-		// pg_db_role_setting,
+		pg_db_role_setting,
 		// pg_default_acl,
 		// pg_depend,
 		// pg_description,
@@ -143,7 +143,7 @@ pub async fn reflect_pg_state(
 		// reflect_pg_constraint(client),
 		// reflect_pg_conversion(client),
 		reflect_pg_database(client),
-		// reflect_pg_db_role_setting(client),
+		reflect_pg_db_role_setting(client),
 		// reflect_pg_default_acl(client),
 		// reflect_pg_depend(client),
 		// reflect_pg_description(client),
@@ -204,7 +204,7 @@ pub async fn reflect_pg_state(
 		// pg_constraint,
 		// pg_conversion,
 		pg_database,
-		// pg_db_role_setting,
+		pg_db_role_setting,
 		// pg_default_acl,
 		// pg_depend,
 		// pg_description,
@@ -376,10 +376,99 @@ use reflect_gen::{PgAggregate, reflect_pg_aggregate};
 // use reflect_gen::{PgConversion, reflect_pg_conversion};
 
 // `pg_database`: https://www.postgresql.org/docs/17/catalog-pg-database.html
-use reflect_gen::{PgDatabase, reflect_pg_database};
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgDatabase {
+	// oid oid  Row identifier
+	/// `name`  Database name
+	datname: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the database, usually the user who created it
+	datdba: Str,
+	/// `int4`  Character encoding for this database (pg_encoding_to_char() can translate this number to the encoding name)
+	encoding: Str,
+	/// `char`  Locale provider for this database: b = builtin, c = libc, i = icu
+	datlocprovider: PgDatabaseDatlocprovider,
+	/// `bool`  If true, then this database can be cloned by any user with CREATEDB privileges; if false, then only superusers or the owner of the database can clone it.
+	datistemplate: bool,
+	/// `bool`  If false then no one can connect to this database. This is used to protect the template0 database from being altered.
+	datallowconn: bool,
+	// dathasloginevt bool  Indicates that there are login event triggers defined for this database. This flag is used to avoid extra lookups on the pg_event_trigger table during each backend startup. This flag is used internally by PostgreSQL and should not be manually altered or read for monitoring purposes.
+	/// `int4`  Sets maximum number of concurrent connections that can be made to this database. -1 means no limit, -2 indicates the database is invalid.
+	datconnlimit: Option<u32>,
+	// datfrozenxid xid  All transaction IDs before this one have been replaced with a permanent (“frozen”) transaction ID in this database. This is used to track whether the database needs to be vacuumed in order to prevent transaction ID wraparound or to allow pg_xact to be shrunk. It is the minimum of the per-table pg_class.relfrozenxid values.
+	// datminmxid xid  All multixact IDs before this one have been replaced with a transaction ID in this database. This is used to track whether the database needs to be vacuumed in order to prevent multixact ID wraparound or to allow pg_multixact to be shrunk. It is the minimum of the per-table pg_class.relminmxid values.
+	// dattablespace oid (references pg_tablespace.oid) The default tablespace for the database. Within this database, all tables for which pg_class.reltablespace is zero will be stored in this tablespace; in particular, all the non-shared system catalogs will be there.
+	/// `text`  LC_COLLATE for this database
+	datcollate: Option<Str>,
+	/// `text`  LC_CTYPE for this database
+	datctype: Option<Str>,
+	/// `text`  Collation provider locale name for this database. If the provider is libc, datlocale is NULL; datcollate and datctype are used instead.
+	datlocale: Option<Str>,
+	/// `text`  ICU collation rules for this database
+	daticurules: Option<Str>,
+	/// `text`  Provider-specific version of the collation. This is recorded when the database is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
+	datcollversion: Option<Str>,
+	/// `aclitem[]`  Access privileges; see Section 5.8 for details
+	datacl: Option<Vec<aclitem::DbAclItem>>,
+}
+impl_name_hash_and_equivalent!(PgDatabase, datname);
+
+pg_char_enum!(PgDatabaseDatlocprovider { 'b' => Builtin, 'c' => Libc, 'i' => Icu });
+
+pub async fn reflect_pg_database(
+	client: &PgClient
+) -> Result<PgDatabase, postgres::Error> {
+	let pg_database = reflect_crate::queries::reflect::reflect_pg_database().bind(client)
+		.map(|pg_database| {
+			PgDatabase {
+				datname: pg_database.datname.into(),
+				datdba: pg_database.datdba.into(),
+				encoding: pg_database.encoding.into(),
+				datlocprovider: PgDatabaseDatlocprovider::pg_from_char(pg_database.datlocprovider),
+				datistemplate: pg_database.datistemplate,
+				datallowconn: pg_database.datallowconn,
+				datconnlimit: pg_database.datconnlimit.map(i32::unsigned_abs),
+				datcollate: pg_database.datcollate.map(Into::into),
+				datctype: pg_database.datctype.map(Into::into),
+				datlocale: pg_database.datlocale.map(Into::into),
+				daticurules: pg_database.daticurules.map(Into::into),
+				datcollversion: pg_database.datcollversion.map(Into::into),
+				datacl: pg_database.datacl.map(|datacl| datacl.map(|acl| aclitem(acl, &DbGrantParser)).collect()),
+			}
+		})
+		.one()
+		.await?;
+
+	Ok(pg_database)
+}
 
 // `pg_db_role_setting`: https://www.postgresql.org/docs/17/catalog-pg-db-role-setting.html
-// use reflect_gen::{PgDbRoleSetting, reflect_pg_db_role_setting};
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgDbRoleSetting {
+	setdatabase: Option<()>, // oid (references pg_database.oid) The OID of the database the setting is applicable to, or zero if not database-specific
+	/// `oid` `(references pg_authid.oid)` The OID of the role the setting is applicable to, or zero if not role-specific
+	setrole: Option<Str>,
+	/// `text[]`  Defaults for run-time configuration variables
+	setconfig: Option<Vec<Str>>,
+}
+
+pub async fn reflect_pg_db_role_setting(
+	client: &PgClient
+) -> Result<Vec<PgDbRoleSetting>, postgres::Error> {
+	let pg_db_role_setting_coll = reflect_crate::queries::reflect::reflect_pg_db_role_setting().bind(client)
+		.map(|pg_db_role_setting| {
+			PgDbRoleSetting {
+				setdatabase: if pg_db_role_setting.setdatabase { Some(()) } else { None },
+				setrole: pg_db_role_setting.setrole.map(Into::into),
+				setconfig: pg_db_role_setting.setconfig.map(|items| items.map(Into::into).collect()),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_db_role_setting_coll)
+}
 
 // `pg_default_acl`: https://www.postgresql.org/docs/17/catalog-pg-default-acl.html
 // use reflect_gen::{PgDefaultAcl, reflect_pg_default_acl};

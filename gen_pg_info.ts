@@ -10,7 +10,7 @@ const decisions = await Deno.readTextFile("./gen_pg_info_decisions.toml")
 const formatted = Object.entries(decisions).map(([tableName, tableDecision]) => formatTable(tableName, tableDecision))
 
 const queryText = formatted.map(({ query }) => `${query}\n\n`).join('\n')
-const reflectText = 'use super::*;\nuse futures::TryStreamExt;use crate::aclitem::*;\n\n' + formatted.map(({ reflect }) => `${reflect}\n\n`).join('\n')
+const reflectText = 'use super::*;\nuse futures::TryStreamExt;\nuse crate::aclitem::*;\n\n' + formatted.map(({ reflect }) => `${reflect}\n\n`).join('\n')
 
 await Promise.all([
 	Deno.writeTextFile("./reflect_queries/reflect_gen.sql", queryText),

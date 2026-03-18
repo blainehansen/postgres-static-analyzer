@@ -40,19 +40,9 @@ pg_constraint = 'todo'
 
 pg_conversion = 'todo'
 
-# pg_database = 'auto'
-# Locale provider for this database: b = builtin, c = libc, i = icu
-pg_database.datname = { filters = ["datname = current_database()"] }
-pg_database.datlocprovider = { ty="PgDatabaseDatlocprovider", exp="PgDatabaseDatlocprovider::pg_from_char(pg_database.datlocprovider)", pgEnum="'b' => Builtin, 'c' => Libc, 'i' => Icu" }
-pg_database.dathasloginevt = 'skip'
-pg_database.datconnlimit = { nullable=true }
-pg_database.datcollate = { nullable=true }
-pg_database.datctype = { nullable=true }
-pg_database.datlocale = { nullable=true }
-pg_database.daticurules = { nullable=true }
-pg_database.datcollversion = { nullable=true }
+pg_database = 'manual'
 
-pg_db_role_setting = 'todo'
+pg_db_role_setting = 'manual'
 
 pg_default_acl = 'todo'
 
