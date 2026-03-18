@@ -170,3 +170,40 @@ pub async fn reflect_pg_amop(
 	Ok(pg_amop_coll)
 }
 
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgAmproc {
+	// oid oid  Row identifier
+	/// `oid` `(references pg_opfamily.oid)` The operator family this entry is for
+	amprocfamily: Qual,
+	/// `oid` `(references pg_type.oid)` Left-hand input data type of associated operator
+	amproclefttype: Qual,
+	/// `oid` `(references pg_type.oid)` Right-hand input data type of associated operator
+	amprocrighttype: Qual,
+	/// `int2`  Support function number
+	amprocnum: u16,
+	/// `regproc` `(references pg_proc.oid)` OID of the function
+	amproc: Qual,
+}
+
+pub async fn reflect_pg_amproc(
+	client: &PgClient
+) -> Result<Vec<PgAmproc>, postgres::Error> {
+	let pg_amproc_coll = reflect_crate::queries::reflect_gen::reflect_pg_amproc().bind(client)
+		.map(|pg_amproc| {
+			PgAmproc {
+				amprocfamily: Qual::parse(pg_amproc.amprocfamily),
+				amproclefttype: Qual::parse(pg_amproc.amproclefttype),
+				amprocrighttype: Qual::parse(pg_amproc.amprocrighttype),
+				amprocnum: pg_amproc.amprocnum.unsigned_abs(),
+				amproc: Qual::parse(pg_amproc.amproc),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_amproc_coll)
+}
+

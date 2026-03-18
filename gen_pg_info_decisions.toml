@@ -268,3 +268,49 @@ sel = "quote_ident(amopsortfamily_pg_namespace.nspname) || '.' || quote_ident(am
 ty = "Option<Qual>"
 exp = "Qual::maybe_parse(pg_amop.amopsortfamily)"
 joins = ["left join pg_opfamily as amopsortfamily_pg_opfamily on pg_amop.amopsortfamily = amopsortfamily_pg_opfamily.oid","left join pg_namespace as amopsortfamily_pg_namespace on amopsortfamily_pg_opfamily.opfnamespace = amopsortfamily_pg_namespace.oid"]
+
+[pg_amproc.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_amproc.columns.amprocfamily]
+typ = "oid"
+ref = "(references pg_opfamily.oid)"
+desc = "The operator family this entry is for"
+sel = "quote_ident(amprocfamily_pg_namespace.nspname) || '.' || quote_ident(amprocfamily_pg_opfamily.opfname) as amprocfamily"
+ty = "Qual"
+exp = "Qual::parse(pg_amproc.amprocfamily)"
+joins = ["join pg_opfamily as amprocfamily_pg_opfamily on pg_amproc.amprocfamily = amprocfamily_pg_opfamily.oid","join pg_namespace as amprocfamily_pg_namespace on amprocfamily_pg_opfamily.opfnamespace = amprocfamily_pg_namespace.oid"]
+
+[pg_amproc.columns.amproclefttype]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "Left-hand input data type of associated operator"
+sel = "amproclefttype::regtype::text as amproclefttype"
+ty = "Qual"
+exp = "Qual::parse(pg_amproc.amproclefttype)"
+
+[pg_amproc.columns.amprocrighttype]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "Right-hand input data type of associated operator"
+sel = "amprocrighttype::regtype::text as amprocrighttype"
+ty = "Qual"
+exp = "Qual::parse(pg_amproc.amprocrighttype)"
+
+[pg_amproc.columns.amprocnum]
+typ = "int2"
+ref = ""
+desc = "Support function number"
+ty = "u16"
+exp = "pg_amproc.amprocnum.unsigned_abs()"
+
+[pg_amproc.columns.amproc]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "OID of the function"
+sel = "amproc::regproc::text as amproc"
+ty = "Qual"
+exp = "Qual::parse(pg_amproc.amproc)"

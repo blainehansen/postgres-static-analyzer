@@ -1,4 +1,4 @@
-# pg_aggregate = 'auto'
+# pg_aggregate = {}
 # Aggregate kind: n for “normal” aggregates, o for “ordered-set” aggregates, or h for “hypothetical-set” aggregates
 pg_aggregate.aggkind = { ty="PgAggregateAggkind", exp="PgAggregateAggkind::pg_from_char(pg_aggregate.aggkind)", pgEnum="'n' => Normal, 'o' => OrderedSet, 'h' => HypotheticalSet" }
 # Whether aggfinalfn modifies the transition state value: r if it is read-only, s if the aggtransfn cannot be applied after the aggfinalfn, or w if it writes on the value
@@ -8,15 +8,15 @@ pg_aggregate.aggmfinalmodify = { ty="PgAggregateAggmfinalmodify", exp="PgAggrega
 pg_aggregate.aggtransspace = 'skip'
 pg_aggregate.aggmtransspace = 'skip'
 
-# pg_am = 'auto'
+# pg_am = {}
 # t = table (including materialized views), i = index.
 pg_am.amtype = { ty="PgAmAmtype", exp="PgAmAmtype::pg_from_char(pg_am.amtype)", pgEnum="'t' => Table, 'i' => Index" }
 
-# pg_amop = 'auto'
+# pg_amop = {}
 # Operator purpose, either s for search or o for ordering
 pg_amop.amoppurpose = { ty="PgAmopAmoppurpose", exp="PgAmopAmoppurpose::pg_from_char(pg_amop.amoppurpose)", pgEnum="'s' => Search, 'o' => Ordering" }
 
-pg_amproc = 'todo'
+pg_amproc = {}
 
 pg_attrdef = 'manual'
 # pg_attrdef.adbin = { sel="pg_get_expr(adbin, adrelid) as adbin", ty="Str" }
