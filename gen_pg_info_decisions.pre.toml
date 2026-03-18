@@ -12,7 +12,9 @@ pg_aggregate.aggmtransspace = 'skip'
 # t = table (including materialized views), i = index.
 pg_am.amtype = { ty="PgAmAmtype", exp="PgAmAmtype::pg_from_char(pg_am.amtype)", pgEnum="'t' => Table, 'i' => Index" }
 
-pg_amop = 'todo'
+# pg_amop = 'auto'
+# Operator purpose, either s for search or o for ordering
+pg_amop.amoppurpose = { ty="PgAmopAmoppurpose", exp="PgAmopAmoppurpose::pg_from_char(pg_amop.amoppurpose)", pgEnum="'s' => Search, 'o' => Ordering" }
 
 pg_amproc = 'todo'
 
@@ -35,6 +37,7 @@ pg_class = 'todo'
 # pg_class.relrewrite = 'skip'
 # pg_class.relpages = 'skip'
 # pg_class.relallvisible = 'skip'
+# pg_class.relam = { nullable=true }
 
 pg_collation = 'todo'
 

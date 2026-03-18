@@ -122,3 +122,51 @@ pub async fn reflect_pg_am(
 	Ok(pg_am_coll)
 }
 
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgAmop {
+	// oid oid  Row identifier
+	/// `oid` `(references pg_opfamily.oid)` The operator family this entry is for
+	amopfamily: Qual,
+	/// `oid` `(references pg_type.oid)` Left-hand input data type of operator
+	amoplefttype: Qual,
+	/// `oid` `(references pg_type.oid)` Right-hand input data type of operator
+	amoprighttype: Qual,
+	/// `int2`  Operator strategy number
+	amopstrategy: u16,
+	/// `char`  Operator purpose, either s for search or o for ordering
+	amoppurpose: PgAmopAmoppurpose,
+	/// `oid` `(references pg_operator.oid)` OID of the operator
+	amopopr: Qual,
+	/// `oid` `(references pg_am.oid)` Index access method operator family is for
+	amopmethod: Str,
+	/// `oid` `(references pg_opfamily.oid)` The B-tree operator family this entry sorts according to, if an ordering operator; zero if a search operator
+	amopsortfamily: Option<Qual>,
+}
+
+pg_char_enum!(PgAmopAmoppurpose { 's' => Search, 'o' => Ordering });
+
+pub async fn reflect_pg_amop(
+	client: &PgClient
+) -> Result<Vec<PgAmop>, postgres::Error> {
+	let pg_amop_coll = reflect_crate::queries::reflect_gen::reflect_pg_amop().bind(client)
+		.map(|pg_amop| {
+			PgAmop {
+				amopfamily: Qual::parse(pg_amop.amopfamily),
+				amoplefttype: Qual::parse(pg_amop.amoplefttype),
+				amoprighttype: Qual::parse(pg_amop.amoprighttype),
+				amopstrategy: pg_amop.amopstrategy.unsigned_abs(),
+				amoppurpose: PgAmopAmoppurpose::pg_from_char(pg_amop.amoppurpose),
+				amopopr: Qual::parse(pg_amop.amopopr),
+				amopmethod: pg_amop.amopmethod.into(),
+				amopsortfamily: Qual::maybe_parse(pg_amop.amopsortfamily),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_amop_coll)
+}
+

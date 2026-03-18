@@ -158,16 +158,44 @@ async function decideColumn(
 		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
-	// if (typ === "oid" && ref === "(references pg_database.oid)") {
-	// 	const zeroable = ovZero ?? /zero/i.test(desc)
-	// 	const nullable = ovNullable ?? zeroable ?? false
-	// 	const sel = zeroable
-	// 		? `case when ${name} = 0 then null else ${name}::regnamespace::text end as ${name}`
-	// 		: `${name}::regnamespace::text as ${name}`
-	// 	const [ty, exp] = makeStr(tableName, name, nullable)
-	// 	// select oid from pg_database where datname = current_database()
-	// 	return [undefined, { typ, ref, desc, sel, ty, exp, filters: [`${name} = current`] }]
-	// }
+	if (typ === "oid" && ref === "(references pg_database.oid)") {
+		throw new Error(`handle ${name} manually please, it references pg_database.oid`)
+	}
+
+	if (typ === "oid" && ref === "(references pg_opfamily.oid)") {
+		const zeroable = ovZero ?? /zero/i.test(desc)
+		const nullable = ovNullable ?? zeroable ?? false
+
+		const joinNamespaceName = `${name}_pg_namespace`
+		const joinTableName = `${name}_pg_opfamily`
+
+		const sel = `quote_ident(${joinNamespaceName}.nspname) || '.' || quote_ident(${joinTableName}.opfname) as ${name}`
+		const ty = nullable ? `Option<Qual>` : `Qual`
+		const exp = `Qual::${nullable ? 'maybe_parse' : 'parse'}(${tableName}.${name})`
+
+		const leftPortion = nullable ? 'left ' : ''
+		const joins = [
+			leftPortion + `join pg_opfamily as ${joinTableName} on ${tableName}.${name} = ${joinTableName}.oid`,
+			leftPortion + `join pg_namespace as ${joinNamespaceName} on ${joinTableName}.opfnamespace = ${joinNamespaceName}.oid`,
+		]
+
+		return [undefined, { typ, ref, desc, ...override, sel, ty, exp, joins }]
+	}
+	if (typ === "oid" && ref === "(references pg_am.oid)") {
+		const nullable = ovNullable ?? false
+
+		const joinTableName = `${name}_pg_am`
+
+		const sel = `${joinTableName}.amname::text as ${name}`
+		const [ty, exp] = makeStr(tableName, name, nullable)
+
+		const leftPortion = nullable ? 'left ' : ''
+		const joins = [
+			leftPortion + `join pg_am as ${joinTableName} on ${tableName}.${name} = ${joinTableName}.oid`,
+		]
+
+		return [undefined, { typ, ref, desc, ...override, sel, ty, exp, joins }]
+	}
 
 	const genericReferences = ref.match(/\(references (\w+)\.oid\)/)
 	const genericReferencesTable = genericReferences && genericReferences[1]
@@ -185,6 +213,9 @@ async function decideColumn(
 		const exp = `${nullable ? 'Qual::maybe_parse' : 'Qual::parse'}(${tableName}.${name})`
 		return [undefined, { typ, ref, desc, ...override, sel, ty, exp }]
 	}
+	// if (typ === "oid" && genericReferencesTable) {
+	// 	return [undefined, { typ, ref, desc, ...override, sel, ty, exp }]
+	// }
 
 	if (typ === "char") {
 		const ty = `${toPascalCase(tableName)}${toPascalCase(name)}`

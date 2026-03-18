@@ -196,3 +196,75 @@ desc = "t = table (including materialized views), i = index."
 ty = "PgAmAmtype"
 exp = "PgAmAmtype::pg_from_char(pg_am.amtype)"
 pgEnum = "'t' => Table, 'i' => Index"
+
+[pg_amop.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_amop.columns.amopfamily]
+typ = "oid"
+ref = "(references pg_opfamily.oid)"
+desc = "The operator family this entry is for"
+sel = "quote_ident(amopfamily_pg_namespace.nspname) || '.' || quote_ident(amopfamily_pg_opfamily.opfname) as amopfamily"
+ty = "Qual"
+exp = "Qual::parse(pg_amop.amopfamily)"
+joins = ["join pg_opfamily as amopfamily_pg_opfamily on pg_amop.amopfamily = amopfamily_pg_opfamily.oid","join pg_namespace as amopfamily_pg_namespace on amopfamily_pg_opfamily.opfnamespace = amopfamily_pg_namespace.oid"]
+
+[pg_amop.columns.amoplefttype]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "Left-hand input data type of operator"
+sel = "amoplefttype::regtype::text as amoplefttype"
+ty = "Qual"
+exp = "Qual::parse(pg_amop.amoplefttype)"
+
+[pg_amop.columns.amoprighttype]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "Right-hand input data type of operator"
+sel = "amoprighttype::regtype::text as amoprighttype"
+ty = "Qual"
+exp = "Qual::parse(pg_amop.amoprighttype)"
+
+[pg_amop.columns.amopstrategy]
+typ = "int2"
+ref = ""
+desc = "Operator strategy number"
+ty = "u16"
+exp = "pg_amop.amopstrategy.unsigned_abs()"
+
+[pg_amop.columns.amoppurpose]
+typ = "char"
+ref = ""
+desc = "Operator purpose, either s for search or o for ordering"
+ty = "PgAmopAmoppurpose"
+exp = "PgAmopAmoppurpose::pg_from_char(pg_amop.amoppurpose)"
+pgEnum = "'s' => Search, 'o' => Ordering"
+
+[pg_amop.columns.amopopr]
+typ = "oid"
+ref = "(references pg_operator.oid)"
+desc = "OID of the operator"
+sel = "amopopr::regoperator::text as amopopr"
+ty = "Qual"
+exp = "Qual::parse(pg_amop.amopopr)"
+
+[pg_amop.columns.amopmethod]
+typ = "oid"
+ref = "(references pg_am.oid)"
+desc = "Index access method operator family is for"
+sel = "amopmethod_pg_am.amname::text as amopmethod"
+ty = "Str"
+exp = "pg_amop.amopmethod.into()"
+joins = ["join pg_am as amopmethod_pg_am on pg_amop.amopmethod = amopmethod_pg_am.oid"]
+
+[pg_amop.columns.amopsortfamily]
+typ = "oid"
+ref = "(references pg_opfamily.oid)"
+desc = "The B-tree operator family this entry sorts according to, if an ordering operator; zero if a search operator"
+sel = "quote_ident(amopsortfamily_pg_namespace.nspname) || '.' || quote_ident(amopsortfamily_pg_opfamily.opfname) as amopsortfamily"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_amop.amopsortfamily)"
+joins = ["left join pg_opfamily as amopsortfamily_pg_opfamily on pg_amop.amopsortfamily = amopsortfamily_pg_opfamily.oid","left join pg_namespace as amopsortfamily_pg_namespace on amopsortfamily_pg_opfamily.opfnamespace = amopsortfamily_pg_namespace.oid"]

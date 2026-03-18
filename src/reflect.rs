@@ -6,7 +6,7 @@ use futures::TryStreamExt;
 pub struct PgState {
 	pub pg_aggregate: Vec<PgAggregate>,
 	pub pg_am: Set<PgAm>,
-	// pub pg_amop: PgAmop,
+	pub pg_amop: Vec<PgAmop>,
 	// pub pg_amproc: PgAmproc,
 	// pub pg_attrdef: PgAttrdef,
 	// pub pg_attribute: PgAttribute,
@@ -72,7 +72,7 @@ pub async fn reflect_pg_state(
 	let (
 		pg_aggregate,
 		pg_am,
-		// pg_amop,
+		pg_amop,
 		// pg_amproc,
 		// pg_attrdef,
 		// pg_attribute,
@@ -131,7 +131,7 @@ pub async fn reflect_pg_state(
 	) = tokio::try_join!(
 		reflect_pg_aggregate(client),
 		reflect_pg_am(client),
-		// reflect_pg_amop(client),
+		reflect_pg_amop(client),
 		// reflect_pg_amproc(client),
 		// reflect_pg_attrdef(client),
 		// reflect_pg_attribute(client),
@@ -192,7 +192,7 @@ pub async fn reflect_pg_state(
 	Ok(PgState {
 		pg_aggregate,
 		pg_am,
-		// pg_amop,
+		pg_amop,
 		// pg_amproc,
 		// pg_attrdef,
 		// pg_attribute,
@@ -343,7 +343,7 @@ use reflect_gen::{PgAggregate, reflect_pg_aggregate};
 use reflect_gen::{PgAm, reflect_pg_am};
 
 // `pg_amop`: https://www.postgresql.org/docs/17/catalog-pg-amop.html
-// use reflect_gen::{PgAmop, reflect_pg_amop};
+use reflect_gen::{PgAmop, reflect_pg_amop};
 
 // `pg_amproc`: https://www.postgresql.org/docs/17/catalog-pg-amproc.html
 // use reflect_gen::{PgAmproc, reflect_pg_amproc};
