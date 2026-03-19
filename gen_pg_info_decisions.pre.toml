@@ -32,7 +32,7 @@ pg_auth_members = 'todo'
 
 pg_cast = 'todo'
 
-# pg_class = 'todo'
+# pg_class = {}
 pg_class.relnamespace = { filters=["relnamespace::regnamespace != 'pg_toast'::regnamespace"] }
 pg_class.relallvisible = 'skip'
 pg_class.relam = { nullable=true }
@@ -131,8 +131,6 @@ pg_statistic_ext = 'todo'
 
 pg_subscription = 'todo'
 
-pg_transform = 'todo'
-
 pg_trigger = 'todo'
 # pg_trigger.tgtype = { ty="i16" }
 
@@ -144,11 +142,18 @@ pg_ts_config_map = 'todo'
 
 pg_ts_dict = 'todo'
 
-pg_ts_parser = 'todo'
-
-pg_ts_template = 'todo'
-
-pg_type = 'todo'
-# pg_type.typlen = { ty="i16" }
+# pg_type = {}
+pg_type.typlen = { ty="i16" }
+pg_type.typdefaultbin = { sel="pg_get_expr(typdefaultbin, 0)", ty="Option<Str>", exp="pg_type.typdefaultbin.map(Into::into)" }
+# typtype is b for a base type, c for a composite type (e.g., a table's row type), d for a domain, e for an enum type, p for a pseudo-type, r for a range type, or m for a multirange type. See also typrelid and typbasetype.
+pg_type.typtype = { ty="PgTypeTyptype", exp="PgTypeTyptype::pg_from_char(pg_type.typtype)", pgEnum="'b' => Base, 'c' => Composite, 'd' => Domain, 'e' => Enum, 'p' => Pseudo, 'r' => Range, 'm' => Multirange" }
+# typcategory is an arbitrary classification of data types that is used by the parser to determine which implicit casts should be “preferred”. See Table 51.65.
+pg_type.typcategory = 'skip'
+# Character that separates two values of this type when parsing array input. Note that the delimiter is associated with the array element data type, not the array data type.
+pg_type.typdelim = { ty="i8" }
+# typalign is the alignment required when storing a value of this type. It applies to storage on disk as well as most representations of the value inside PostgreSQL. When multiple values are stored consecutively, such as in the representation of a complete row on disk, padding is inserted before a datum of this type so that it begins on the specified boundary. The alignment reference is the beginning of the first datum in the sequence. Possible values are: c = char alignment, i.e., no alignment needed. s = short alignment (2 bytes on most machines). i = int alignment (4 bytes on most machines). d = double alignment (8 bytes on many machines, but by no means all).
+pg_type.typalign = { ty="PgTypeTypalign", exp="PgTypeTypalign::pg_from_char(pg_type.typalign)", pgEnum="'c' => Char, 's' => Short, 'i' => Int, 'd' => Double" }
+# typstorage tells for varlena types (those with typlen = -1) if the type is prepared for toasting and what the default strategy for attributes of this type should be. Possible values are: p (plain): Values must always be stored plain (non-varlena types always use this value). e (external): Values can be stored in a secondary “TOAST” relation (if relation has one, see pg_class.reltoastrelid). m (main): Values can be compressed and stored inline. x (extended): Values can be compressed and/or moved to a secondary relation. x is the usual choice for toast-able types. Note that m values can also be moved out to secondary storage, but only as a last resort (e and x values are moved first).
+pg_type.typstorage = { ty="PgTypeTypstorage", exp="PgTypeTypstorage::pg_from_char(pg_type.typstorage)", pgEnum="'p' => Plain, 'e' => External, 'm' => Main, 'x' => Extended" }
 
 pg_user_mapping = 'todo'
