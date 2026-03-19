@@ -62,7 +62,7 @@ pg_database = 'manual'
 
 pg_db_role_setting = 'manual'
 
-pg_default_acl = {}
+# pg_default_acl = {}
 # Type of object this entry is for: r = relation (table, view), S = sequence, f = function, T = type, n = schema
 pg_default_acl.defaclobjtype = { ty="PgDefaultAclDefaclobjtype", exp="PgDefaultAclDefaclobjtype::pg_from_char(pg_default_acl.defaclobjtype)", pgEnum="'r' => Relation, 'S' => Sequence, 'f' => Function, 'T' => Type, 'n' => Schema" }
 
