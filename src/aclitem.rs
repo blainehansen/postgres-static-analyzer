@@ -76,6 +76,12 @@ pg_acl!(TableColumn { 'a' => Insert, 'r' => Select, 'w' => Update, 'x' => Refere
 // TYPE	U	U	\dT+
 pg_acl!(Type { 'U' => Usage });
 
+pg_acl!(AclDefault {
+	'a' => Insert, 'r' => Select, 'w' => Update, 'd' => Delete, 'D' => Truncate, 'x' => References, 't' => Trigger, 'm' => Maintain,
+	'U' => Usage,
+	'X' => Execute,
+});
+
 // SELECT	r (“read”)	LARGE OBJECT, SEQUENCE, TABLE (and table-like objects), table column
 // INSERT	a (“append”)	TABLE, table column
 // UPDATE	w (“write”)	LARGE OBJECT, SEQUENCE, TABLE, table column

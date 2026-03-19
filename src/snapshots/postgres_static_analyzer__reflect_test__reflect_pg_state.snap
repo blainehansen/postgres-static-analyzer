@@ -59793,6 +59793,25 @@ PgState(
       ]),
     ),
   ],
+  pg_default_acl: [
+    PgDefaultAcl(
+      defaclrole: "tempuser",
+      defaclnamespace: Some("catalog_schema"),
+      defaclobjtype: Relation,
+      defaclacl: Some([
+        AclItem(
+          grantee: Some("catalog_user"),
+          grantor: "tempuser",
+          grants: [
+            Grant(
+              privilege: Select,
+              with_grant_option: false,
+            ),
+          ],
+        ),
+      ]),
+    ),
+  ],
   pg_language: [
     PgLanguage(
       lanname: "c",

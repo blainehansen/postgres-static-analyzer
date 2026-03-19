@@ -631,6 +631,44 @@ sel = "pg_get_expr(relpartbound, pg_class.oid)"
 ty = "Option<Str>"
 exp = "pg_class.relpartbound.map(Into::into)"
 
+[pg_default_acl.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_default_acl.columns.defaclrole]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "The OID of the role associated with this entry"
+sel = "pg_get_userbyid(defaclrole)::text"
+ty = "Str"
+exp = "pg_default_acl.defaclrole.into()"
+
+[pg_default_acl.columns.defaclnamespace]
+typ = "oid"
+ref = "(references pg_namespace.oid)"
+desc = "The OID of the namespace associated with this entry, or zero if none"
+sel = "case when defaclnamespace = 0 then null else defaclnamespace::regnamespace::text end"
+ty = "Option<Str>"
+exp = "pg_default_acl.defaclnamespace.map(Into::into)"
+
+[pg_default_acl.columns.defaclobjtype]
+typ = "char"
+ref = ""
+desc = "Type of object this entry is for: r = relation (table, view), S = sequence, f = function, T = type, n = schema"
+ty = "PgDefaultAclDefaclobjtype"
+exp = "PgDefaultAclDefaclobjtype::pg_from_char(pg_default_acl.defaclobjtype)"
+pgEnum = "'r' => Relation, 'S' => Sequence, 'f' => Function, 'T' => Type, 'n' => Schema"
+
+[pg_default_acl.columns.defaclacl]
+typ = "aclitem[]"
+ref = ""
+desc = "Access privileges that this type of object should have on creation"
+sel = "defaclacl::text[]"
+ty = "Option<Vec<aclitem::AclDefaultAclItem>>"
+exp = "pg_default_acl.defaclacl.map(|defaclacl| defaclacl.map(|acl| aclitem(acl, &AclDefaultGrantParser)).collect())"
+
 [pg_language]
 hashCol = "lanname"
 

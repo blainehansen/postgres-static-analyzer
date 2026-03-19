@@ -19,7 +19,7 @@ pub struct PgState {
 	// pub pg_conversion: PgConversion,
 	pub pg_database: PgDatabase,
 	pub pg_db_role_setting: Vec<PgDbRoleSetting>,
-	// pub pg_default_acl: PgDefaultAcl,
+	pub pg_default_acl: Vec<PgDefaultAcl>,
 	// pub pg_depend: PgDepend,
 	// pub pg_description: PgDescription,
 	// pub pg_enum: PgEnum,
@@ -85,7 +85,7 @@ pub async fn reflect_pg_state(
 		// pg_conversion,
 		pg_database,
 		pg_db_role_setting,
-		// pg_default_acl,
+		pg_default_acl,
 		// pg_depend,
 		// pg_description,
 		// pg_enum,
@@ -144,7 +144,7 @@ pub async fn reflect_pg_state(
 		// reflect_pg_conversion(client),
 		reflect_pg_database(client),
 		reflect_pg_db_role_setting(client),
-		// reflect_pg_default_acl(client),
+		reflect_pg_default_acl(client),
 		// reflect_pg_depend(client),
 		// reflect_pg_description(client),
 		// reflect_pg_enum(client),
@@ -205,7 +205,7 @@ pub async fn reflect_pg_state(
 		// pg_conversion,
 		pg_database,
 		pg_db_role_setting,
-		// pg_default_acl,
+		pg_default_acl,
 		// pg_depend,
 		// pg_description,
 		// pg_enum,
@@ -472,7 +472,7 @@ pub async fn reflect_pg_db_role_setting(
 }
 
 // `pg_default_acl`: https://www.postgresql.org/docs/17/catalog-pg-default-acl.html
-// use reflect_gen::{PgDefaultAcl, reflect_pg_default_acl};
+use reflect_gen::{PgDefaultAcl, reflect_pg_default_acl};
 
 // `pg_depend`: https://www.postgresql.org/docs/17/catalog-pg-depend.html
 // use reflect_gen::{PgDepend, reflect_pg_depend};

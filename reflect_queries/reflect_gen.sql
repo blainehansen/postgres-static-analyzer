@@ -137,6 +137,18 @@ where
 ;
 
 
+--! reflect_pg_default_acl : (defaclnamespace?, defaclacl?)
+select
+	-- oid oid  Row identifier
+	pg_get_userbyid(defaclrole)::text as defaclrole, -- oid (references pg_authid.oid) The OID of the role associated with this entry
+	case when defaclnamespace = 0 then null else defaclnamespace::regnamespace::text end as defaclnamespace, -- oid (references pg_namespace.oid) The OID of the namespace associated with this entry, or zero if none
+	defaclobjtype as defaclobjtype, -- char  Type of object this entry is for: r = relation (table, view), S = sequence, f = function, T = type, n = schema
+	defaclacl::text[] as defaclacl -- aclitem[]  Access privileges that this type of object should have on creation
+from
+	pg_default_acl
+;
+
+
 --! reflect_pg_language : (lanplcallfoid?, laninline?, lanvalidator?, lanacl?)
 select
 	-- oid oid  Row identifier

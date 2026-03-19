@@ -363,6 +363,42 @@ pub async fn reflect_pg_class(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgDefaultAcl {
+	// oid oid  Row identifier
+	/// `oid` `(references pg_authid.oid)` The OID of the role associated with this entry
+	defaclrole: Str,
+	/// `oid` `(references pg_namespace.oid)` The OID of the namespace associated with this entry, or zero if none
+	defaclnamespace: Option<Str>,
+	/// `char`  Type of object this entry is for: r = relation (table, view), S = sequence, f = function, T = type, n = schema
+	defaclobjtype: PgDefaultAclDefaclobjtype,
+	/// `aclitem[]`  Access privileges that this type of object should have on creation
+	defaclacl: Option<Vec<aclitem::AclDefaultAclItem>>,
+}
+
+pg_char_enum!(PgDefaultAclDefaclobjtype { 'r' => Relation, 'S' => Sequence, 'f' => Function, 'T' => Type, 'n' => Schema });
+
+pub async fn reflect_pg_default_acl(
+	client: &PgClient
+) -> Result<Vec<PgDefaultAcl>, postgres::Error> {
+	let pg_default_acl_coll = reflect_crate::queries::reflect_gen::reflect_pg_default_acl().bind(client)
+		.map(|pg_default_acl| {
+			PgDefaultAcl {
+				defaclrole: pg_default_acl.defaclrole.into(),
+				defaclnamespace: pg_default_acl.defaclnamespace.map(Into::into),
+				defaclobjtype: PgDefaultAclDefaclobjtype::pg_from_char(pg_default_acl.defaclobjtype),
+				defaclacl: pg_default_acl.defaclacl.map(|defaclacl| defaclacl.map(|acl| aclitem(acl, &AclDefaultGrantParser)).collect()),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_default_acl_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgLanguage {
 	// oid oid  Row identifier
 	/// `name`  Name of the language

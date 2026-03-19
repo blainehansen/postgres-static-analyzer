@@ -31,6 +31,7 @@ export const aclitemMapping: { [key: string]: string } = {
 	pg_attribute: "TableColumn",
 	pg_tablespace: "Tablespace",
 	pg_type: "Type",
+	pg_default_acl: "AclDefault",
 }
 
 export const ignoredTables = new Set([
