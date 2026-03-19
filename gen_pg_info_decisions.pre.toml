@@ -86,7 +86,7 @@ pg_inherits = 'todo'
 
 pg_init_privs = 'todo'
 
-pg_language = 'todo'
+pg_language = {}
 
 # pg_namespace = {}
 pg_namespace.nspname = { filters=["nspname != 'pg_toast'"] }

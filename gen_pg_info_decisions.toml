@@ -545,6 +545,75 @@ sel = "pg_get_expr(relpartbound, pg_class.oid)"
 ty = "Option<Str>"
 exp = "pg_class.relpartbound.map(Into::into)"
 
+[pg_language]
+hashCol = "lanname"
+
+[pg_language.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_language.columns.lanname]
+typ = "name"
+ref = ""
+desc = "Name of the language"
+sel = "lanname::text"
+ty = "Str"
+exp = "pg_language.lanname.into()"
+
+[pg_language.columns.lanowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the language"
+sel = "pg_get_userbyid(lanowner)::text"
+ty = "Str"
+exp = "pg_language.lanowner.into()"
+
+[pg_language.columns.lanispl]
+typ = "bool"
+ref = ""
+desc = "This is false for internal languages (such as SQL) and true for user-defined languages. Currently, pg_dump still uses this to determine which languages need to be dumped, but this might be replaced by a different mechanism in the future."
+ty = "bool"
+
+[pg_language.columns.lanpltrusted]
+typ = "bool"
+ref = ""
+desc = "True if this is a trusted language, which means that it is believed not to grant access to anything outside the normal SQL execution environment. Only superusers can create functions in untrusted languages."
+ty = "bool"
+
+[pg_language.columns.lanplcallfoid]
+typ = "oid"
+ref = "(references pg_proc.oid)"
+desc = "For noninternal languages this references the language handler, which is a special function that is responsible for executing all functions that are written in the particular language. Zero for internal languages."
+sel = "case when lanplcallfoid = 0 then null else lanplcallfoid::regprocedure::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_language.lanplcallfoid)"
+
+[pg_language.columns.laninline]
+typ = "oid"
+ref = "(references pg_proc.oid)"
+desc = "This references a function that is responsible for executing “inline” anonymous code blocks (DO blocks). Zero if inline blocks are not supported."
+sel = "case when laninline = 0 then null else laninline::regprocedure::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_language.laninline)"
+
+[pg_language.columns.lanvalidator]
+typ = "oid"
+ref = "(references pg_proc.oid)"
+desc = "This references a language validator function that is responsible for checking the syntax and validity of new functions when they are created. Zero if no validator is provided."
+sel = "case when lanvalidator = 0 then null else lanvalidator::regprocedure::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_language.lanvalidator)"
+
+[pg_language.columns.lanacl]
+typ = "aclitem[]"
+ref = ""
+desc = "Access privileges; see Section 5.8 for details"
+sel = "lanacl::text[]"
+ty = "Option<Vec<aclitem::LanguageAclItem>>"
+exp = "pg_language.lanacl.map(|lanacl| lanacl.map(|acl| aclitem(acl, &LanguageGrantParser)).collect())"
+
 [pg_namespace]
 hashCol = "nspname"
 

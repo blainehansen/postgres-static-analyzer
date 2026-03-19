@@ -59555,6 +59555,66 @@ PgState(
       ]),
     ),
   ],
+  pg_language: [
+    PgLanguage(
+      lanname: "c",
+      lanowner: "tempuser",
+      lanispl: false,
+      lanpltrusted: false,
+      lanplcallfoid: None,
+      laninline: None,
+      lanvalidator: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "fmgr_c_validator(oid)",
+      )),
+      lanacl: None,
+    ),
+    PgLanguage(
+      lanname: "internal",
+      lanowner: "tempuser",
+      lanispl: false,
+      lanpltrusted: false,
+      lanplcallfoid: None,
+      laninline: None,
+      lanvalidator: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "fmgr_internal_validator(oid)",
+      )),
+      lanacl: None,
+    ),
+    PgLanguage(
+      lanname: "plpgsql",
+      lanowner: "tempuser",
+      lanispl: true,
+      lanpltrusted: true,
+      lanplcallfoid: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "plpgsql_call_handler()",
+      )),
+      laninline: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "plpgsql_inline_handler(internal)",
+      )),
+      lanvalidator: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "plpgsql_validator(oid)",
+      )),
+      lanacl: None,
+    ),
+    PgLanguage(
+      lanname: "sql",
+      lanowner: "tempuser",
+      lanispl: false,
+      lanpltrusted: true,
+      lanplcallfoid: None,
+      laninline: None,
+      lanvalidator: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "fmgr_sql_validator(oid)",
+      )),
+      lanacl: None,
+    ),
+  ],
   pg_namespace: [
     PgNamespace(
       nspname: "catalog_schema",

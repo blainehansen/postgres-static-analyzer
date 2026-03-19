@@ -117,6 +117,22 @@ where
 ;
 
 
+--! reflect_pg_language : (lanplcallfoid?, laninline?, lanvalidator?, lanacl?)
+select
+	-- oid oid  Row identifier
+	lanname::text as lanname, -- name  Name of the language
+	pg_get_userbyid(lanowner)::text as lanowner, -- oid (references pg_authid.oid) Owner of the language
+	lanispl as lanispl, -- bool  This is false for internal languages (such as SQL) and true for user-defined languages. Currently, pg_dump still uses this to determine which languages need to be dumped, but this might be replaced by a different mechanism in the future.
+	lanpltrusted as lanpltrusted, -- bool  True if this is a trusted language, which means that it is believed not to grant access to anything outside the normal SQL execution environment. Only superusers can create functions in untrusted languages.
+	case when lanplcallfoid = 0 then null else lanplcallfoid::regprocedure::text end as lanplcallfoid, -- oid (references pg_proc.oid) For noninternal languages this references the language handler, which is a special function that is responsible for executing all functions that are written in the particular language. Zero for internal languages.
+	case when laninline = 0 then null else laninline::regprocedure::text end as laninline, -- oid (references pg_proc.oid) This references a function that is responsible for executing “inline” anonymous code blocks (DO blocks). Zero if inline blocks are not supported.
+	case when lanvalidator = 0 then null else lanvalidator::regprocedure::text end as lanvalidator, -- oid (references pg_proc.oid) This references a language validator function that is responsible for checking the syntax and validity of new functions when they are created. Zero if no validator is provided.
+	lanacl::text[] as lanacl -- aclitem[]  Access privileges; see Section 5.8 for details
+from
+	pg_language
+;
+
+
 --! reflect_pg_namespace : (nspacl?)
 select
 	-- oid oid  Row identifier

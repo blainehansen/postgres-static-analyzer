@@ -306,6 +306,53 @@ pub async fn reflect_pg_class(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgLanguage {
+	// oid oid  Row identifier
+	/// `name`  Name of the language
+	lanname: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the language
+	lanowner: Str,
+	/// `bool`  This is false for internal languages (such as SQL) and true for user-defined languages. Currently, pg_dump still uses this to determine which languages need to be dumped, but this might be replaced by a different mechanism in the future.
+	lanispl: bool,
+	/// `bool`  True if this is a trusted language, which means that it is believed not to grant access to anything outside the normal SQL execution environment. Only superusers can create functions in untrusted languages.
+	lanpltrusted: bool,
+	/// `oid` `(references pg_proc.oid)` For noninternal languages this references the language handler, which is a special function that is responsible for executing all functions that are written in the particular language. Zero for internal languages.
+	lanplcallfoid: Option<Qual>,
+	/// `oid` `(references pg_proc.oid)` This references a function that is responsible for executing “inline” anonymous code blocks (DO blocks). Zero if inline blocks are not supported.
+	laninline: Option<Qual>,
+	/// `oid` `(references pg_proc.oid)` This references a language validator function that is responsible for checking the syntax and validity of new functions when they are created. Zero if no validator is provided.
+	lanvalidator: Option<Qual>,
+	/// `aclitem[]`  Access privileges; see Section 5.8 for details
+	lanacl: Option<Vec<aclitem::LanguageAclItem>>,
+}
+impl_name_hash_and_equivalent!(PgLanguage, lanname);
+
+pub async fn reflect_pg_language(
+	client: &PgClient
+) -> Result<Set<PgLanguage>, postgres::Error> {
+	let pg_language_coll = reflect_crate::queries::reflect_gen::reflect_pg_language().bind(client)
+		.map(|pg_language| {
+			PgLanguage {
+				lanname: pg_language.lanname.into(),
+				lanowner: pg_language.lanowner.into(),
+				lanispl: pg_language.lanispl,
+				lanpltrusted: pg_language.lanpltrusted,
+				lanplcallfoid: Qual::maybe_parse(pg_language.lanplcallfoid),
+				laninline: Qual::maybe_parse(pg_language.laninline),
+				lanvalidator: Qual::maybe_parse(pg_language.lanvalidator),
+				lanacl: pg_language.lanacl.map(|lanacl| lanacl.map(|acl| aclitem(acl, &LanguageGrantParser)).collect()),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_language_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgNamespace {
 	// oid oid  Row identifier
 	/// `name`  Name of the namespace
