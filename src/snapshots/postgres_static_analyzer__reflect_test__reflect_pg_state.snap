@@ -59555,6 +59555,103 @@ PgState(
       ]),
     ),
   ],
+  pg_namespace: [
+    PgNamespace(
+      nspname: "catalog_schema",
+      nspowner: "catalog_admin",
+      nspacl: None,
+    ),
+    PgNamespace(
+      nspname: "information_schema",
+      nspowner: "tempuser",
+      nspacl: Some([
+        AclItem(
+          grantee: Some("tempuser"),
+          grantor: "tempuser",
+          grants: [
+            Grant(
+              privilege: Usage,
+              with_grant_option: false,
+            ),
+            Grant(
+              privilege: Create,
+              with_grant_option: false,
+            ),
+          ],
+        ),
+        AclItem(
+          grantee: None,
+          grantor: "tempuser",
+          grants: [
+            Grant(
+              privilege: Usage,
+              with_grant_option: false,
+            ),
+          ],
+        ),
+      ]),
+    ),
+    PgNamespace(
+      nspname: "pg_catalog",
+      nspowner: "tempuser",
+      nspacl: Some([
+        AclItem(
+          grantee: Some("tempuser"),
+          grantor: "tempuser",
+          grants: [
+            Grant(
+              privilege: Usage,
+              with_grant_option: false,
+            ),
+            Grant(
+              privilege: Create,
+              with_grant_option: false,
+            ),
+          ],
+        ),
+        AclItem(
+          grantee: None,
+          grantor: "tempuser",
+          grants: [
+            Grant(
+              privilege: Usage,
+              with_grant_option: false,
+            ),
+          ],
+        ),
+      ]),
+    ),
+    PgNamespace(
+      nspname: "public",
+      nspowner: "pg_database_owner",
+      nspacl: Some([
+        AclItem(
+          grantee: Some("pg_database_owner"),
+          grantor: "pg_database_owner",
+          grants: [
+            Grant(
+              privilege: Usage,
+              with_grant_option: false,
+            ),
+            Grant(
+              privilege: Create,
+              with_grant_option: false,
+            ),
+          ],
+        ),
+        AclItem(
+          grantee: None,
+          grantor: "pg_database_owner",
+          grants: [
+            Grant(
+              privilege: Usage,
+              with_grant_option: false,
+            ),
+          ],
+        ),
+      ]),
+    ),
+  ],
   pg_type: [
     PgType(
       oid: Qual(

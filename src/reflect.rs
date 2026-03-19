@@ -32,7 +32,7 @@ pub struct PgState {
 	// pub pg_inherits: PgInherits,
 	// pub pg_init_privs: PgInitPrivs,
 	// pub pg_language: PgLanguage,
-	// pub pg_namespace: PgNamespace,
+	pub pg_namespace: Set<PgNamespace>,
 	// pub pg_opclass: PgOpclass,
 	// pub pg_operator: PgOperator,
 	// pub pg_opfamily: PgOpfamily,
@@ -98,7 +98,7 @@ pub async fn reflect_pg_state(
 		// pg_inherits,
 		// pg_init_privs,
 		// pg_language,
-		// pg_namespace,
+		pg_namespace,
 		// pg_opclass,
 		// pg_operator,
 		// pg_opfamily,
@@ -157,7 +157,7 @@ pub async fn reflect_pg_state(
 		// reflect_pg_inherits(client),
 		// reflect_pg_init_privs(client),
 		// reflect_pg_language(client),
-		// reflect_pg_namespace(client),
+		reflect_pg_namespace(client),
 		// reflect_pg_opclass(client),
 		// reflect_pg_operator(client),
 		// reflect_pg_opfamily(client),
@@ -218,7 +218,7 @@ pub async fn reflect_pg_state(
 		// pg_inherits,
 		// pg_init_privs,
 		// pg_language,
-		// pg_namespace,
+		pg_namespace,
 		// pg_opclass,
 		// pg_operator,
 		// pg_opfamily,
@@ -510,7 +510,7 @@ pub async fn reflect_pg_db_role_setting(
 // use reflect_gen::{PgLanguage, reflect_pg_language};
 
 // `pg_namespace`: https://www.postgresql.org/docs/17/catalog-pg-namespace.html
-// use reflect_gen::{PgNamespace, reflect_pg_namespace};
+use reflect_gen::{PgNamespace, reflect_pg_namespace};
 
 // `pg_opclass`: https://www.postgresql.org/docs/17/catalog-pg-opclass.html
 // use reflect_gen::{PgOpclass, reflect_pg_opclass};

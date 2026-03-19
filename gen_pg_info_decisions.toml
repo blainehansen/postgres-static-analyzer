@@ -545,6 +545,40 @@ sel = "pg_get_expr(relpartbound, pg_class.oid)"
 ty = "Option<Str>"
 exp = "pg_class.relpartbound.map(Into::into)"
 
+[pg_namespace]
+hashCol = "nspname"
+
+[pg_namespace.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_namespace.columns.nspname]
+typ = "name"
+ref = ""
+desc = "Name of the namespace"
+sel = "nspname::text"
+ty = "Str"
+exp = "pg_namespace.nspname.into()"
+filters = ["nspname != 'pg_toast'"]
+
+[pg_namespace.columns.nspowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the namespace"
+sel = "pg_get_userbyid(nspowner)::text"
+ty = "Str"
+exp = "pg_namespace.nspowner.into()"
+
+[pg_namespace.columns.nspacl]
+typ = "aclitem[]"
+ref = ""
+desc = "Access privileges; see Section 5.8 for details"
+sel = "nspacl::text[]"
+ty = "Option<Vec<aclitem::SchemaAclItem>>"
+exp = "pg_namespace.nspacl.map(|nspacl| nspacl.map(|acl| aclitem(acl, &SchemaGrantParser)).collect())"
+
 [pg_type]
 hashCol = true
 

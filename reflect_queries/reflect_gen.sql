@@ -117,6 +117,19 @@ where
 ;
 
 
+--! reflect_pg_namespace : (nspacl?)
+select
+	-- oid oid  Row identifier
+	nspname::text as nspname, -- name  Name of the namespace
+	pg_get_userbyid(nspowner)::text as nspowner, -- oid (references pg_authid.oid) Owner of the namespace
+	nspacl::text[] as nspacl -- aclitem[]  Access privileges; see Section 5.8 for details
+from
+	pg_namespace
+where 
+	nspname != 'pg_toast'
+;
+
+
 --! reflect_pg_type : (typrelid?, typsubscript?, typelem?, typarray?, typreceive?, typsend?, typmodin?, typmodout?, typanalyze?, typbasetype?, typtypmod?, typcollation?, typdefaultbin?, typdefault?, typacl?)
 select
 	pg_type.oid::regtype::text as oid, -- oid  Row identifier

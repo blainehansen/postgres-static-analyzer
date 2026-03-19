@@ -306,6 +306,38 @@ pub async fn reflect_pg_class(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgNamespace {
+	// oid oid  Row identifier
+	/// `name`  Name of the namespace
+	nspname: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the namespace
+	nspowner: Str,
+	/// `aclitem[]`  Access privileges; see Section 5.8 for details
+	nspacl: Option<Vec<aclitem::SchemaAclItem>>,
+}
+impl_name_hash_and_equivalent!(PgNamespace, nspname);
+
+pub async fn reflect_pg_namespace(
+	client: &PgClient
+) -> Result<Set<PgNamespace>, postgres::Error> {
+	let pg_namespace_coll = reflect_crate::queries::reflect_gen::reflect_pg_namespace().bind(client)
+		.map(|pg_namespace| {
+			PgNamespace {
+				nspname: pg_namespace.nspname.into(),
+				nspowner: pg_namespace.nspowner.into(),
+				nspacl: pg_namespace.nspacl.map(|nspacl| nspacl.map(|acl| aclitem(acl, &SchemaGrantParser)).collect()),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_namespace_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgType {
 	/// `oid`  Row identifier
 	oid: Qual,

@@ -88,7 +88,8 @@ pg_init_privs = 'todo'
 
 pg_language = 'todo'
 
-pg_namespace = 'todo'
+# pg_namespace = {}
+pg_namespace.nspname = { filters=["nspname != 'pg_toast'"] }
 
 pg_opclass = 'todo'
 
