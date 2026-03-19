@@ -74,6 +74,26 @@ from
 ;
 
 
+--! reflect_pg_roles : (rolconnlimit?, rolvaliduntil?, rolconfig?)
+select
+	rolname::text as rolname, -- name  Role name
+	rolsuper as rolsuper, -- bool  Role has superuser privileges
+	rolinherit as rolinherit, -- bool  Role automatically inherits privileges of roles it is a member of
+	rolcreaterole as rolcreaterole, -- bool  Role can create more roles
+	rolcreatedb as rolcreatedb, -- bool  Role can create databases
+	rolcanlogin as rolcanlogin, -- bool  Role can log in. That is, this role can be given as the initial session authorization identifier
+	rolreplication as rolreplication, -- bool  Role is a replication role. A replication role can initiate replication connections and create and drop replication slots.
+	case when rolconnlimit < 0 then null else rolconnlimit end as rolconnlimit, -- int4  For roles that can log in, this sets maximum number of concurrent connections this role can make. -1 means no limit.
+	-- rolpassword text  Not the password (always reads as ********)
+	rolvaliduntil as rolvaliduntil, -- timestamptz  Password expiry time (only used for password authentication); null if no expiration
+	rolbypassrls as rolbypassrls, -- bool  Role bypasses every row-level security policy, see Section 5.9 for more information.
+	rolconfig as rolconfig -- text[]  Role-specific defaults for run-time configuration variables
+	-- oid oid (references pg_authid.oid) ID of role
+from
+	pg_roles
+;
+
+
 --! reflect_pg_class : (reltype?, reloftype?, relam?, relacl?, reloptions?, relpartbound?)
 select
 	pg_class.oid::regclass::text as oid, -- oid  Row identifier

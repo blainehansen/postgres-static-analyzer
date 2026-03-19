@@ -59,11 +59,13 @@ function formatTable(
 
 	const joinsPortion = !allJoins.length ? '' : '\n' + allJoins.map(j => `\t\t\t${j}`).join("\n")
 	const filtersPortion = !allFilters.length ? '' : '\n\t\twhere ' + ('\n' + allFilters.map(f => `\t\t\t${f}`).join("\nand "))
+
+	const lastRealIndex = Math.max(...formattedQueryColumns.flatMap((c, i) => c.startsWith('--') ? [] : [i]))
 	const finalFormattedQueryColumns = formattedQueryColumns.map((c, i) => {
 		const commentIndex = c.indexOf('--') - 1
-		return (commentIndex <= 0 || i === formattedQueryColumns.length - 1) ? c
-			:`${c.slice(0, commentIndex)}, ${c.slice(commentIndex + 1)}`
+		return (c.startsWith('--') || i === lastRealIndex) ? c :`${c.slice(0, commentIndex)}, ${c.slice(commentIndex + 1)}`
 	}).join("\n\t\t\t")
+
 	const query = dedent(`
 		--! reflect_${tableName} : (${nullableQueryColumns.map(f => `${f}?`).join(", ")})
 		select

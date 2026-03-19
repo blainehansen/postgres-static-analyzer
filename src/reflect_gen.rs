@@ -209,6 +209,63 @@ pub async fn reflect_pg_amproc(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgRoles {
+	/// `name`  Role name
+	rolname: Str,
+	/// `bool`  Role has superuser privileges
+	rolsuper: bool,
+	/// `bool`  Role automatically inherits privileges of roles it is a member of
+	rolinherit: bool,
+	/// `bool`  Role can create more roles
+	rolcreaterole: bool,
+	/// `bool`  Role can create databases
+	rolcreatedb: bool,
+	/// `bool`  Role can log in. That is, this role can be given as the initial session authorization identifier
+	rolcanlogin: bool,
+	/// `bool`  Role is a replication role. A replication role can initiate replication connections and create and drop replication slots.
+	rolreplication: bool,
+	/// `int4`  For roles that can log in, this sets maximum number of concurrent connections this role can make. -1 means no limit.
+	rolconnlimit: Option<u32>,
+	// rolpassword text  Not the password (always reads as ********)
+	/// `timestamptz`  Password expiry time (only used for password authentication); null if no expiration
+	rolvaliduntil: Option<chrono::DateTime<chrono::FixedOffset>>,
+	/// `bool`  Role bypasses every row-level security policy, see Section 5.9 for more information.
+	rolbypassrls: bool,
+	/// `text[]`  Role-specific defaults for run-time configuration variables
+	rolconfig: Option<Vec<Str>>,
+	// oid oid (references pg_authid.oid) ID of role
+}
+impl_name_hash_and_equivalent!(PgRoles, rolname);
+
+pub async fn reflect_pg_roles(
+	client: &PgClient
+) -> Result<Set<PgRoles>, postgres::Error> {
+	let pg_roles_coll = reflect_crate::queries::reflect_gen::reflect_pg_roles().bind(client)
+		.map(|pg_roles| {
+			PgRoles {
+				rolname: pg_roles.rolname.into(),
+				rolsuper: pg_roles.rolsuper,
+				rolinherit: pg_roles.rolinherit,
+				rolcreaterole: pg_roles.rolcreaterole,
+				rolcreatedb: pg_roles.rolcreatedb,
+				rolcanlogin: pg_roles.rolcanlogin,
+				rolreplication: pg_roles.rolreplication,
+				rolconnlimit: pg_roles.rolconnlimit.map(i32::unsigned_abs),
+				rolvaliduntil: pg_roles.rolvaliduntil,
+				rolbypassrls: pg_roles.rolbypassrls,
+				rolconfig: pg_roles.rolconfig.map(|items| items.map(Into::into).collect()),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_roles_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgClass {
 	/// `oid`  Row identifier
 	oid: Qual,

@@ -25,8 +25,9 @@ pg_attribute = 'todo'
 # pg_attribute.attisdropped = { filters=["not attisdropped"] }
 # pg_attribute.attcacheoff = 'skip'
 
-pg_roles = 'todo'
-# pg_roles.rolpassword = 'skip'
+# pg_roles = {}
+pg_roles.rolpassword = 'skip'
+pg_roles.rolvaliduntil = { ty="Option<chrono::DateTime<chrono::FixedOffset>>" }
 
 pg_auth_members = 'todo'
 

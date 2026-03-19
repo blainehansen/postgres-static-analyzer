@@ -315,6 +315,92 @@ sel = "amproc::regproc::text"
 ty = "Qual"
 exp = "Qual::parse(pg_amproc.amproc)"
 
+[pg_roles]
+hashCol = "rolname"
+
+[pg_roles.columns.rolname]
+typ = "name"
+ref = ""
+desc = "Role name"
+sel = "rolname::text"
+ty = "Str"
+exp = "pg_roles.rolname.into()"
+
+[pg_roles.columns.rolsuper]
+typ = "bool"
+ref = ""
+desc = "Role has superuser privileges"
+ty = "bool"
+
+[pg_roles.columns.rolinherit]
+typ = "bool"
+ref = ""
+desc = "Role automatically inherits privileges of roles it is a member of"
+ty = "bool"
+
+[pg_roles.columns.rolcreaterole]
+typ = "bool"
+ref = ""
+desc = "Role can create more roles"
+ty = "bool"
+
+[pg_roles.columns.rolcreatedb]
+typ = "bool"
+ref = ""
+desc = "Role can create databases"
+ty = "bool"
+
+[pg_roles.columns.rolcanlogin]
+typ = "bool"
+ref = ""
+desc = "Role can log in. That is, this role can be given as the initial session authorization identifier"
+ty = "bool"
+
+[pg_roles.columns.rolreplication]
+typ = "bool"
+ref = ""
+desc = "Role is a replication role. A replication role can initiate replication connections and create and drop replication slots."
+ty = "bool"
+
+[pg_roles.columns.rolconnlimit]
+typ = "int4"
+ref = ""
+desc = "For roles that can log in, this sets maximum number of concurrent connections this role can make. -1 means no limit."
+sel = "case when rolconnlimit < 0 then null else rolconnlimit end"
+ty = "Option<u32>"
+exp = "pg_roles.rolconnlimit.map(i32::unsigned_abs)"
+
+[pg_roles.columns.rolpassword]
+typ = "text"
+ref = ""
+desc = "Not the password (always reads as ********)"
+skip = true
+
+[pg_roles.columns.rolvaliduntil]
+typ = "timestamptz"
+ref = ""
+desc = "Password expiry time (only used for password authentication); null if no expiration"
+ty = "Option<chrono::DateTime<chrono::FixedOffset>>"
+
+[pg_roles.columns.rolbypassrls]
+typ = "bool"
+ref = ""
+desc = "Role bypasses every row-level security policy, see Section 5.9 for more information."
+ty = "bool"
+
+[pg_roles.columns.rolconfig]
+typ = "text[]"
+ref = ""
+desc = "Role-specific defaults for run-time configuration variables"
+ty = "Option<Vec<Str>>"
+exp = "pg_roles.rolconfig.map(|items| items.map(Into::into).collect())"
+
+[pg_roles.columns.oid]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "ID of role"
+skip = true
+
 [pg_class]
 hashCol = true
 
