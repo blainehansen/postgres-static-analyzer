@@ -14,9 +14,14 @@ set search_path = '';
 -- show search_path;
 -- select current_schemas(true);
 
-select *
-from pg_catalog.pg_db_role_setting
-where setdatabase = current_database();
+-- select *
+-- from pg_catalog.pg_db_role_setting
+-- where setdatabase = current_database();
+
+select count(*)
+from pg_catalog.pg_class
+where relnamespace::regnamespace != 'pg_toast'::regnamespace
+
 
 -- select
 -- 	oid::regtype,

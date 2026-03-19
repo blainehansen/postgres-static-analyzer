@@ -44,7 +44,7 @@ function formatTable(
 		const actualExp = exp ?? `${tableName}.${name}`
 
 		if (nullable) nullableQueryColumns.push(name)
-		formattedQueryColumns.push(`${sel ?? name} -- ${typ} ${ref} ${desc}`)
+		formattedQueryColumns.push(`${sel ?? name} as ${name} -- ${typ} ${ref} ${desc}`)
 		const prettyRef = ref ? `\`${ref}\`` : ref
 		formattedStructColumns.push(`/// \`${typ}\` ${prettyRef} ${desc}\n\t\t\t${name}: ${ty},`)
 		formattedReflectColumns.push(`${name}: ${actualExp},`)

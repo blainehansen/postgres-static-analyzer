@@ -18,10 +18,10 @@ pg_amop.amoppurpose = { ty="PgAmopAmoppurpose", exp="PgAmopAmoppurpose::pg_from_
 
 pg_amproc = {}
 
-pg_attrdef = 'manual'
-# pg_attrdef.adbin = { sel="pg_get_expr(adbin, adrelid) as adbin", ty="Str" }
+pg_attrdef = 'todo'
+# pg_attrdef.adbin = { sel="pg_get_expr(adbin, adrelid)", ty="Str" }
 
-pg_attribute = 'manual'
+pg_attribute = 'todo'
 # pg_attribute.attisdropped = { filters=["not attisdropped"] }
 # pg_attribute.attcacheoff = 'skip'
 
@@ -32,12 +32,24 @@ pg_auth_members = 'todo'
 
 pg_cast = 'todo'
 
-pg_class = 'todo'
-# pg_class.reltoastrelid = 'skip'
-# pg_class.relrewrite = 'skip'
-# pg_class.relpages = 'skip'
-# pg_class.relallvisible = 'skip'
-# pg_class.relam = { nullable=true }
+# pg_class = 'todo'
+pg_class.relnamespace = { filters=["relnamespace::regnamespace != 'pg_toast'::regnamespace"] }
+pg_class.relallvisible = 'skip'
+pg_class.relam = { nullable=true }
+pg_class.relfilenode = 'skip'
+pg_class.relhasindex = 'skip'
+pg_class.relispopulated = 'skip'
+pg_class.relpages = 'skip'
+pg_class.relpartbound = { sel="pg_get_expr(relpartbound, pg_class.oid)", ty="Option<Str>", exp="pg_class.relpartbound.map(Into::into)" }
+pg_class.relrewrite = 'skip'
+pg_class.reltoastrelid = 'skip'
+pg_class.reltuples = 'skip'
+# p = permanent table/sequence, u = unlogged table/sequence, t = temporary table/sequence
+pg_class.relpersistence = { ty="PgClassRelpersistence", exp="PgClassRelpersistence::pg_from_char(pg_class.relpersistence)", pgEnum="'p' => Permanent, 'u' => Unlogged, 't' => Temporary" }
+# r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table, I = partitioned index
+pg_class.relkind = { ty="PgClassRelkind", exp="PgClassRelkind::pg_from_char(pg_class.relkind)", pgEnum="'r' => Ordinary, 'i' => Index, 'S' => Sequence, 't' => Toast, 'v' => View, 'm' => MaterializedView, 'c' => CompositeType, 'f' => ForeignTable, 'p' => PartitionedTable, 'I' => PartitionedIndex" }
+# Columns used to form “replica identity” for rows: d = default (primary key, if any), n = nothing, f = all columns, i = index with indisreplident set (same as nothing if the index used has been dropped)
+pg_class.relreplident = { ty="PgClassRelreplident", exp="PgClassRelreplident::pg_from_char(pg_class.relreplident)", pgEnum="'d' => Default, 'n' => Nothing, 'f' => AllColumns, 'i' => Index " }
 
 pg_collation = 'todo'
 

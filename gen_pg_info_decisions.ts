@@ -101,6 +101,8 @@ async function decideColumn(
 		return [undefined, { typ, ref, desc, skip: true }]
 	if (tableName === "pg_attribute" && desc.includes(" copy of "))
 		return [undefined, { typ, ref, desc, skip: true }]
+	if (tableName === "pg_class" && desc.includes(" (or once had) "))
+		return [undefined, { typ, ref, desc, skip: true }]
 
 	const { nullable: ovNullable, zero: ovZero } = override ?? {}
 	if (override) {
@@ -114,7 +116,7 @@ async function decideColumn(
 	if (typ === "name") {
 		const hashColumn = name !== "conname" ? name : undefined
 
-		const sel = `${name}::text as ${name}`
+		const sel = `${name}::text`
 		const [ty, exp] = makeStr(tableName, name, false)
 		return [hashColumn, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
@@ -125,7 +127,7 @@ async function decideColumn(
 	if (name === "oid" && (tableName in refToReg)) {
 		const reg = refToReg[tableName]
 		if (!reg) throw ''
-		const sel = `${name}::${reg} as ${name}`
+		const sel = `${tableName}.${name}::${reg}::text`
 		const ty = "Qual"
 		const exp = `Qual::parse(${tableName}.${name})`
 		return [true, { typ, ref, desc, sel, ty, exp }]
@@ -134,8 +136,8 @@ async function decideColumn(
 		const zeroable = ovZero ?? /zero/i.test(desc)
 		const nullable = ovNullable ?? zeroable ?? false
 		const sel = zeroable
-			? `case when ${name} = 0 then null else ${name}::regproc::text end as ${name}`
-			: `${name}::regproc::text as ${name}`
+			? `case when ${name} = 0 then null else ${name}::regproc::text end`
+			: `${name}::regproc::text`
 		const ty = nullable ? `Option<Qual>` : `Qual`
 		const exp = `${nullable ? 'Qual::maybe_parse' : 'Qual::parse'}(${tableName}.${name})`
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
@@ -144,8 +146,8 @@ async function decideColumn(
 		const zeroable = ovZero ?? /zero/i.test(desc)
 		const nullable = ovNullable ?? zeroable ?? false
 		const sel = zeroable
-			? `case when ${name} = 0 then null else pg_get_userbyid(${name})::text end as ${name}`
-			: `pg_get_userbyid(${name})::text as ${name}`
+			? `case when ${name} = 0 then null else pg_get_userbyid(${name})::text end`
+			: `pg_get_userbyid(${name})::text`
 		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
@@ -153,8 +155,8 @@ async function decideColumn(
 		const zeroable = ovZero ?? /zero/i.test(desc)
 		const nullable = ovNullable ?? zeroable ?? false
 		const sel = zeroable
-			? `case when ${name} = 0 then null else ${name}::regnamespace::text end as ${name}`
-			: `${name}::regnamespace::text as ${name}`
+			? `case when ${name} = 0 then null else ${name}::regnamespace::text end`
+			: `${name}::regnamespace::text`
 		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
@@ -169,7 +171,7 @@ async function decideColumn(
 		const joinNamespaceName = `${name}_pg_namespace`
 		const joinTableName = `${name}_pg_opfamily`
 
-		const sel = `quote_ident(${joinNamespaceName}.nspname) || '.' || quote_ident(${joinTableName}.opfname) as ${name}`
+		const sel = `quote_ident(${joinNamespaceName}.nspname) || '.' || quote_ident(${joinTableName}.opfname)`
 		const ty = nullable ? `Option<Qual>` : `Qual`
 		const exp = `Qual::${nullable ? 'maybe_parse' : 'parse'}(${tableName}.${name})`
 
@@ -186,7 +188,7 @@ async function decideColumn(
 
 		const joinTableName = `${name}_pg_am`
 
-		const sel = `${joinTableName}.amname::text as ${name}`
+		const sel = `${joinTableName}.amname::text`
 		const [ty, exp] = makeStr(tableName, name, nullable)
 
 		const leftPortion = nullable ? 'left ' : ''
@@ -207,8 +209,8 @@ async function decideColumn(
 		const zeroable = ovZero ?? /zero/i.test(desc)
 		const nullable = ovNullable ?? zeroable ?? false
 		const sel = zeroable
-			? `case when ${name} = 0 then null else ${name}::${reg}::text end as ${name}`
-			: `${name}::${reg}::text as ${name}`
+			? `case when ${name} = 0 then null else ${name}::${reg}::text end`
+			: `${name}::${reg}::text`
 		const ty = nullable ? "Option<Qual>" : "Qual"
 		const exp = `${nullable ? 'Qual::maybe_parse' : 'Qual::parse'}(${tableName}.${name})`
 		return [undefined, { typ, ref, desc, ...override, sel, ty, exp }]
@@ -241,7 +243,7 @@ async function decideColumn(
 	}
 	if (typ === "aclitem[]") {
 		const aclPrefix = aclitemMapping[tableName]; if (!aclPrefix) throw `no acl for ${tableName}`
-		const sel = `${name}::text[] as ${name}`
+		const sel = `${name}::text[]`
 		const ty = `Option<Vec<aclitem::${aclPrefix}AclItem>>`
 		const exp = `${tableName}.${name}.map(|${name}| ${name}.map(|acl| aclitem(acl, &${aclPrefix}GrantParser)).collect())`
 		return [undefined, { typ, ref, desc, sel, ty, exp }]
@@ -253,8 +255,8 @@ async function decideColumn(
 	if (name.endsWith("encoding")) {
 		const negativeable = /-1/.test(desc)
 		const sel = negativeable
-			? `case when ${name} < 0 then null else pg_encoding_to_char(${name})::text end as ${name}`
-			: `pg_encoding_to_char(${name})::text as ${name}`
+			? `case when ${name} < 0 then null else pg_encoding_to_char(${name})::text end`
+			: `pg_encoding_to_char(${name})::text`
 		const [ty, exp] = makeStr(tableName, name, negativeable)
 		return [undefined, { typ, ref, desc, sel, ty, exp }]
 	}
@@ -267,7 +269,7 @@ async function decideColumn(
 	}
 	if (typ === "int4" && !ref) {
 		const negativeable = /-1/.test(desc)
-		const sel = negativeable ? `case when ${name} < 0 then null else ${name} end as ${name}` : undefined
+		const sel = negativeable ? `case when ${name} < 0 then null else ${name} end` : undefined
 		const [ty, exp] = makeAssumedU(tableName, name, 32, negativeable)
 		return [undefined, { typ, ref, desc, sel, ty, exp }]
 	}
