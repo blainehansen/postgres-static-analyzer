@@ -40810,6 +40810,40 @@ PgState(
       rolconfig: None,
     ),
   ],
+  pg_auth_members: [
+    PgAuthMembers(
+      roleid: "catalog_user",
+      member: "catalog_admin",
+      grantor: "tempuser",
+      admin_option: false,
+      inherit_option: true,
+      set_option: true,
+    ),
+    PgAuthMembers(
+      roleid: "pg_read_all_settings",
+      member: "pg_monitor",
+      grantor: "tempuser",
+      admin_option: false,
+      inherit_option: true,
+      set_option: true,
+    ),
+    PgAuthMembers(
+      roleid: "pg_read_all_stats",
+      member: "pg_monitor",
+      grantor: "tempuser",
+      admin_option: false,
+      inherit_option: true,
+      set_option: true,
+    ),
+    PgAuthMembers(
+      roleid: "pg_stat_scan_tables",
+      member: "pg_monitor",
+      grantor: "tempuser",
+      admin_option: false,
+      inherit_option: true,
+      set_option: true,
+    ),
+  ],
   pg_class: [
     PgClass(
       oid: Qual(

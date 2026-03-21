@@ -266,6 +266,46 @@ pub async fn reflect_pg_roles(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgAuthMembers {
+	// oid oid  Row identifier
+	/// `oid` `(references pg_authid.oid)` ID of a role that has a member
+	roleid: Str,
+	/// `oid` `(references pg_authid.oid)` ID of a role that is a member of roleid
+	member: Str,
+	/// `oid` `(references pg_authid.oid)` ID of the role that granted this membership
+	grantor: Str,
+	/// `bool`  True if member can grant membership in roleid to others
+	admin_option: bool,
+	/// `bool`  True if the member automatically inherits the privileges of the granted role
+	inherit_option: bool,
+	/// `bool`  True if the member can SET ROLE to the granted role
+	set_option: bool,
+}
+
+pub async fn reflect_pg_auth_members(
+	client: &PgClient
+) -> Result<Vec<PgAuthMembers>, postgres::Error> {
+	let pg_auth_members_coll = reflect_crate::queries::reflect_gen::reflect_pg_auth_members().bind(client)
+		.map(|pg_auth_members| {
+			PgAuthMembers {
+				roleid: pg_auth_members.roleid.into(),
+				member: pg_auth_members.member.into(),
+				grantor: pg_auth_members.grantor.into(),
+				admin_option: pg_auth_members.admin_option,
+				inherit_option: pg_auth_members.inherit_option,
+				set_option: pg_auth_members.set_option,
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_auth_members_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgClass {
 	/// `oid`  Row identifier
 	oid: Qual,

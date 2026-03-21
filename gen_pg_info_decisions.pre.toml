@@ -29,7 +29,7 @@ pg_attribute = 'todo'
 pg_roles.rolpassword = 'skip'
 pg_roles.rolvaliduntil = { ty="Option<chrono::DateTime<chrono::FixedOffset>>" }
 
-pg_auth_members = 'todo'
+pg_auth_members = {}
 
 pg_cast = 'todo'
 

@@ -94,6 +94,20 @@ from
 ;
 
 
+--! reflect_pg_auth_members : ()
+select
+	-- oid oid  Row identifier
+	pg_get_userbyid(roleid)::text as roleid, -- oid (references pg_authid.oid) ID of a role that has a member
+	pg_get_userbyid(member)::text as member, -- oid (references pg_authid.oid) ID of a role that is a member of roleid
+	pg_get_userbyid(grantor)::text as grantor, -- oid (references pg_authid.oid) ID of the role that granted this membership
+	admin_option as admin_option, -- bool  True if member can grant membership in roleid to others
+	inherit_option as inherit_option, -- bool  True if the member automatically inherits the privileges of the granted role
+	set_option as set_option -- bool  True if the member can SET ROLE to the granted role
+from
+	pg_auth_members
+;
+
+
 --! reflect_pg_class : (reltype?, reloftype?, relam?, relacl?, reloptions?, relpartbound?)
 select
 	pg_class.oid::regclass::text as oid, -- oid  Row identifier

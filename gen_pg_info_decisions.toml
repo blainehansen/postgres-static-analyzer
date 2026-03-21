@@ -401,6 +401,54 @@ ref = "(references pg_authid.oid)"
 desc = "ID of role"
 skip = true
 
+[pg_auth_members.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_auth_members.columns.roleid]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "ID of a role that has a member"
+sel = "pg_get_userbyid(roleid)::text"
+ty = "Str"
+exp = "pg_auth_members.roleid.into()"
+
+[pg_auth_members.columns.member]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "ID of a role that is a member of roleid"
+sel = "pg_get_userbyid(member)::text"
+ty = "Str"
+exp = "pg_auth_members.member.into()"
+
+[pg_auth_members.columns.grantor]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "ID of the role that granted this membership"
+sel = "pg_get_userbyid(grantor)::text"
+ty = "Str"
+exp = "pg_auth_members.grantor.into()"
+
+[pg_auth_members.columns.admin_option]
+typ = "bool"
+ref = ""
+desc = "True if member can grant membership in roleid to others"
+ty = "bool"
+
+[pg_auth_members.columns.inherit_option]
+typ = "bool"
+ref = ""
+desc = "True if the member automatically inherits the privileges of the granted role"
+ty = "bool"
+
+[pg_auth_members.columns.set_option]
+typ = "bool"
+ref = ""
+desc = "True if the member can SET ROLE to the granted role"
+ty = "bool"
+
 [pg_class]
 hashCol = true
 
