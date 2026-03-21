@@ -108,6 +108,19 @@ from
 ;
 
 
+--! reflect_pg_cast : (castfunc?)
+select
+	-- oid oid  Row identifier
+	castsource::regtype::text as castsource, -- oid (references pg_type.oid) OID of the source data type
+	casttarget::regtype::text as casttarget, -- oid (references pg_type.oid) OID of the target data type
+	case when castfunc = 0 then null else castfunc::regprocedure::text end as castfunc, -- oid (references pg_proc.oid) The OID of the function to use to perform this cast. Zero is stored if the cast method doesn't require a function.
+	castcontext as castcontext, -- char  Indicates what contexts the cast can be invoked in. e means only as an explicit cast (using CAST or :: syntax). a means implicitly in assignment to a target column, as well as explicitly. i means implicitly in expressions, as well as the other cases.
+	castmethod as castmethod -- char  Indicates how the cast is performed. f means that the function specified in the castfunc field is used. i means that the input/output functions are used. b means that the types are binary-coercible, thus no conversion is required.
+from
+	pg_cast
+;
+
+
 --! reflect_pg_class : (reltype?, reloftype?, relam?, relacl?, reloptions?, relpartbound?)
 select
 	pg_class.oid::regclass::text as oid, -- oid  Row identifier

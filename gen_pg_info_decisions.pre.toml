@@ -31,7 +31,11 @@ pg_roles.rolvaliduntil = { ty="Option<chrono::DateTime<chrono::FixedOffset>>" }
 
 pg_auth_members = {}
 
-pg_cast = 'todo'
+# pg_cast = {}
+# Indicates what contexts the cast can be invoked in. e means only as an explicit cast (using CAST or :: syntax). a means implicitly in assignment to a target column, as well as explicitly. i means implicitly in expressions, as well as the other cases.
+pg_cast.castcontext = { ty="PgCastCastcontext", exp="PgCastCastcontext::pg_from_char(pg_cast.castcontext)", pgEnum="'e' => Explicit, 'a' => ImplicitAssignment, 'i' => Implicit" }
+# Indicates how the cast is performed. f means that the function specified in the castfunc field is used. i means that the input/output functions are used. b means that the types are binary-coercible, thus no conversion is required.
+pg_cast.castmethod = { ty="PgCastCastmethod", exp="PgCastCastmethod::pg_from_char(pg_cast.castmethod)", pgEnum="'f' => Castfunc, 'i' => IOFunc, 'b' => BinaryCoercible" }
 
 # pg_class = {}
 pg_class.relnamespace = { filters=["relnamespace::regnamespace != 'pg_toast'::regnamespace"] }

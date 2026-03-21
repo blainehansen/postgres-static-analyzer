@@ -40844,6 +40844,3497 @@ PgState(
       set_option: true,
     ),
   ],
+  pg_cast: [
+    PgCast(
+      castsource: Qual(
+        schema_name: "catalog_schema",
+        name: "float_range",
+      ),
+      casttarget: Qual(
+        schema_name: "catalog_schema",
+        name: "float_multirange",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "catalog_schema",
+        name: "float_multirange(catalog_schema.float_range)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "\"char\"",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "bpchar(\"char\")",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "\"char\"",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "text(\"char\")",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "\"char\"",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(\"char\")",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "\"char\"",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "text(\"char\")",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bit",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"bit\"(bigint,integer)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "double precision",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "float8(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(bigint)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "money",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "money(bigint)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"numeric\"(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "oid(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "real",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "float4(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regclass",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "oid(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regcollation",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "oid(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regconfig",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "oid(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regdictionary",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "oid(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regnamespace",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "oid(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regoper",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "oid(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regoperator",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "oid(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regproc",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "oid(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regprocedure",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "oid(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regrole",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "oid(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regtype",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "oid(bigint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int2(bigint)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bit",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(bit)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bit",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bit",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"bit\"(bit,integer,boolean)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bit",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bit varying",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bit",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(bit)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bit varying",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bit",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "bit varying",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bit varying",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "varbit(bit varying,integer,boolean)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "boolean",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "text(boolean)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "boolean",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "text(boolean)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "boolean",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(boolean)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "boolean",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "text(boolean)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "box",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "circle",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "circle(box)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "box",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "lseg",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "lseg(box)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "box",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "point",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "point(box)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "box",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "polygon",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "polygon(box)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "\"char\"",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"char\"(text)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "bpchar(character,integer,boolean)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "text(character)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "name",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "name(character)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "text(character)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "xml",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "xml(text)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "\"char\"",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"char\"(text)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"varchar\"(character varying,integer,boolean)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "name",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "name(character varying)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regclass",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "regclass(text)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "xml",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "xml(text)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "cidr",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "text(inet)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "cidr",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "text(inet)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "cidr",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "inet",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "cidr",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "text(inet)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "circle",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "box",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "box(circle)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "circle",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "point",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "point(circle)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "circle",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "polygon",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "polygon(circle)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "date",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp with time zone",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "timestamptz(date)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "date",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp without time zone",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"timestamp\"(date)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "daterange",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "datemultirange",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "datemultirange(daterange)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "double precision",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(double precision)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "double precision",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(double precision)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "double precision",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"numeric\"(double precision)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "double precision",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "real",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "float4(double precision)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "double precision",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int2(double precision)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "inet",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "text(inet)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "inet",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "text(inet)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "inet",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "cidr",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "cidr(inet)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "inet",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "text(inet)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "int4range",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "int4multirange",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4multirange(int4range)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "int8range",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "int8multirange",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8multirange(int8range)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "\"char\"",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"char\"(integer)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(integer)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bit",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"bit\"(integer,integer)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "boolean",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "bool(integer)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "double precision",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "float8(integer)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "money",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "money(integer)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"numeric\"(integer)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "real",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "float4(integer)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regclass",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regcollation",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regconfig",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regdictionary",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regnamespace",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regoper",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regoperator",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regproc",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regprocedure",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regrole",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regtype",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int2(integer)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "interval",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "interval",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"interval\"(interval,integer)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "interval",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "time without time zone",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"time\"(interval)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "json",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "jsonb",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: IOFunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "jsonb",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(jsonb)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "jsonb",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "boolean",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "bool(jsonb)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "jsonb",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "double precision",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "float8(jsonb)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "jsonb",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(jsonb)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "jsonb",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "json",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: IOFunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "jsonb",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"numeric\"(jsonb)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "jsonb",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "real",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "float4(jsonb)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "jsonb",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int2(jsonb)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "lseg",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "point",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "point(lseg)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "macaddr",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "macaddr8",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "macaddr8(macaddr)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "macaddr8",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "macaddr",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "macaddr(macaddr8)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "money",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"numeric\"(money)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "name",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "bpchar(name)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "name",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"varchar\"(name)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "name",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "text(name)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(numeric)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "double precision",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "float8(numeric)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(numeric)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "money",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "money(numeric)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"numeric\"(numeric,integer)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "real",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "float4(numeric)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int2(numeric)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "numrange",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "nummultirange",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "nummultirange(numrange)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(oid)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regclass",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regcollation",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regconfig",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regdictionary",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regnamespace",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regoper",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regoperator",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regproc",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regprocedure",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regrole",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regtype",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "path",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "polygon",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "polygon(path)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "pg_dependencies",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bytea",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "pg_dependencies",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: IOFunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "pg_mcv_list",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bytea",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "pg_mcv_list",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: IOFunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "pg_ndistinct",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bytea",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "pg_ndistinct",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: IOFunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "pg_node_tree",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "point",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "box",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "box(point)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "polygon",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "box",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "box(polygon)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "polygon",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "circle",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "circle(polygon)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "polygon",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "path",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "path(polygon)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "polygon",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "point",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "point(polygon)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "real",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(real)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "real",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "double precision",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "float8(real)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "real",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(real)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "real",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"numeric\"(real)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "real",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int2(real)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regclass",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(oid)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regclass",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regclass",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regcollation",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(oid)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regcollation",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regcollation",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regconfig",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(oid)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regconfig",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regconfig",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regdictionary",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(oid)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regdictionary",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regdictionary",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regnamespace",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(oid)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regnamespace",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regnamespace",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regoper",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(oid)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regoper",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regoper",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regoper",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regoperator",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regoperator",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(oid)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regoperator",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regoperator",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regoperator",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regoper",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regproc",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(oid)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regproc",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regproc",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regproc",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regprocedure",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regprocedure",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(oid)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regprocedure",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regprocedure",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regprocedure",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regproc",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regrole",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(oid)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regrole",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regrole",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regtype",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(oid)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regtype",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "regtype",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "bigint",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int8(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "double precision",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "float8(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "integer",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "numeric",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"numeric\"(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "oid",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "real",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "float4(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regclass",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regcollation",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regconfig",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regdictionary",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regnamespace",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regoper",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regoperator",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regproc",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regprocedure",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regrole",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "smallint",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regtype",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "int4(smallint)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      casttarget: Qual(
+        schema_name: "catalog_schema",
+        name: "point_composite",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "catalog_schema",
+        name: "text_to_point_composite(text)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "\"char\"",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"char\"(text)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      castfunc: None,
+      castcontext: Implicit,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "name",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "name(text)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "regclass",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "regclass(text)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "xml",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "xml(text)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "time with time zone",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "time with time zone",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "timetz(time with time zone,integer)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "time with time zone",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "time without time zone",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"time\"(time with time zone)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "time without time zone",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "interval",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"interval\"(time without time zone)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "time without time zone",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "time with time zone",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "timetz(time without time zone)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "time without time zone",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "time without time zone",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"time\"(time without time zone,integer)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp with time zone",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "date",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "date(timestamp with time zone)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp with time zone",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "time with time zone",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "timetz(timestamp with time zone)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp with time zone",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "time without time zone",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"time\"(timestamp with time zone)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp with time zone",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp with time zone",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "timestamptz(timestamp with time zone,integer)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp with time zone",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp without time zone",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"timestamp\"(timestamp with time zone)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp without time zone",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "date",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "date(timestamp without time zone)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp without time zone",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "time without time zone",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"time\"(timestamp without time zone)",
+      )),
+      castcontext: ImplicitAssignment,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp without time zone",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp with time zone",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "timestamptz(timestamp without time zone)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp without time zone",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "timestamp without time zone",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "\"timestamp\"(timestamp without time zone,integer)",
+      )),
+      castcontext: Implicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "tsrange",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "tsmultirange",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "tsmultirange(tsrange)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "tstzrange",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "tstzmultirange",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "tstzmultirange(tstzrange)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "xid8",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "xid",
+      ),
+      castfunc: Some(Qual(
+        schema_name: "pg_catalog",
+        name: "xid(xid8)",
+      )),
+      castcontext: Explicit,
+      castmethod: Castfunc,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "xml",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "xml",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "character varying",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+    PgCast(
+      castsource: Qual(
+        schema_name: "pg_catalog",
+        name: "xml",
+      ),
+      casttarget: Qual(
+        schema_name: "pg_catalog",
+        name: "text",
+      ),
+      castfunc: None,
+      castcontext: ImplicitAssignment,
+      castmethod: BinaryCoercible,
+    ),
+  ],
   pg_class: [
     PgClass(
       oid: Qual(

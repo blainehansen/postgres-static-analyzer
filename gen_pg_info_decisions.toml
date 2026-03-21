@@ -449,6 +449,52 @@ ref = ""
 desc = "True if the member can SET ROLE to the granted role"
 ty = "bool"
 
+[pg_cast.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_cast.columns.castsource]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "OID of the source data type"
+sel = "castsource::regtype::text"
+ty = "Qual"
+exp = "Qual::parse(pg_cast.castsource)"
+
+[pg_cast.columns.casttarget]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "OID of the target data type"
+sel = "casttarget::regtype::text"
+ty = "Qual"
+exp = "Qual::parse(pg_cast.casttarget)"
+
+[pg_cast.columns.castfunc]
+typ = "oid"
+ref = "(references pg_proc.oid)"
+desc = "The OID of the function to use to perform this cast. Zero is stored if the cast method doesn't require a function."
+sel = "case when castfunc = 0 then null else castfunc::regprocedure::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_cast.castfunc)"
+
+[pg_cast.columns.castcontext]
+typ = "char"
+ref = ""
+desc = "Indicates what contexts the cast can be invoked in. e means only as an explicit cast (using CAST or :: syntax). a means implicitly in assignment to a target column, as well as explicitly. i means implicitly in expressions, as well as the other cases."
+ty = "PgCastCastcontext"
+exp = "PgCastCastcontext::pg_from_char(pg_cast.castcontext)"
+pgEnum = "'e' => Explicit, 'a' => ImplicitAssignment, 'i' => Implicit"
+
+[pg_cast.columns.castmethod]
+typ = "char"
+ref = ""
+desc = "Indicates how the cast is performed. f means that the function specified in the castfunc field is used. i means that the input/output functions are used. b means that the types are binary-coercible, thus no conversion is required."
+ty = "PgCastCastmethod"
+exp = "PgCastCastmethod::pg_from_char(pg_cast.castmethod)"
+pgEnum = "'f' => Castfunc, 'i' => IOFunc, 'b' => BinaryCoercible"
+
 [pg_class]
 hashCol = true
 

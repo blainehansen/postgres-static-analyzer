@@ -306,6 +306,46 @@ pub async fn reflect_pg_auth_members(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgCast {
+	// oid oid  Row identifier
+	/// `oid` `(references pg_type.oid)` OID of the source data type
+	castsource: Qual,
+	/// `oid` `(references pg_type.oid)` OID of the target data type
+	casttarget: Qual,
+	/// `oid` `(references pg_proc.oid)` The OID of the function to use to perform this cast. Zero is stored if the cast method doesn't require a function.
+	castfunc: Option<Qual>,
+	/// `char`  Indicates what contexts the cast can be invoked in. e means only as an explicit cast (using CAST or :: syntax). a means implicitly in assignment to a target column, as well as explicitly. i means implicitly in expressions, as well as the other cases.
+	castcontext: PgCastCastcontext,
+	/// `char`  Indicates how the cast is performed. f means that the function specified in the castfunc field is used. i means that the input/output functions are used. b means that the types are binary-coercible, thus no conversion is required.
+	castmethod: PgCastCastmethod,
+}
+
+pg_char_enum!(PgCastCastcontext { 'e' => Explicit, 'a' => ImplicitAssignment, 'i' => Implicit });
+pg_char_enum!(PgCastCastmethod { 'f' => Castfunc, 'i' => IOFunc, 'b' => BinaryCoercible });
+
+pub async fn reflect_pg_cast(
+	client: &PgClient
+) -> Result<Vec<PgCast>, postgres::Error> {
+	let pg_cast_coll = reflect_crate::queries::reflect_gen::reflect_pg_cast().bind(client)
+		.map(|pg_cast| {
+			PgCast {
+				castsource: Qual::parse(pg_cast.castsource),
+				casttarget: Qual::parse(pg_cast.casttarget),
+				castfunc: Qual::maybe_parse(pg_cast.castfunc),
+				castcontext: PgCastCastcontext::pg_from_char(pg_cast.castcontext),
+				castmethod: PgCastCastmethod::pg_from_char(pg_cast.castmethod),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_cast_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgClass {
 	/// `oid`  Row identifier
 	oid: Qual,
