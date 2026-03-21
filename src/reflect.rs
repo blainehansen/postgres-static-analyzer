@@ -14,7 +14,7 @@ pub struct PgState {
 	pub pg_auth_members: Vec<PgAuthMembers>,
 	pub pg_cast: Vec<PgCast>,
 	pub pg_class: Set<PgClass>,
-	// pub pg_collation: PgCollation,
+	pub pg_collation: Vec<PgCollation>,
 	// pub pg_constraint: PgConstraint,
 	// pub pg_conversion: PgConversion,
 	pub pg_database: PgDatabase,
@@ -80,7 +80,7 @@ pub async fn reflect_pg_state(
 		pg_auth_members,
 		pg_cast,
 		pg_class,
-		// pg_collation,
+		pg_collation,
 		// pg_constraint,
 		// pg_conversion,
 		pg_database,
@@ -139,7 +139,7 @@ pub async fn reflect_pg_state(
 		reflect_pg_auth_members(client),
 		reflect_pg_cast(client),
 		reflect_pg_class(client),
-		// reflect_pg_collation(client),
+		reflect_pg_collation(client),
 		// reflect_pg_constraint(client),
 		// reflect_pg_conversion(client),
 		reflect_pg_database(client),
@@ -200,7 +200,7 @@ pub async fn reflect_pg_state(
 		pg_auth_members,
 		pg_cast,
 		pg_class,
-		// pg_collation,
+		pg_collation,
 		// pg_constraint,
 		// pg_conversion,
 		pg_database,
@@ -368,7 +368,7 @@ use reflect_gen::{PgCast, reflect_pg_cast};
 use reflect_gen::{PgClass, reflect_pg_class};
 
 // `pg_collation`: https://www.postgresql.org/docs/17/catalog-pg-collation.html
-// use reflect_gen::{PgCollation, reflect_pg_collation};
+use reflect_gen::{PgCollation, reflect_pg_collation};
 
 // `pg_constraint`: https://www.postgresql.org/docs/17/catalog-pg-constraint.html
 // use reflect_gen::{PgConstraint, reflect_pg_constraint};

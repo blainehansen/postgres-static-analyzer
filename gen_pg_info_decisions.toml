@@ -725,6 +725,95 @@ sel = "pg_get_expr(relpartbound, pg_class.oid)"
 ty = "Option<Str>"
 exp = "pg_class.relpartbound.map(Into::into)"
 
+[pg_collation.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+sel = "pg_collation.oid::regcollation::text"
+ty = "Qual"
+exp = "Qual::parse(pg_collation.oid)"
+
+[pg_collation.columns.collname]
+typ = "name"
+ref = ""
+desc = "Collation name (unique per namespace and encoding)"
+sel = "collname::text"
+ty = "Str"
+exp = "pg_collation.collname.into()"
+
+[pg_collation.columns.collnamespace]
+typ = "oid"
+ref = "(references pg_namespace.oid)"
+desc = "The OID of the namespace that contains this collation"
+sel = "collnamespace::regnamespace::text"
+ty = "Str"
+exp = "pg_collation.collnamespace.into()"
+
+[pg_collation.columns.collowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the collation"
+sel = "pg_get_userbyid(collowner)::text"
+ty = "Str"
+exp = "pg_collation.collowner.into()"
+
+[pg_collation.columns.collprovider]
+typ = "char"
+ref = ""
+desc = "Provider of the collation: d = database default, b = builtin, c = libc, i = icu"
+ty = "PgCollationCollprovider"
+exp = "PgCollationCollprovider::pg_from_char(pg_collation.collprovider)"
+pgEnum = "'d' => DatabaseDefault, 'b' => Builtin, 'c' => Libc, 'i' => Icu"
+
+[pg_collation.columns.collisdeterministic]
+typ = "bool"
+ref = ""
+desc = "Is the collation deterministic?"
+ty = "bool"
+
+[pg_collation.columns.collencoding]
+typ = "int4"
+ref = ""
+desc = "Encoding in which the collation is applicable, or -1 if it works for any encoding"
+sel = "case when collencoding < 0 then null else pg_encoding_to_char(collencoding)::text end"
+ty = "Option<Str>"
+exp = "pg_collation.collencoding.map(Into::into)"
+
+[pg_collation.columns.collcollate]
+typ = "text"
+ref = ""
+desc = "LC_COLLATE for this collation object. If the provider is not libc, collcollate is NULL and colllocale is used instead."
+ty = "Option<Str>"
+exp = "pg_collation.collcollate.map(Into::into)"
+
+[pg_collation.columns.collctype]
+typ = "text"
+ref = ""
+desc = "LC_CTYPE for this collation object. If the provider is not libc, collctype is NULL and colllocale is used instead."
+ty = "Option<Str>"
+exp = "pg_collation.collctype.map(Into::into)"
+
+[pg_collation.columns.colllocale]
+typ = "text"
+ref = ""
+desc = "Collation provider locale name for this collation object. If the provider is libc, colllocale is NULL; collcollate and collctype are used instead."
+ty = "Option<Str>"
+exp = "pg_collation.colllocale.map(Into::into)"
+
+[pg_collation.columns.collicurules]
+typ = "text"
+ref = ""
+desc = "ICU collation rules for this collation object"
+ty = "Option<Str>"
+exp = "pg_collation.collicurules.map(Into::into)"
+
+[pg_collation.columns.collversion]
+typ = "text"
+ref = ""
+desc = "Provider-specific version of the collation. This is recorded when the collation is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption."
+ty = "Option<Str>"
+exp = "pg_collation.collversion.map(Into::into)"
+
 [pg_default_acl.columns.oid]
 typ = "oid"
 ref = ""

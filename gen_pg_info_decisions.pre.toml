@@ -56,7 +56,11 @@ pg_class.relkind = { ty="PgClassRelkind", exp="PgClassRelkind::pg_from_char(pg_c
 # Columns used to form “replica identity” for rows: d = default (primary key, if any), n = nothing, f = all columns, i = index with indisreplident set (same as nothing if the index used has been dropped)
 pg_class.relreplident = { ty="PgClassRelreplident", exp="PgClassRelreplident::pg_from_char(pg_class.relreplident)", pgEnum="'d' => Default, 'n' => Nothing, 'f' => AllColumns, 'i' => Index " }
 
-pg_collation = 'todo'
+# pg_collation = {}
+# Provider of the collation: d = database default, b = builtin, c = libc, i = icu
+pg_collation.collprovider = { ty="PgCollationCollprovider", exp="PgCollationCollprovider::pg_from_char(pg_collation.collprovider)", pgEnum="'d' => DatabaseDefault, 'b' => Builtin, 'c' => Libc, 'i' => Icu" }
+pg_collation.collicurules = { nullable=true }
+pg_collation.collversion = { nullable=true }
 
 pg_constraint = 'todo'
 

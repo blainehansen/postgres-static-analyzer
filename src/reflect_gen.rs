@@ -443,6 +443,65 @@ pub async fn reflect_pg_class(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgCollation {
+	/// `oid`  Row identifier
+	oid: Qual,
+	/// `name`  Collation name (unique per namespace and encoding)
+	collname: Str,
+	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this collation
+	collnamespace: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the collation
+	collowner: Str,
+	/// `char`  Provider of the collation: d = database default, b = builtin, c = libc, i = icu
+	collprovider: PgCollationCollprovider,
+	/// `bool`  Is the collation deterministic?
+	collisdeterministic: bool,
+	/// `int4`  Encoding in which the collation is applicable, or -1 if it works for any encoding
+	collencoding: Option<Str>,
+	/// `text`  LC_COLLATE for this collation object. If the provider is not libc, collcollate is NULL and colllocale is used instead.
+	collcollate: Option<Str>,
+	/// `text`  LC_CTYPE for this collation object. If the provider is not libc, collctype is NULL and colllocale is used instead.
+	collctype: Option<Str>,
+	/// `text`  Collation provider locale name for this collation object. If the provider is libc, colllocale is NULL; collcollate and collctype are used instead.
+	colllocale: Option<Str>,
+	/// `text`  ICU collation rules for this collation object
+	collicurules: Option<Str>,
+	/// `text`  Provider-specific version of the collation. This is recorded when the collation is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
+	collversion: Option<Str>,
+}
+
+pg_char_enum!(PgCollationCollprovider { 'd' => DatabaseDefault, 'b' => Builtin, 'c' => Libc, 'i' => Icu });
+
+pub async fn reflect_pg_collation(
+	client: &PgClient
+) -> Result<Vec<PgCollation>, postgres::Error> {
+	let pg_collation_coll = reflect_crate::queries::reflect_gen::reflect_pg_collation().bind(client)
+		.map(|pg_collation| {
+			PgCollation {
+				oid: Qual::parse(pg_collation.oid),
+				collname: pg_collation.collname.into(),
+				collnamespace: pg_collation.collnamespace.into(),
+				collowner: pg_collation.collowner.into(),
+				collprovider: PgCollationCollprovider::pg_from_char(pg_collation.collprovider),
+				collisdeterministic: pg_collation.collisdeterministic,
+				collencoding: pg_collation.collencoding.map(Into::into),
+				collcollate: pg_collation.collcollate.map(Into::into),
+				collctype: pg_collation.collctype.map(Into::into),
+				colllocale: pg_collation.colllocale.map(Into::into),
+				collicurules: pg_collation.collicurules.map(Into::into),
+				collversion: pg_collation.collversion.map(Into::into),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_collation_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgDefaultAcl {
 	// oid oid  Row identifier
 	/// `oid` `(references pg_authid.oid)` The OID of the role associated with this entry

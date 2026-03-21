@@ -164,6 +164,25 @@ where
 ;
 
 
+--! reflect_pg_collation : (collencoding?, collcollate?, collctype?, colllocale?, collicurules?, collversion?)
+select
+	pg_collation.oid::regcollation::text as oid, -- oid  Row identifier
+	collname::text as collname, -- name  Collation name (unique per namespace and encoding)
+	collnamespace::regnamespace::text as collnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this collation
+	pg_get_userbyid(collowner)::text as collowner, -- oid (references pg_authid.oid) Owner of the collation
+	collprovider as collprovider, -- char  Provider of the collation: d = database default, b = builtin, c = libc, i = icu
+	collisdeterministic as collisdeterministic, -- bool  Is the collation deterministic?
+	case when collencoding < 0 then null else pg_encoding_to_char(collencoding)::text end as collencoding, -- int4  Encoding in which the collation is applicable, or -1 if it works for any encoding
+	collcollate as collcollate, -- text  LC_COLLATE for this collation object. If the provider is not libc, collcollate is NULL and colllocale is used instead.
+	collctype as collctype, -- text  LC_CTYPE for this collation object. If the provider is not libc, collctype is NULL and colllocale is used instead.
+	colllocale as colllocale, -- text  Collation provider locale name for this collation object. If the provider is libc, colllocale is NULL; collcollate and collctype are used instead.
+	collicurules as collicurules, -- text  ICU collation rules for this collation object
+	collversion as collversion -- text  Provider-specific version of the collation. This is recorded when the collation is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
+from
+	pg_collation
+;
+
+
 --! reflect_pg_default_acl : (defaclnamespace?, defaclacl?)
 select
 	-- oid oid  Row identifier
