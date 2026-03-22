@@ -183,6 +183,21 @@ from
 ;
 
 
+--! reflect_pg_conversion : ()
+select
+	-- oid oid  Row identifier
+	conname::text as conname, -- name  Conversion name (unique within a namespace)
+	connamespace::regnamespace::text as connamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this conversion
+	pg_get_userbyid(conowner)::text as conowner, -- oid (references pg_authid.oid) Owner of the conversion
+	pg_encoding_to_char(conforencoding)::text as conforencoding, -- int4  Source encoding ID (pg_encoding_to_char() can translate this number to the encoding name)
+	pg_encoding_to_char(contoencoding)::text as contoencoding, -- int4  Destination encoding ID (pg_encoding_to_char() can translate this number to the encoding name)
+	conproc::regproc::text as conproc, -- regproc (references pg_proc.oid) Conversion function
+	condefault as condefault -- bool  True if this is the default conversion
+from
+	pg_conversion
+;
+
+
 --! reflect_pg_default_acl : (defaclnamespace?, defaclacl?)
 select
 	-- oid oid  Row identifier

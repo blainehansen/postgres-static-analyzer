@@ -70,6 +70,18 @@ where (setdatabase = 0 or setdatabase = (select oid from pg_database where datna
 -- `pg_description`: https://www.postgresql.org/docs/17/catalog-pg-description.html
 
 -- `pg_enum`: https://www.postgresql.org/docs/17/catalog-pg-enum.html
+--! reflect_pg_enum : ()
+select
+	-- oid oid  Row identifier
+	-- enumtypid oid (references pg_type.oid) The OID of the pg_type entry owning this enum value,
+	-- enumsortorder float4  The sort position of this enum value within its enum type,
+	-- enumlabel name  The textual label for this enum value
+	enumtypid::regtype::text as enumtypid,
+	array_agg(enumlabel::text order by enumsortorder) as enumlabels
+from
+	pg_enum
+group by enumtypid
+;
 
 -- `pg_event_trigger`: https://www.postgresql.org/docs/17/catalog-pg-event-trigger.html
 

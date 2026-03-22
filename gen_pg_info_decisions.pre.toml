@@ -64,7 +64,7 @@ pg_collation.collversion = { nullable=true }
 
 pg_constraint = 'todo'
 
-pg_conversion = 'todo'
+pg_conversion = {}
 
 pg_database = 'manual'
 
@@ -78,7 +78,7 @@ pg_depend = 'todo'
 
 pg_description = 'todo'
 
-pg_enum = 'todo'
+pg_enum = 'manual'
 
 pg_event_trigger = 'todo'
 

@@ -116,7 +116,8 @@ async function decideColumn(
 	if (typ === "name") {
 		const nullable = /null/i.test(desc)
 		const hasUniquenessQualifier = /unique/i.test(desc)
-		const hashColumn = !nullable && !hasUniquenessQualifier ? name : undefined
+		const isEnum = tableName === "pg_enum"
+		const hashColumn = !nullable && !hasUniquenessQualifier && !isEnum ? name : undefined
 
 		const sel = `${name}::text`
 		const [ty, exp] = makeStr(tableName, name, nullable)
@@ -274,6 +275,11 @@ async function decideColumn(
 		const negativeable = /-1/.test(desc)
 		const sel = negativeable ? `case when ${name} < 0 then null else ${name} end` : undefined
 		const [ty, exp] = makeAssumedU(tableName, name, 32, negativeable)
+		return [undefined, { typ, ref, desc, sel, ty, exp }]
+	}
+	if (typ === "float4") {
+		const sel = `${name}::text`
+		const [ty, exp] = makeStr(tableName, name, true)
 		return [undefined, { typ, ref, desc, sel, ty, exp }]
 	}
 

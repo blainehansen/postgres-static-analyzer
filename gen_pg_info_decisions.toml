@@ -814,6 +814,66 @@ desc = "Provider-specific version of the collation. This is recorded when the co
 ty = "Option<Str>"
 exp = "pg_collation.collversion.map(Into::into)"
 
+[pg_conversion.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_conversion.columns.conname]
+typ = "name"
+ref = ""
+desc = "Conversion name (unique within a namespace)"
+sel = "conname::text"
+ty = "Str"
+exp = "pg_conversion.conname.into()"
+
+[pg_conversion.columns.connamespace]
+typ = "oid"
+ref = "(references pg_namespace.oid)"
+desc = "The OID of the namespace that contains this conversion"
+sel = "connamespace::regnamespace::text"
+ty = "Str"
+exp = "pg_conversion.connamespace.into()"
+
+[pg_conversion.columns.conowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the conversion"
+sel = "pg_get_userbyid(conowner)::text"
+ty = "Str"
+exp = "pg_conversion.conowner.into()"
+
+[pg_conversion.columns.conforencoding]
+typ = "int4"
+ref = ""
+desc = "Source encoding ID (pg_encoding_to_char() can translate this number to the encoding name)"
+sel = "pg_encoding_to_char(conforencoding)::text"
+ty = "Str"
+exp = "pg_conversion.conforencoding.into()"
+
+[pg_conversion.columns.contoencoding]
+typ = "int4"
+ref = ""
+desc = "Destination encoding ID (pg_encoding_to_char() can translate this number to the encoding name)"
+sel = "pg_encoding_to_char(contoencoding)::text"
+ty = "Str"
+exp = "pg_conversion.contoencoding.into()"
+
+[pg_conversion.columns.conproc]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "Conversion function"
+sel = "conproc::regproc::text"
+ty = "Qual"
+exp = "Qual::parse(pg_conversion.conproc)"
+
+[pg_conversion.columns.condefault]
+typ = "bool"
+ref = ""
+desc = "True if this is the default conversion"
+ty = "bool"
+
 [pg_default_acl.columns.oid]
 typ = "oid"
 ref = ""

@@ -16,13 +16,13 @@ pub struct PgState {
 	pub pg_class: Set<PgClass>,
 	pub pg_collation: Vec<PgCollation>,
 	// pub pg_constraint: PgConstraint,
-	// pub pg_conversion: PgConversion,
+	pub pg_conversion: Vec<PgConversion>,
 	pub pg_database: PgDatabase,
 	pub pg_db_role_setting: Vec<PgDbRoleSetting>,
 	pub pg_default_acl: Vec<PgDefaultAcl>,
 	// pub pg_depend: PgDepend,
 	// pub pg_description: PgDescription,
-	// pub pg_enum: PgEnum,
+	pub pg_enum: Set<PgEnum>,
 	// pub pg_event_trigger: PgEventTrigger,
 	// pub pg_extension: PgExtension,
 	// pub pg_foreign_data_wrapper: PgForeignDataWrapper,
@@ -82,13 +82,13 @@ pub async fn reflect_pg_state(
 		pg_class,
 		pg_collation,
 		// pg_constraint,
-		// pg_conversion,
+		pg_conversion,
 		pg_database,
 		pg_db_role_setting,
 		pg_default_acl,
 		// pg_depend,
 		// pg_description,
-		// pg_enum,
+		pg_enum,
 		// pg_event_trigger,
 		// pg_extension,
 		// pg_foreign_data_wrapper,
@@ -141,13 +141,13 @@ pub async fn reflect_pg_state(
 		reflect_pg_class(client),
 		reflect_pg_collation(client),
 		// reflect_pg_constraint(client),
-		// reflect_pg_conversion(client),
+		reflect_pg_conversion(client),
 		reflect_pg_database(client),
 		reflect_pg_db_role_setting(client),
 		reflect_pg_default_acl(client),
 		// reflect_pg_depend(client),
 		// reflect_pg_description(client),
-		// reflect_pg_enum(client),
+		reflect_pg_enum(client),
 		// reflect_pg_event_trigger(client),
 		// reflect_pg_extension(client),
 		// reflect_pg_foreign_data_wrapper(client),
@@ -202,13 +202,13 @@ pub async fn reflect_pg_state(
 		pg_class,
 		pg_collation,
 		// pg_constraint,
-		// pg_conversion,
+		pg_conversion,
 		pg_database,
 		pg_db_role_setting,
 		pg_default_acl,
 		// pg_depend,
 		// pg_description,
-		// pg_enum,
+		pg_enum,
 		// pg_event_trigger,
 		// pg_extension,
 		// pg_foreign_data_wrapper,
@@ -297,7 +297,28 @@ macro_rules! impl_qual_hash_and_equivalent {
 			}
 		}
 	};
+	($type:ty, $field:ident) => {
+		impl std::hash::Hash for $type {
+			fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+				self.$field.schema_name.hash(state);
+				self.$field.name.hash(state);
+			}
+		}
+
+		impl hashbrown::Equivalent<$type> for (&str, &str) {
+			fn equivalent(&self, key: &$type) -> bool {
+				key.$field.schema_name == *self.0 && key.$field.name == *self.1
+			}
+		}
+
+		impl hashbrown::Equivalent<$type> for (&Str, &Str) {
+			fn equivalent(&self, key: &$type) -> bool {
+				key.$field.schema_name == *self.0 && key.$field.name == *self.1
+			}
+		}
+	};
 }
+
 
 // #[macro_export]
 // macro_rules! impl_pg_from_str {
@@ -374,7 +395,7 @@ use reflect_gen::{PgCollation, reflect_pg_collation};
 // use reflect_gen::{PgConstraint, reflect_pg_constraint};
 
 // `pg_conversion`: https://www.postgresql.org/docs/17/catalog-pg-conversion.html
-// use reflect_gen::{PgConversion, reflect_pg_conversion};
+use reflect_gen::{PgConversion, reflect_pg_conversion};
 
 // `pg_database`: https://www.postgresql.org/docs/17/catalog-pg-database.html
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
@@ -481,7 +502,34 @@ use reflect_gen::{PgDefaultAcl, reflect_pg_default_acl};
 // use reflect_gen::{PgDescription, reflect_pg_description};
 
 // `pg_enum`: https://www.postgresql.org/docs/17/catalog-pg-enum.html
-// use reflect_gen::{PgCharEnum, reflect_pg_enum};
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgEnum {
+	// `oid`  Row identifier
+	/// enumtypid `oid` `(references pg_type.oid)` The OID of the pg_type entry owning this enum value
+	enumtypid: Qual,
+	/// enumlabel `name`  The textual label for this enum value
+	enumlabels: Vec<Str>,
+	// enumsortorder `float4`  The sort position of this enum value within its enum type
+}
+impl_qual_hash_and_equivalent!(PgEnum, enumtypid);
+
+pub async fn reflect_pg_enum(
+	client: &PgClient
+) -> Result<Set<PgEnum>, postgres::Error> {
+	let pg_enum_coll = reflect_crate::queries::reflect::reflect_pg_enum().bind(client)
+		.map(|pg_enum| {
+			PgEnum {
+				enumtypid: Qual::parse(pg_enum.enumtypid),
+				enumlabels: pg_enum.enumlabels.map(Into::into).collect(),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_enum_coll)
+}
 
 // `pg_event_trigger`: https://www.postgresql.org/docs/17/catalog-pg-event-trigger.html
 // use reflect_gen::{PgEventTrigger, reflect_pg_event_trigger};

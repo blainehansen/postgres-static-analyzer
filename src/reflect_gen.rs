@@ -502,6 +502,49 @@ pub async fn reflect_pg_collation(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgConversion {
+	// oid oid  Row identifier
+	/// `name`  Conversion name (unique within a namespace)
+	conname: Str,
+	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this conversion
+	connamespace: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the conversion
+	conowner: Str,
+	/// `int4`  Source encoding ID (pg_encoding_to_char() can translate this number to the encoding name)
+	conforencoding: Str,
+	/// `int4`  Destination encoding ID (pg_encoding_to_char() can translate this number to the encoding name)
+	contoencoding: Str,
+	/// `regproc` `(references pg_proc.oid)` Conversion function
+	conproc: Qual,
+	/// `bool`  True if this is the default conversion
+	condefault: bool,
+}
+
+pub async fn reflect_pg_conversion(
+	client: &PgClient
+) -> Result<Vec<PgConversion>, postgres::Error> {
+	let pg_conversion_coll = reflect_crate::queries::reflect_gen::reflect_pg_conversion().bind(client)
+		.map(|pg_conversion| {
+			PgConversion {
+				conname: pg_conversion.conname.into(),
+				connamespace: pg_conversion.connamespace.into(),
+				conowner: pg_conversion.conowner.into(),
+				conforencoding: pg_conversion.conforencoding.into(),
+				contoencoding: pg_conversion.contoencoding.into(),
+				conproc: Qual::parse(pg_conversion.conproc),
+				condefault: pg_conversion.condefault,
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_conversion_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgDefaultAcl {
 	// oid oid  Row identifier
 	/// `oid` `(references pg_authid.oid)` The OID of the role associated with this entry
