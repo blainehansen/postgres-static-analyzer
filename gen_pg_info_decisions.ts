@@ -113,12 +113,13 @@ async function decideColumn(
 	if (override && override.ty)
 		return [undefined, { typ, ref, desc, ...override, ty: override.ty }]
 
-	const notCollation = tableName !== "pg_collation"
 	if (typ === "name") {
-		const hashColumn = name !== "conname" && notCollation ? name : undefined
+		const nullable = /null/i.test(desc)
+		const hasUniquenessQualifier = /unique/i.test(desc)
+		const hashColumn = !nullable && !hasUniquenessQualifier ? name : undefined
 
 		const sel = `${name}::text`
-		const [ty, exp] = makeStr(tableName, name, false)
+		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [hashColumn, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
 	if (name === "oid" && !(tableName in refToReg))
@@ -131,7 +132,7 @@ async function decideColumn(
 		const sel = `${tableName}.${name}::${reg}::text`
 		const ty = "Qual"
 		const exp = `Qual::parse(${tableName}.${name})`
-		const hashCol = notCollation ? true : undefined
+		const hashCol = tableName !== "pg_collation" ? true : undefined
 		return [hashCol, { typ, ref, desc, sel, ty, exp }]
 	}
 	if (typ === "regproc") {
