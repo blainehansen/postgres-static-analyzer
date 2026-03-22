@@ -581,6 +581,48 @@ pub async fn reflect_pg_default_acl(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgEventTrigger {
+	// oid oid  Row identifier
+	/// `name`  Trigger name (must be unique)
+	evtname: Str,
+	/// `name`  Identifies the event for which this trigger fires
+	evtevent: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the event trigger
+	evtowner: Str,
+	/// `oid` `(references pg_proc.oid)` The function to be called
+	evtfoid: Qual,
+	/// `char`  Controls in which session_replication_role modes the event trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always.
+	evtenabled: PgEventTriggerEvtenabled,
+	/// `text[]`  Command tags for which this trigger will fire. If NULL, the firing of this trigger is not restricted on the basis of the command tag.
+	evttags: Option<Vec<Str>>,
+}
+
+pg_char_enum!(PgEventTriggerEvtenabled { 'O' => OriginLocal, 'D' => Disabled, 'R' => Replica, 'A' => Always });
+
+pub async fn reflect_pg_event_trigger(
+	client: &PgClient
+) -> Result<Vec<PgEventTrigger>, postgres::Error> {
+	let pg_event_trigger_coll = reflect_crate::queries::reflect_gen::reflect_pg_event_trigger().bind(client)
+		.map(|pg_event_trigger| {
+			PgEventTrigger {
+				evtname: pg_event_trigger.evtname.into(),
+				evtevent: pg_event_trigger.evtevent.into(),
+				evtowner: pg_event_trigger.evtowner.into(),
+				evtfoid: Qual::parse(pg_event_trigger.evtfoid),
+				evtenabled: PgEventTriggerEvtenabled::pg_from_char(pg_event_trigger.evtenabled),
+				evttags: pg_event_trigger.evttags.map(|items| items.map(Into::into).collect()),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_event_trigger_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgLanguage {
 	// oid oid  Row identifier
 	/// `name`  Name of the language

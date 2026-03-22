@@ -912,6 +912,59 @@ sel = "defaclacl::text[]"
 ty = "Option<Vec<aclitem::AclDefaultAclItem>>"
 exp = "pg_default_acl.defaclacl.map(|defaclacl| defaclacl.map(|acl| aclitem(acl, &AclDefaultGrantParser)).collect())"
 
+[pg_event_trigger.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_event_trigger.columns.evtname]
+typ = "name"
+ref = ""
+desc = "Trigger name (must be unique)"
+sel = "evtname::text"
+ty = "Str"
+exp = "pg_event_trigger.evtname.into()"
+
+[pg_event_trigger.columns.evtevent]
+typ = "name"
+ref = ""
+desc = "Identifies the event for which this trigger fires"
+sel = "evtevent::text"
+ty = "Str"
+exp = "pg_event_trigger.evtevent.into()"
+
+[pg_event_trigger.columns.evtowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the event trigger"
+sel = "pg_get_userbyid(evtowner)::text"
+ty = "Str"
+exp = "pg_event_trigger.evtowner.into()"
+
+[pg_event_trigger.columns.evtfoid]
+typ = "oid"
+ref = "(references pg_proc.oid)"
+desc = "The function to be called"
+sel = "evtfoid::regprocedure::text"
+ty = "Qual"
+exp = "Qual::parse(pg_event_trigger.evtfoid)"
+
+[pg_event_trigger.columns.evtenabled]
+typ = "char"
+ref = ""
+desc = "Controls in which session_replication_role modes the event trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always."
+ty = "PgEventTriggerEvtenabled"
+exp = "PgEventTriggerEvtenabled::pg_from_char(pg_event_trigger.evtenabled)"
+pgEnum = "'O' => OriginLocal, 'D' => Disabled, 'R' => Replica, 'A' => Always"
+
+[pg_event_trigger.columns.evttags]
+typ = "text[]"
+ref = ""
+desc = "Command tags for which this trigger will fire. If NULL, the firing of this trigger is not restricted on the basis of the command tag."
+ty = "Option<Vec<Str>>"
+exp = "pg_event_trigger.evttags.map(|items| items.map(Into::into).collect())"
+
 [pg_language]
 hashCol = "lanname"
 

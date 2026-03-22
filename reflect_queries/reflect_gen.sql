@@ -210,6 +210,20 @@ from
 ;
 
 
+--! reflect_pg_event_trigger : (evttags?)
+select
+	-- oid oid  Row identifier
+	evtname::text as evtname, -- name  Trigger name (must be unique)
+	evtevent::text as evtevent, -- name  Identifies the event for which this trigger fires
+	pg_get_userbyid(evtowner)::text as evtowner, -- oid (references pg_authid.oid) Owner of the event trigger
+	evtfoid::regprocedure::text as evtfoid, -- oid (references pg_proc.oid) The function to be called
+	evtenabled as evtenabled, -- char  Controls in which session_replication_role modes the event trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always.
+	evttags as evttags -- text[]  Command tags for which this trigger will fire. If NULL, the firing of this trigger is not restricted on the basis of the command tag.
+from
+	pg_event_trigger
+;
+
+
 --! reflect_pg_language : (lanplcallfoid?, laninline?, lanvalidator?, lanacl?)
 select
 	-- oid oid  Row identifier

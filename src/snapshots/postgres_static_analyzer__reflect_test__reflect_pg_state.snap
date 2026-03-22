@@ -79862,6 +79862,19 @@ PgState(
       ],
     ),
   ],
+  pg_event_trigger: [
+    PgEventTrigger(
+      evtname: "log_ddl_events",
+      evtevent: "ddl_command_start",
+      evtowner: "tempuser",
+      evtfoid: Qual(
+        schema_name: "catalog_schema",
+        name: "ddl_log_func()",
+      ),
+      evtenabled: OriginLocal,
+      evttags: None,
+    ),
+  ],
   pg_language: [
     PgLanguage(
       lanname: "c",

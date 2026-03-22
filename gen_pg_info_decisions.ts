@@ -113,15 +113,23 @@ async function decideColumn(
 	if (override && override.ty)
 		return [undefined, { typ, ref, desc, ...override, ty: override.ty }]
 
-	if (typ === "name") {
+	if (typ === "name" && /name/i.test(desc)) {
 		const nullable = /null/i.test(desc)
 		const hasUniquenessQualifier = /unique/i.test(desc)
+		if (name === "evtenabled")
+			console.log(tableName, name, desc, hasUniquenessQualifier)
 		const isEnum = tableName === "pg_enum"
 		const hashColumn = !nullable && !hasUniquenessQualifier && !isEnum ? name : undefined
 
 		const sel = `${name}::text`
 		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [hashColumn, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
+	}
+	if (typ === "name") {
+		const nullable = /null/i.test(desc)
+		const sel = `${name}::text`
+		const [ty, exp] = makeStr(tableName, name, nullable)
+		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
 	if (name === "oid" && !(tableName in refToReg))
 		return [undefined, { typ, ref, desc, skip: true }]
@@ -243,6 +251,14 @@ async function decideColumn(
 	if (typ === "text[]" && desc.includes("keyword=value") || desc.includes("configuration variables")) {
 		const ty = "Option<Vec<Str>>"
 		const exp = `${tableName}.${name}.map(|items| items.map(Into::into).collect())`
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
+	}
+	if (typ === "text[]") {
+		const nullable = ovNullable ?? /null/i.test(desc)
+		const ty = nullable ? "Option<Vec<Str>>" : "Vec<Str>"
+		const exp = nullable
+			? `${tableName}.${name}.map(|items| items.map(Into::into).collect())`
+			: `${tableName}.${name}.map(Into::into).collect())`
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
 	}
 	if (typ === "aclitem[]") {
