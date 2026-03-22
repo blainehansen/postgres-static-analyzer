@@ -955,6 +955,7 @@ ref = "(references pg_attribute.attnum)"
 desc = "If a table constraint (including foreign keys, but not constraint triggers), list of the constrained columns"
 ty = "Option<Vec<u16>>"
 exp = "pg_constraint.conkey.map(|items| items.map(i16::unsigned_abs).collect())"
+filters = ["(pg_constraint.conkey is null or not (0 >= any(pg_constraint.conkey)))"]
 
 [pg_constraint.columns.confkey]
 typ = "int2[]"
@@ -962,6 +963,7 @@ ref = "(references pg_attribute.attnum)"
 desc = "If a foreign key, list of the referenced columns"
 ty = "Option<Vec<u16>>"
 exp = "pg_constraint.confkey.map(|items| items.map(i16::unsigned_abs).collect())"
+filters = ["(pg_constraint.confkey is null or not (0 >= any(pg_constraint.confkey)))"]
 
 [pg_constraint.columns.conpfeqop]
 typ = "oid[]"
@@ -993,6 +995,7 @@ ref = "(references pg_attribute.attnum)"
 desc = "If a foreign key with a SET NULL or SET DEFAULT delete action, the columns that will be updated. If null, all of the referencing columns will be updated."
 ty = "Option<Vec<u16>>"
 exp = "pg_constraint.confdelsetcols.map(|items| items.map(i16::unsigned_abs).collect())"
+filters = ["(pg_constraint.confdelsetcols is null or not (0 >= any(pg_constraint.confdelsetcols)))"]
 
 [pg_constraint.columns.conexclop]
 typ = "oid[]"

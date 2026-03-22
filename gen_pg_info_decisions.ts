@@ -308,8 +308,7 @@ async function decideColumn(
 	if (typ === "int2[]" && ref === "(references pg_attribute.attnum)") {
 		const ty = `Option<Vec<u16>>`
 		const exp = `${tableName}.${name}.map(|items| items.map(i16::unsigned_abs).collect())`
-		// return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, filters: [`not (0 >= any(${tableName}.${name}))`] }]
-		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, filters: [`(${tableName}.${name} is null or not (0 >= any(${tableName}.${name})))`] }]
 	}
 	// pg_attribute.attnum
 	if (name.endsWith("encoding")) {

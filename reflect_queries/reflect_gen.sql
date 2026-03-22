@@ -215,6 +215,10 @@ from
 	pg_constraint
 	left join pg_constraint as conparentid_pg_constraint on pg_constraint.conparentid = conparentid_pg_constraint.oid
 	left join pg_namespace as conparentid_pg_namespace on conparentid_pg_constraint.connamespace = conparentid_pg_namespace.oid
+where
+	(pg_constraint.conkey is null or not (0 >= any(pg_constraint.conkey)))
+	and (pg_constraint.confkey is null or not (0 >= any(pg_constraint.confkey)))
+	and (pg_constraint.confdelsetcols is null or not (0 >= any(pg_constraint.confdelsetcols)))
 ;
 
 
