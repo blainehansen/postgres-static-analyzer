@@ -121,13 +121,13 @@ async function decideColumn(
 		const isEnum = tableName === "pg_enum"
 		const hashColumn = !nullable && !hasUniquenessQualifier && !isEnum ? name : undefined
 
-		const sel = `${name}::text`
+		const sel = `${tableName}.${name}::text`
 		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [hashColumn, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
 	if (typ === "name") {
 		const nullable = /null/i.test(desc)
-		const sel = `${name}::text`
+		const sel = `${tableName}.${name}::text`
 		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
@@ -163,12 +163,21 @@ async function decideColumn(
 		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
+	// if ( ref === "(references pg_authid.oid)") {
+	// 	const zeroable = ovZero ?? /zero/i.test(desc)
+	// 	const nullable = ovNullable ?? zeroable ?? false
+	// 	const sel = zeroable
+	// 		? `case when ${name} = 0 then null else pg_get_userbyid(${name})::text end`
+	// 		: `pg_get_userbyid(${name})::text`
+	// 	const [ty, exp] = makeStr(tableName, name, nullable)
+	// 	return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
+	// }
 	if (typ === "oid" && ref === "(references pg_namespace.oid)") {
 		const zeroable = ovZero ?? /zero/i.test(desc)
 		const nullable = ovNullable ?? zeroable ?? false
 		const sel = zeroable
-			? `case when ${name} = 0 then null else ${name}::regnamespace::text end`
-			: `${name}::regnamespace::text`
+			? `case when ${tableName}.${name} = 0 then null else ${tableName}.${name}::regnamespace::text end`
+			: `${tableName}.${name}::regnamespace::text`
 		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
@@ -210,6 +219,25 @@ async function decideColumn(
 
 		return [undefined, { typ, ref, desc, ...override, sel, ty, exp, joins }]
 	}
+	if (typ === "oid" && ref === "(references pg_constraint.oid)") {
+		const zeroable = ovZero ?? /zero/i.test(desc)
+		const nullable = ovNullable ?? zeroable ?? false
+
+		const joinNamespaceName = `${name}_pg_namespace`
+		const joinTableName = `${name}_pg_constraint`
+
+		const sel = `quote_ident(${joinNamespaceName}.nspname) || '.' || quote_ident(${joinTableName}.conname)`
+		const ty = nullable ? `Option<Qual>` : `Qual`
+		const exp = `Qual::${nullable ? 'maybe_parse' : 'parse'}(${tableName}.${name})`
+
+		const leftPortion = nullable ? 'left ' : ''
+		const joins = [
+			leftPortion + `join pg_constraint as ${joinTableName} on ${tableName}.${name} = ${joinTableName}.oid`,
+			leftPortion + `join pg_namespace as ${joinNamespaceName} on ${joinTableName}.connamespace = ${joinNamespaceName}.oid`,
+		]
+
+		return [undefined, { typ, ref, desc, ...override, sel, ty, exp, joins }]
+	}
 
 	const genericReferences = ref.match(/\(references (\w+)\.oid\)/)
 	const genericReferencesTable = genericReferences && genericReferences[1]
@@ -221,15 +249,20 @@ async function decideColumn(
 		const zeroable = ovZero ?? /zero/i.test(desc)
 		const nullable = ovNullable ?? zeroable ?? false
 		const sel = zeroable
-			? `case when ${name} = 0 then null else ${name}::${reg}::text end`
-			: `${name}::${reg}::text`
+			? `case when ${tableName}.${name} = 0 then null else ${tableName}.${name}::${reg}::text end`
+			: `${tableName}.${name}::${reg}::text`
 		const ty = nullable ? "Option<Qual>" : "Qual"
 		const exp = `${nullable ? 'Qual::maybe_parse' : 'Qual::parse'}(${tableName}.${name})`
 		return [undefined, { typ, ref, desc, ...override, sel, ty, exp }]
 	}
-	// if (typ === "oid" && genericReferencesTable) {
-	// 	return [undefined, { typ, ref, desc, ...override, sel, ty, exp }]
-	// }
+	if (typ === "oid[]" && genericReferencesTable && (genericReferencesTable in refToReg)) {
+		const reg = refToReg[genericReferencesTable as keyof typeof refToReg]
+		if (!reg) throw ''
+		const sel = `${tableName}.${name}::${reg}[]::text[]`
+		const ty = "Option<Vec<Qual>>"
+		const exp = `${tableName}.${name}.map(|items| items.map(Qual::parse).collect())`
+		return [undefined, { typ, ref, desc, ...override, sel, ty, exp }]
+	}
 
 	if (typ === "char") {
 		const ty = `${toPascalCase(tableName)}${toPascalCase(name)}`
@@ -272,6 +305,13 @@ async function decideColumn(
 		const [ty, exp] = makeAssumedU(tableName, name, 16, false)
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, filters: [`${name} > 0`] }]
 	}
+	if (typ === "int2[]" && ref === "(references pg_attribute.attnum)") {
+		const ty = `Option<Vec<u16>>`
+		const exp = `${tableName}.${name}.map(|items| items.map(i16::unsigned_abs).collect())`
+		// return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, filters: [`not (0 >= any(${tableName}.${name}))`] }]
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
+	}
+	// pg_attribute.attnum
 	if (name.endsWith("encoding")) {
 		const negativeable = /-1/.test(desc)
 		const sel = negativeable

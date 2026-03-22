@@ -62,7 +62,17 @@ pg_collation.collprovider = { ty="PgCollationCollprovider", exp="PgCollationColl
 pg_collation.collicurules = { nullable=true }
 pg_collation.collversion = { nullable=true }
 
-pg_constraint = 'todo'
+# pg_constraint = {}
+pg_constraint.conbin = { sel="pg_get_expr(pg_constraint.conbin, pg_constraint.conrelid)", ty="Option<Str>", exp="pg_constraint.conbin.map(Into::into)" }
+# c = check constraint, f = foreign key constraint, n = not-null constraint (domains only), p = primary key constraint, u = unique constraint, t = constraint trigger, x = exclusion constraint
+pg_constraint.contype = { ty="PgConstraintContype", exp="PgConstraintContype::pg_from_char(pg_constraint.contype)", pgEnum="'c' => Check, 'f' => ForeignKey, 'n' => DomainNotNull, 'p' => PrimaryKey, 'u' => Unique, 't' => Trigger, 'x' => Exclusion" }
+# Foreign key update action code: a = no action, r = restrict, c = cascade, n = set null, d = set default
+pg_constraint.confupdtype = { sel="case when pg_constraint.confupdtype = ' ' then null else pg_constraint.confupdtype end", ty="Option<PgConstraintConfupdtype>", exp="pg_constraint.confupdtype.map(PgConstraintConfupdtype::pg_from_char)", pgEnum="'a' => NoAction, 'r' => Restrict, 'c' => Cascade, 'n' => SetNull, 'd' => SetDefault" }
+# Foreign key deletion action code: a = no action, r = restrict, c = cascade, n = set null, d = set default
+pg_constraint.confdeltype = { sel="case when pg_constraint.confdeltype = ' ' then null else pg_constraint.confdeltype end", ty="Option<PgConstraintConfdeltype>", exp="pg_constraint.confdeltype.map(PgConstraintConfdeltype::pg_from_char)", pgEnum="'a' => NoAction, 'r' => Restrict, 'c' => Cascade, 'n' => SetNull, 'd' => SetDefault" }
+# Foreign key match type: f = full, p = partial, s = simple
+pg_constraint.confmatchtype = { sel="case when pg_constraint.confmatchtype = ' ' then null else pg_constraint.confmatchtype end", ty="Option<PgConstraintConfmatchtype>", exp="pg_constraint.confmatchtype.map(PgConstraintConfmatchtype::pg_from_char)", pgEnum="'f' => Full, 'p' => Partial, 's' => Simple" }
+
 
 pg_conversion = {}
 

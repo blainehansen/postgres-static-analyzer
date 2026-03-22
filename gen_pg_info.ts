@@ -41,10 +41,11 @@ function formatTable(
 
 		const { sel, ty, exp, joins, filters, pgEnum, typ, ref, desc } = column
 		const nullable = ty.startsWith('Option<')
+		const actualSel = sel ?? `${tableName}.${name}`
 		const actualExp = exp ?? `${tableName}.${name}`
 
 		if (nullable) nullableQueryColumns.push(name)
-		formattedQueryColumns.push(`${sel ?? name} as ${name} -- ${typ} ${ref} ${desc}`)
+		formattedQueryColumns.push(`${actualSel} as ${name} -- ${typ} ${ref} ${desc}`)
 		const prettyRef = ref ? `\`${ref}\`` : ref
 		formattedStructColumns.push(`/// \`${typ}\` ${prettyRef} ${desc}\n\t\t\t${name}: ${ty},`)
 		formattedReflectColumns.push(`${name}: ${actualExp},`)
@@ -58,7 +59,7 @@ function formatTable(
 	}
 
 	const joinsPortion = !allJoins.length ? '' : '\n' + allJoins.map(j => `\t\t\t${j}`).join("\n")
-	const filtersPortion = !allFilters.length ? '' : '\n\t\twhere ' + ('\n' + allFilters.map(f => `\t\t\t${f}`).join("\nand "))
+	const filtersPortion = !allFilters.length ? '' : '\n\t\twhere ' + ('\n\t\t\t' + allFilters.join("\n\t\t\tand "))
 
 	const lastRealIndex = Math.max(...formattedQueryColumns.flatMap((c, i) => c.startsWith('--') ? [] : [i]))
 	const finalFormattedQueryColumns = formattedQueryColumns.map((c, i) => {

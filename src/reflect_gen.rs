@@ -502,6 +502,108 @@ pub async fn reflect_pg_collation(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgConstraint {
+	// oid oid  Row identifier
+	/// `name`  Constraint name (not necessarily unique!)
+	conname: Str,
+	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this constraint
+	connamespace: Str,
+	/// `char`  c = check constraint, f = foreign key constraint, n = not-null constraint (domains only), p = primary key constraint, u = unique constraint, t = constraint trigger, x = exclusion constraint
+	contype: PgConstraintContype,
+	/// `bool`  Is the constraint deferrable?
+	condeferrable: bool,
+	/// `bool`  Is the constraint deferred by default?
+	condeferred: bool,
+	/// `bool`  Has the constraint been validated? Currently, can be false only for foreign keys and CHECK constraints
+	convalidated: bool,
+	/// `oid` `(references pg_class.oid)` The table this constraint is on; zero if not a table constraint
+	conrelid: Option<Qual>,
+	/// `oid` `(references pg_type.oid)` The domain this constraint is on; zero if not a domain constraint
+	contypid: Option<Qual>,
+	/// `oid` `(references pg_class.oid)` The index supporting this constraint, if it's a unique, primary key, foreign key, or exclusion constraint; else zero
+	conindid: Option<Qual>,
+	/// `oid` `(references pg_constraint.oid)` The corresponding constraint of the parent partitioned table, if this is a constraint on a partition; else zero
+	conparentid: Option<Qual>,
+	/// `oid` `(references pg_class.oid)` If a foreign key, the referenced table; else zero
+	confrelid: Option<Qual>,
+	/// `char`  Foreign key update action code: a = no action, r = restrict, c = cascade, n = set null, d = set default
+	confupdtype: Option<PgConstraintConfupdtype>,
+	/// `char`  Foreign key deletion action code: a = no action, r = restrict, c = cascade, n = set null, d = set default
+	confdeltype: Option<PgConstraintConfdeltype>,
+	/// `char`  Foreign key match type: f = full, p = partial, s = simple
+	confmatchtype: Option<PgConstraintConfmatchtype>,
+	/// `bool`  This constraint is defined locally for the relation. Note that a constraint can be locally defined and inherited simultaneously.
+	conislocal: bool,
+	/// `int2`  The number of direct inheritance ancestors this constraint has. A constraint with a nonzero number of ancestors cannot be dropped nor renamed.
+	coninhcount: u16,
+	/// `bool`  This constraint is defined locally for the relation. It is a non-inheritable constraint.
+	connoinherit: bool,
+	/// `int2[]` `(references pg_attribute.attnum)` If a table constraint (including foreign keys, but not constraint triggers), list of the constrained columns
+	conkey: Option<Vec<u16>>,
+	/// `int2[]` `(references pg_attribute.attnum)` If a foreign key, list of the referenced columns
+	confkey: Option<Vec<u16>>,
+	/// `oid[]` `(references pg_operator.oid)` If a foreign key, list of the equality operators for PK = FK comparisons
+	conpfeqop: Option<Vec<Qual>>,
+	/// `oid[]` `(references pg_operator.oid)` If a foreign key, list of the equality operators for PK = PK comparisons
+	conppeqop: Option<Vec<Qual>>,
+	/// `oid[]` `(references pg_operator.oid)` If a foreign key, list of the equality operators for FK = FK comparisons
+	conffeqop: Option<Vec<Qual>>,
+	/// `int2[]` `(references pg_attribute.attnum)` If a foreign key with a SET NULL or SET DEFAULT delete action, the columns that will be updated. If null, all of the referencing columns will be updated.
+	confdelsetcols: Option<Vec<u16>>,
+	/// `oid[]` `(references pg_operator.oid)` If an exclusion constraint, list of the per-column exclusion operators
+	conexclop: Option<Vec<Qual>>,
+	/// `pg_node_tree`  If a check constraint, an internal representation of the expression. (It's recommended to use pg_get_constraintdef() to extract the definition of a check constraint.)
+	conbin: Option<Str>,
+}
+
+pg_char_enum!(PgConstraintContype { 'c' => Check, 'f' => ForeignKey, 'n' => DomainNotNull, 'p' => PrimaryKey, 'u' => Unique, 't' => Trigger, 'x' => Exclusion });
+pg_char_enum!(PgConstraintConfupdtype { 'a' => NoAction, 'r' => Restrict, 'c' => Cascade, 'n' => SetNull, 'd' => SetDefault });
+pg_char_enum!(PgConstraintConfdeltype { 'a' => NoAction, 'r' => Restrict, 'c' => Cascade, 'n' => SetNull, 'd' => SetDefault });
+pg_char_enum!(PgConstraintConfmatchtype { 'f' => Full, 'p' => Partial, 's' => Simple });
+
+pub async fn reflect_pg_constraint(
+	client: &PgClient
+) -> Result<Vec<PgConstraint>, postgres::Error> {
+	let pg_constraint_coll = reflect_crate::queries::reflect_gen::reflect_pg_constraint().bind(client)
+		.map(|pg_constraint| {
+			PgConstraint {
+				conname: pg_constraint.conname.into(),
+				connamespace: pg_constraint.connamespace.into(),
+				contype: PgConstraintContype::pg_from_char(pg_constraint.contype),
+				condeferrable: pg_constraint.condeferrable,
+				condeferred: pg_constraint.condeferred,
+				convalidated: pg_constraint.convalidated,
+				conrelid: Qual::maybe_parse(pg_constraint.conrelid),
+				contypid: Qual::maybe_parse(pg_constraint.contypid),
+				conindid: Qual::maybe_parse(pg_constraint.conindid),
+				conparentid: Qual::maybe_parse(pg_constraint.conparentid),
+				confrelid: Qual::maybe_parse(pg_constraint.confrelid),
+				confupdtype: pg_constraint.confupdtype.map(PgConstraintConfupdtype::pg_from_char),
+				confdeltype: pg_constraint.confdeltype.map(PgConstraintConfdeltype::pg_from_char),
+				confmatchtype: pg_constraint.confmatchtype.map(PgConstraintConfmatchtype::pg_from_char),
+				conislocal: pg_constraint.conislocal,
+				coninhcount: pg_constraint.coninhcount.unsigned_abs(),
+				connoinherit: pg_constraint.connoinherit,
+				conkey: pg_constraint.conkey.map(|items| items.map(i16::unsigned_abs).collect()),
+				confkey: pg_constraint.confkey.map(|items| items.map(i16::unsigned_abs).collect()),
+				conpfeqop: pg_constraint.conpfeqop.map(|items| items.map(Qual::parse).collect()),
+				conppeqop: pg_constraint.conppeqop.map(|items| items.map(Qual::parse).collect()),
+				conffeqop: pg_constraint.conffeqop.map(|items| items.map(Qual::parse).collect()),
+				confdelsetcols: pg_constraint.confdelsetcols.map(|items| items.map(i16::unsigned_abs).collect()),
+				conexclop: pg_constraint.conexclop.map(|items| items.map(Qual::parse).collect()),
+				conbin: pg_constraint.conbin.map(Into::into),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_constraint_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgConversion {
 	// oid oid  Row identifier
 	/// `name`  Conversion name (unique within a namespace)

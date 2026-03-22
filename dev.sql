@@ -1,12 +1,3 @@
--- create table a(
--- 	aaa text default ''
--- );
-
--- create function public.other_add(a integer) returns integer
--- 	language sql stable return a;
-
--- create type yay as enum('a', 'b');
-
 set search_path = '';
 -- show search_path;
 -- select current_schemas(true);
@@ -14,13 +5,19 @@ set search_path = '';
 -- show search_path;
 -- select current_schemas(true);
 
--- select *
--- from pg_catalog.pg_db_role_setting
--- where setdatabase = current_database();
 
-select count(*)
-from pg_catalog.pg_class
-where relnamespace::regnamespace != 'pg_toast'::regnamespace
+-- select distinct contype from pg_constraint;
+select contype from pg_constraint where contype = ' ';
+
+-- select distinct confupdtype from pg_constraint;
+select confupdtype from pg_constraint where confupdtype = ' ';
+
+-- select distinct confdeltype from pg_constraint;
+select confdeltype from pg_constraint where confdeltype = ' ';
+
+-- select distinct confmatchtype from pg_constraint;
+select confmatchtype from pg_constraint where confmatchtype = ' ';
+
 
 
 -- select
