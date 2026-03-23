@@ -1483,6 +1483,76 @@ sel = "nspacl::text[]"
 ty = "Option<Vec<aclitem::SchemaAclItem>>"
 exp = "pg_namespace.nspacl.map(|nspacl| nspacl.map(|acl| aclitem(acl, &SchemaGrantParser)).collect())"
 
+[pg_opclass.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_opclass.columns.opcmethod]
+typ = "oid"
+ref = "(references pg_am.oid)"
+desc = "Index access method operator class is for"
+sel = "opcmethod_pg_am.amname::text"
+ty = "Str"
+exp = "pg_opclass.opcmethod.into()"
+joins = ["join pg_am as opcmethod_pg_am on pg_opclass.opcmethod = opcmethod_pg_am.oid"]
+
+[pg_opclass.columns.opcname]
+typ = "name"
+ref = ""
+desc = "Name of this operator class"
+sel = "pg_opclass.opcname::text"
+ty = "Str"
+exp = "pg_opclass.opcname.into()"
+
+[pg_opclass.columns.opcnamespace]
+typ = "oid"
+ref = "(references pg_namespace.oid)"
+desc = "Namespace of this operator class"
+sel = "pg_opclass.opcnamespace::regnamespace::text"
+ty = "Str"
+exp = "pg_opclass.opcnamespace.into()"
+
+[pg_opclass.columns.opcowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the operator class"
+sel = "pg_get_userbyid(opcowner)::text"
+ty = "Str"
+exp = "pg_opclass.opcowner.into()"
+
+[pg_opclass.columns.opcfamily]
+typ = "oid"
+ref = "(references pg_opfamily.oid)"
+desc = "Operator family containing the operator class"
+sel = "quote_ident(opcfamily_pg_namespace.nspname) || '.' || quote_ident(opcfamily_pg_opfamily.opfname)"
+ty = "Qual"
+exp = "Qual::parse(pg_opclass.opcfamily)"
+joins = ["join pg_opfamily as opcfamily_pg_opfamily on pg_opclass.opcfamily = opcfamily_pg_opfamily.oid","join pg_namespace as opcfamily_pg_namespace on opcfamily_pg_opfamily.opfnamespace = opcfamily_pg_namespace.oid"]
+
+[pg_opclass.columns.opcintype]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "Data type that the operator class indexes"
+sel = "pg_opclass.opcintype::regtype::text"
+ty = "Qual"
+exp = "Qual::parse(pg_opclass.opcintype)"
+
+[pg_opclass.columns.opcdefault]
+typ = "bool"
+ref = ""
+desc = "True if this operator class is the default for opcintype"
+ty = "bool"
+
+[pg_opclass.columns.opckeytype]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "Type of data stored in index, or zero if same as opcintype"
+sel = "case when pg_opclass.opckeytype = 0 then null else pg_opclass.opckeytype::regtype::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_opclass.opckeytype)"
+
 [pg_type]
 hashCol = true
 

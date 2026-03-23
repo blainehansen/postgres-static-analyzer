@@ -126,7 +126,7 @@ pg_language = {}
 # pg_namespace = {}
 pg_namespace.nspname = { filters=["nspname != 'pg_toast'"] }
 
-pg_opclass = 'todo'
+pg_opclass = {}
 
 pg_operator = 'todo'
 

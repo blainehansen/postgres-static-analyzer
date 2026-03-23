@@ -924,6 +924,52 @@ pub async fn reflect_pg_namespace(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgOpclass {
+	// oid oid  Row identifier
+	/// `oid` `(references pg_am.oid)` Index access method operator class is for
+	opcmethod: Str,
+	/// `name`  Name of this operator class
+	opcname: Str,
+	/// `oid` `(references pg_namespace.oid)` Namespace of this operator class
+	opcnamespace: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the operator class
+	opcowner: Str,
+	/// `oid` `(references pg_opfamily.oid)` Operator family containing the operator class
+	opcfamily: Qual,
+	/// `oid` `(references pg_type.oid)` Data type that the operator class indexes
+	opcintype: Qual,
+	/// `bool`  True if this operator class is the default for opcintype
+	opcdefault: bool,
+	/// `oid` `(references pg_type.oid)` Type of data stored in index, or zero if same as opcintype
+	opckeytype: Option<Qual>,
+}
+
+pub async fn reflect_pg_opclass(
+	client: &PgClient
+) -> Result<Vec<PgOpclass>, postgres::Error> {
+	let pg_opclass_coll = reflect_crate::queries::reflect_gen::reflect_pg_opclass().bind(client)
+		.map(|pg_opclass| {
+			PgOpclass {
+				opcmethod: pg_opclass.opcmethod.into(),
+				opcname: pg_opclass.opcname.into(),
+				opcnamespace: pg_opclass.opcnamespace.into(),
+				opcowner: pg_opclass.opcowner.into(),
+				opcfamily: Qual::parse(pg_opclass.opcfamily),
+				opcintype: Qual::parse(pg_opclass.opcintype),
+				opcdefault: pg_opclass.opcdefault,
+				opckeytype: Qual::maybe_parse(pg_opclass.opckeytype),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_opclass_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgType {
 	/// `oid`  Row identifier
 	oid: Qual,

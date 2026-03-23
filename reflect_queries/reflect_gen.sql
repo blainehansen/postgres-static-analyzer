@@ -342,6 +342,25 @@ where
 ;
 
 
+--! reflect_pg_opclass : (opckeytype?)
+select
+	-- oid oid  Row identifier
+	opcmethod_pg_am.amname::text as opcmethod, -- oid (references pg_am.oid) Index access method operator class is for
+	pg_opclass.opcname::text as opcname, -- name  Name of this operator class
+	pg_opclass.opcnamespace::regnamespace::text as opcnamespace, -- oid (references pg_namespace.oid) Namespace of this operator class
+	pg_get_userbyid(opcowner)::text as opcowner, -- oid (references pg_authid.oid) Owner of the operator class
+	quote_ident(opcfamily_pg_namespace.nspname) || '.' || quote_ident(opcfamily_pg_opfamily.opfname) as opcfamily, -- oid (references pg_opfamily.oid) Operator family containing the operator class
+	pg_opclass.opcintype::regtype::text as opcintype, -- oid (references pg_type.oid) Data type that the operator class indexes
+	pg_opclass.opcdefault as opcdefault, -- bool  True if this operator class is the default for opcintype
+	case when pg_opclass.opckeytype = 0 then null else pg_opclass.opckeytype::regtype::text end as opckeytype -- oid (references pg_type.oid) Type of data stored in index, or zero if same as opcintype
+from
+	pg_opclass
+	join pg_am as opcmethod_pg_am on pg_opclass.opcmethod = opcmethod_pg_am.oid
+	join pg_opfamily as opcfamily_pg_opfamily on pg_opclass.opcfamily = opcfamily_pg_opfamily.oid
+	join pg_namespace as opcfamily_pg_namespace on opcfamily_pg_opfamily.opfnamespace = opcfamily_pg_namespace.oid
+;
+
+
 --! reflect_pg_type : (typrelid?, typsubscript?, typelem?, typarray?, typreceive?, typsend?, typmodin?, typmodout?, typanalyze?, typbasetype?, typtypmod?, typcollation?, typdefaultbin?, typdefault?, typacl?)
 select
 	pg_type.oid::regtype::text as oid, -- oid  Row identifier
