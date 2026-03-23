@@ -113,20 +113,16 @@ async function decideColumn(
 	if (override && override.ty)
 		return [undefined, { typ, ref, desc, ...override, ty: override.ty }]
 
-	if (typ === "name" && /name/i.test(desc)) {
-		const nullable = /null/i.test(desc)
-		const hasUniquenessQualifier = /unique/i.test(desc)
-		const columnNotUnique = new Set([
-			"pg_attribute",
-			"pg_opclass",
-			"pg_enum",
-			"pg_user_mappings",
-		]).has(tableName)
-		const hashColumn = !nullable && !hasUniquenessQualifier && !columnNotUnique ? name : undefined
-
+	const nameUniqueTables = new Set([
+		"pg_am",
+		"pg_roles",
+		"pg_language",
+		"pg_namespace",
+	])
+	if (typ === "name" && nameUniqueTables.has(tableName)) {
 		const sel = `${tableName}.${name}::text`
-		const [ty, exp] = makeStr(tableName, name, nullable)
-		return [hashColumn, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
+		const [ty, exp] = makeStr(tableName, name, false)
+		return [name, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
 	if (typ === "name") {
 		const nullable = /null/i.test(desc)

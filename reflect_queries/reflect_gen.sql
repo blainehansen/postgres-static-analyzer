@@ -313,6 +313,21 @@ from
 ;
 
 
+--! reflect_pg_extension : (extconfig?, extcondition?)
+select
+	-- oid oid  Row identifier
+	pg_extension.extname::text as extname, -- name  Name of the extension
+	pg_get_userbyid(extowner)::text as extowner, -- oid (references pg_authid.oid) Owner of the extension
+	pg_extension.extnamespace::regnamespace::text as extnamespace, -- oid (references pg_namespace.oid) Schema containing the extension's exported objects
+	pg_extension.extrelocatable as extrelocatable, -- bool  True if extension can be relocated to another schema
+	pg_extension.extversion as extversion, -- text  Version name for the extension
+	pg_extension.extconfig::regclass[]::text[] as extconfig, -- oid[] (references pg_class.oid) Array of regclass OIDs for the extension's configuration table(s), or NULL if none
+	pg_extension.extcondition as extcondition -- text[]  Array of WHERE-clause filter conditions for the extension's configuration table(s), or NULL if none
+from
+	pg_extension
+;
+
+
 --! reflect_pg_language : (lanplcallfoid?, laninline?, lanvalidator?, lanacl?)
 select
 	-- oid oid  Row identifier

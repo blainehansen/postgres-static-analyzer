@@ -106,7 +106,7 @@ pg_enum = 'manual'
 # Controls in which session_replication_role modes the event trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always.
 pg_event_trigger.evtenabled = { ty="PgEventTriggerEvtenabled", exp="PgEventTriggerEvtenabled::pg_from_char(pg_event_trigger.evtenabled)", pgEnum="'O' => OriginLocal, 'D' => Disabled, 'R' => Replica, 'A' => Always" }
 
-pg_extension = 'todo'
+pg_extension = {}
 
 pg_foreign_data_wrapper = 'todo'
 

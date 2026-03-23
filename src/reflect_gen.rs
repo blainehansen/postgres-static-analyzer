@@ -845,6 +845,49 @@ pub async fn reflect_pg_event_trigger(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgExtension {
+	// oid oid  Row identifier
+	/// `name`  Name of the extension
+	extname: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the extension
+	extowner: Str,
+	/// `oid` `(references pg_namespace.oid)` Schema containing the extension's exported objects
+	extnamespace: Str,
+	/// `bool`  True if extension can be relocated to another schema
+	extrelocatable: bool,
+	/// `text`  Version name for the extension
+	extversion: Str,
+	/// `oid[]` `(references pg_class.oid)` Array of regclass OIDs for the extension's configuration table(s), or NULL if none
+	extconfig: Option<Vec<Qual>>,
+	/// `text[]`  Array of WHERE-clause filter conditions for the extension's configuration table(s), or NULL if none
+	extcondition: Option<Vec<Str>>,
+}
+
+pub async fn reflect_pg_extension(
+	client: &PgClient
+) -> Result<Vec<PgExtension>, postgres::Error> {
+	let pg_extension_coll = reflect_crate::queries::reflect_gen::reflect_pg_extension().bind(client)
+		.map(|pg_extension| {
+			PgExtension {
+				extname: pg_extension.extname.into(),
+				extowner: pg_extension.extowner.into(),
+				extnamespace: pg_extension.extnamespace.into(),
+				extrelocatable: pg_extension.extrelocatable,
+				extversion: pg_extension.extversion.into(),
+				extconfig: pg_extension.extconfig.map(|items| items.map(Qual::parse).collect()),
+				extcondition: pg_extension.extcondition.map(|items| items.map(Into::into).collect()),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_extension_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgLanguage {
 	// oid oid  Row identifier
 	/// `name`  Name of the language

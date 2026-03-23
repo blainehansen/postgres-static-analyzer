@@ -1380,6 +1380,64 @@ desc = "Command tags for which this trigger will fire. If NULL, the firing of th
 ty = "Option<Vec<Str>>"
 exp = "pg_event_trigger.evttags.map(|items| items.map(Into::into).collect())"
 
+[pg_extension.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_extension.columns.extname]
+typ = "name"
+ref = ""
+desc = "Name of the extension"
+sel = "pg_extension.extname::text"
+ty = "Str"
+exp = "pg_extension.extname.into()"
+
+[pg_extension.columns.extowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the extension"
+sel = "pg_get_userbyid(extowner)::text"
+ty = "Str"
+exp = "pg_extension.extowner.into()"
+
+[pg_extension.columns.extnamespace]
+typ = "oid"
+ref = "(references pg_namespace.oid)"
+desc = "Schema containing the extension's exported objects"
+sel = "pg_extension.extnamespace::regnamespace::text"
+ty = "Str"
+exp = "pg_extension.extnamespace.into()"
+
+[pg_extension.columns.extrelocatable]
+typ = "bool"
+ref = ""
+desc = "True if extension can be relocated to another schema"
+ty = "bool"
+
+[pg_extension.columns.extversion]
+typ = "text"
+ref = ""
+desc = "Version name for the extension"
+ty = "Str"
+exp = "pg_extension.extversion.into()"
+
+[pg_extension.columns.extconfig]
+typ = "oid[]"
+ref = "(references pg_class.oid)"
+desc = "Array of regclass OIDs for the extension's configuration table(s), or NULL if none"
+sel = "pg_extension.extconfig::regclass[]::text[]"
+ty = "Option<Vec<Qual>>"
+exp = "pg_extension.extconfig.map(|items| items.map(Qual::parse).collect())"
+
+[pg_extension.columns.extcondition]
+typ = "text[]"
+ref = ""
+desc = "Array of WHERE-clause filter conditions for the extension's configuration table(s), or NULL if none"
+ty = "Option<Vec<Str>>"
+exp = "pg_extension.extcondition.map(|items| items.map(Into::into).collect())"
+
 [pg_language]
 hashCol = "lanname"
 

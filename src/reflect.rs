@@ -24,7 +24,7 @@ pub struct PgState {
 	// pub pg_description: PgDescription,
 	pub pg_enum: Set<PgEnum>,
 	pub pg_event_trigger: Vec<PgEventTrigger>,
-	// pub pg_extension: PgExtension,
+	pub pg_extension: Vec<PgExtension>,
 	// pub pg_foreign_data_wrapper: PgForeignDataWrapper,
 	// pub pg_foreign_server: PgForeignServer,
 	// pub pg_foreign_table: PgForeignTable,
@@ -90,7 +90,7 @@ pub async fn reflect_pg_state(
 		// pg_description,
 		pg_enum,
 		pg_event_trigger,
-		// pg_extension,
+		pg_extension,
 		// pg_foreign_data_wrapper,
 		// pg_foreign_server,
 		// pg_foreign_table,
@@ -149,7 +149,7 @@ pub async fn reflect_pg_state(
 		// reflect_pg_description(client),
 		reflect_pg_enum(client),
 		reflect_pg_event_trigger(client),
-		// reflect_pg_extension(client),
+		reflect_pg_extension(client),
 		// reflect_pg_foreign_data_wrapper(client),
 		// reflect_pg_foreign_server(client),
 		// reflect_pg_foreign_table(client),
@@ -210,7 +210,7 @@ pub async fn reflect_pg_state(
 		// pg_description,
 		pg_enum,
 		pg_event_trigger,
-		// pg_extension,
+		pg_extension,
 		// pg_foreign_data_wrapper,
 		// pg_foreign_server,
 		// pg_foreign_table,
@@ -535,7 +535,7 @@ pub async fn reflect_pg_enum(
 use reflect_gen::{PgEventTrigger, reflect_pg_event_trigger};
 
 // `pg_extension`: https://www.postgresql.org/docs/17/catalog-pg-extension.html
-// use reflect_gen::{PgExtension, reflect_pg_extension};
+use reflect_gen::{PgExtension, reflect_pg_extension};
 
 // `pg_foreign_data_wrapper`: https://www.postgresql.org/docs/17/catalog-pg-foreign-data-wrapper.html
 // use reflect_gen::{PgForeignDataWrapper, reflect_pg_foreign_data_wrapper};
