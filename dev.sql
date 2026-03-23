@@ -6,18 +6,8 @@ set search_path = '';
 -- select current_schemas(true);
 
 
--- select distinct contype from pg_constraint;
-select contype from pg_constraint where contype = ' ';
-
--- select distinct confupdtype from pg_constraint;
-select confupdtype from pg_constraint where confupdtype = ' ';
-
--- select distinct confdeltype from pg_constraint;
-select confdeltype from pg_constraint where confdeltype = ' ';
-
--- select distinct confmatchtype from pg_constraint;
-select confmatchtype from pg_constraint where confmatchtype = ' ';
-
+select distinct attgenerated from pg_attribute;
+-- select attgenerated from pg_attribute where attgenerated = '';
 
 
 -- select

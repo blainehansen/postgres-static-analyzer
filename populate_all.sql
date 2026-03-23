@@ -66,6 +66,7 @@ CREATE TABLE parent_table (
 	metrics       point_composite,
 	active_period float_range,
 	score         numeric      CHECK (score >= 0),                          -- pg_constraint (CHECK)
+	score_text text GENERATED ALWAYS AS (score::text) STORED,
 	CONSTRAINT unique_name UNIQUE (name)                                    -- pg_constraint (UNIQUE)
 );
 

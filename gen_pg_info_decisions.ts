@@ -116,10 +116,9 @@ async function decideColumn(
 	if (typ === "name" && /name/i.test(desc)) {
 		const nullable = /null/i.test(desc)
 		const hasUniquenessQualifier = /unique/i.test(desc)
-		if (name === "evtenabled")
-			console.log(tableName, name, desc, hasUniquenessQualifier)
 		const isEnum = tableName === "pg_enum"
-		const hashColumn = !nullable && !hasUniquenessQualifier && !isEnum ? name : undefined
+		const isColumn = tableName === "pg_attribute"
+		const hashColumn = !nullable && !hasUniquenessQualifier && !isEnum && !isColumn ? name : undefined
 
 		const sel = `${tableName}.${name}::text`
 		const [ty, exp] = makeStr(tableName, name, nullable)
