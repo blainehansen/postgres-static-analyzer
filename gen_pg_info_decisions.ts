@@ -116,6 +116,7 @@ async function decideColumn(
 	const nameUniqueTables = new Set([
 		"pg_am",
 		"pg_roles",
+		"pg_publication",
 		"pg_language",
 		"pg_namespace",
 	])

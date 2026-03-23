@@ -1013,6 +1013,53 @@ pub async fn reflect_pg_opclass(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgPublication {
+	// oid oid  Row identifier
+	/// `name`  Name of the publication
+	pubname: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the publication
+	pubowner: Str,
+	/// `bool`  If true, this publication automatically includes all tables in the database, including any that will be created in the future.
+	puballtables: bool,
+	/// `bool`  If true, INSERT operations are replicated for tables in the publication.
+	pubinsert: bool,
+	/// `bool`  If true, UPDATE operations are replicated for tables in the publication.
+	pubupdate: bool,
+	/// `bool`  If true, DELETE operations are replicated for tables in the publication.
+	pubdelete: bool,
+	/// `bool`  If true, TRUNCATE operations are replicated for tables in the publication.
+	pubtruncate: bool,
+	/// `bool`  If true, operations on a leaf partition are replicated using the identity and schema of its topmost partitioned ancestor mentioned in the publication instead of its own.
+	pubviaroot: bool,
+}
+impl_name_hash_and_equivalent!(PgPublication, pubname);
+
+pub async fn reflect_pg_publication(
+	client: &PgClient
+) -> Result<Set<PgPublication>, postgres::Error> {
+	let pg_publication_coll = reflect_crate::queries::reflect_gen::reflect_pg_publication().bind(client)
+		.map(|pg_publication| {
+			PgPublication {
+				pubname: pg_publication.pubname.into(),
+				pubowner: pg_publication.pubowner.into(),
+				puballtables: pg_publication.puballtables,
+				pubinsert: pg_publication.pubinsert,
+				pubupdate: pg_publication.pubupdate,
+				pubdelete: pg_publication.pubdelete,
+				pubtruncate: pg_publication.pubtruncate,
+				pubviaroot: pg_publication.pubviaroot,
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_publication_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgType {
 	/// `oid`  Row identifier
 	oid: Qual,

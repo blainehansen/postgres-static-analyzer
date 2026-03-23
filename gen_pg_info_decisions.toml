@@ -1611,6 +1611,67 @@ sel = "case when pg_opclass.opckeytype = 0 then null else pg_opclass.opckeytype:
 ty = "Option<Qual>"
 exp = "Qual::maybe_parse(pg_opclass.opckeytype)"
 
+[pg_publication]
+hashCol = "pubname"
+
+[pg_publication.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_publication.columns.pubname]
+typ = "name"
+ref = ""
+desc = "Name of the publication"
+sel = "pg_publication.pubname::text"
+ty = "Str"
+exp = "pg_publication.pubname.into()"
+
+[pg_publication.columns.pubowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the publication"
+sel = "pg_get_userbyid(pubowner)::text"
+ty = "Str"
+exp = "pg_publication.pubowner.into()"
+
+[pg_publication.columns.puballtables]
+typ = "bool"
+ref = ""
+desc = "If true, this publication automatically includes all tables in the database, including any that will be created in the future."
+ty = "bool"
+
+[pg_publication.columns.pubinsert]
+typ = "bool"
+ref = ""
+desc = "If true, INSERT operations are replicated for tables in the publication."
+ty = "bool"
+
+[pg_publication.columns.pubupdate]
+typ = "bool"
+ref = ""
+desc = "If true, UPDATE operations are replicated for tables in the publication."
+ty = "bool"
+
+[pg_publication.columns.pubdelete]
+typ = "bool"
+ref = ""
+desc = "If true, DELETE operations are replicated for tables in the publication."
+ty = "bool"
+
+[pg_publication.columns.pubtruncate]
+typ = "bool"
+ref = ""
+desc = "If true, TRUNCATE operations are replicated for tables in the publication."
+ty = "bool"
+
+[pg_publication.columns.pubviaroot]
+typ = "bool"
+ref = ""
+desc = "If true, operations on a leaf partition are replicated using the identity and schema of its topmost partitioned ancestor mentioned in the publication instead of its own."
+ty = "bool"
+
 [pg_type]
 hashCol = true
 

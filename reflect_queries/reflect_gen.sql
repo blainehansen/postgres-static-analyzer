@@ -376,6 +376,22 @@ from
 ;
 
 
+--! reflect_pg_publication : ()
+select
+	-- oid oid  Row identifier
+	pg_publication.pubname::text as pubname, -- name  Name of the publication
+	pg_get_userbyid(pubowner)::text as pubowner, -- oid (references pg_authid.oid) Owner of the publication
+	pg_publication.puballtables as puballtables, -- bool  If true, this publication automatically includes all tables in the database, including any that will be created in the future.
+	pg_publication.pubinsert as pubinsert, -- bool  If true, INSERT operations are replicated for tables in the publication.
+	pg_publication.pubupdate as pubupdate, -- bool  If true, UPDATE operations are replicated for tables in the publication.
+	pg_publication.pubdelete as pubdelete, -- bool  If true, DELETE operations are replicated for tables in the publication.
+	pg_publication.pubtruncate as pubtruncate, -- bool  If true, TRUNCATE operations are replicated for tables in the publication.
+	pg_publication.pubviaroot as pubviaroot -- bool  If true, operations on a leaf partition are replicated using the identity and schema of its topmost partitioned ancestor mentioned in the publication instead of its own.
+from
+	pg_publication
+;
+
+
 --! reflect_pg_type : (typrelid?, typsubscript?, typelem?, typarray?, typreceive?, typsend?, typmodin?, typmodout?, typanalyze?, typbasetype?, typtypmod?, typcollation?, typdefaultbin?, typdefault?, typacl?)
 select
 	pg_type.oid::regtype::text as oid, -- oid  Row identifier

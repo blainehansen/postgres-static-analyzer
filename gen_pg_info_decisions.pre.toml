@@ -140,7 +140,7 @@ pg_policy = 'todo'
 
 pg_proc = 'todo'
 
-pg_publication = 'todo'
+pg_publication = {}
 
 pg_publication_namespace = 'todo'
 

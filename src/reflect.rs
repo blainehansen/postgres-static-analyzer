@@ -40,7 +40,7 @@ pub struct PgState {
 	// pub pg_partitioned_table: PgPartitionedTable,
 	// pub pg_policy: PgPolicy,
 	// pub pg_proc: PgProc,
-	// pub pg_publication: PgPublication,
+	pub pg_publication: Set<PgPublication>,
 	// pub pg_publication_namespace: PgPublicationNamespace,
 	// pub pg_publication_rel: PgPublicationRel,
 	// pub pg_range: PgRange,
@@ -106,7 +106,7 @@ pub async fn reflect_pg_state(
 		// pg_partitioned_table,
 		// pg_policy,
 		// pg_proc,
-		// pg_publication,
+		pg_publication,
 		// pg_publication_namespace,
 		// pg_publication_rel,
 		// pg_range,
@@ -165,7 +165,7 @@ pub async fn reflect_pg_state(
 		// reflect_pg_partitioned_table(client),
 		// reflect_pg_policy(client),
 		// reflect_pg_proc(client),
-		// reflect_pg_publication(client),
+		reflect_pg_publication(client),
 		// reflect_pg_publication_namespace(client),
 		// reflect_pg_publication_rel(client),
 		// reflect_pg_range(client),
@@ -226,7 +226,7 @@ pub async fn reflect_pg_state(
 		// pg_partitioned_table,
 		// pg_policy,
 		// pg_proc,
-		// pg_publication,
+		pg_publication,
 		// pg_publication_namespace,
 		// pg_publication_rel,
 		// pg_range,
@@ -583,7 +583,7 @@ use reflect_gen::{PgOpclass, reflect_pg_opclass};
 // use reflect_gen::{PgProc, reflect_pg_proc};
 
 // `pg_publication`: https://www.postgresql.org/docs/17/catalog-pg-publication.html
-// use reflect_gen::{PgPublication, reflect_pg_publication};
+use reflect_gen::{PgPublication, reflect_pg_publication};
 
 // `pg_publication_namespace`: https://www.postgresql.org/docs/17/catalog-pg-publication-namespace.html
 // use reflect_gen::{PgPublicationNamespace, reflect_pg_publication_namespace};
