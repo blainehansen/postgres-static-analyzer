@@ -1,5 +1,8 @@
 # `postgres-static-analyzer`
 
+TODO note that foreign server user mapping reflection will change based on what user is performing the reflection!
+
+
 This library gives tools for *statically* analyzing postgres sql code for type checking, permissions checking, and diff generation. It can't detect whether *data* operations will always succeed based on *constraints*, but it can detect if they will succeed based on inferred types.
 
 Here are some of the top level types and functions:

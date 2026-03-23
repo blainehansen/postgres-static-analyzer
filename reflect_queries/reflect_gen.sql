@@ -380,3 +380,16 @@ from
 	pg_type
 ;
 
+
+--! reflect_pg_user_mappings : (umuser?, umoptions?)
+select
+	-- umid oid (references pg_user_mapping.oid) OID of the user mapping
+	-- srvid oid (references pg_foreign_server.oid) The OID of the foreign server that contains this mapping
+	pg_user_mappings.srvname::text as srvname, -- name (references pg_foreign_server.srvname) Name of the foreign server
+	case when umuser = 0 then null else pg_get_userbyid(umuser)::text end as umuser, -- oid (references pg_authid.oid) OID of the local role being mapped, or zero if the user mapping is public
+	pg_user_mappings.usename::text as usename, -- name  Name of the local user to be mapped
+	pg_user_mappings.umoptions as umoptions -- text[]  User mapping specific options, as “keyword=value” strings
+from
+	pg_user_mappings
+;
+

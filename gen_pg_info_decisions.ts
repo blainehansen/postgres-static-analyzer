@@ -118,7 +118,8 @@ async function decideColumn(
 		const hasUniquenessQualifier = /unique/i.test(desc)
 		const isEnum = tableName === "pg_enum"
 		const isColumn = tableName === "pg_attribute"
-		const hashColumn = !nullable && !hasUniquenessQualifier && !isEnum && !isColumn ? name : undefined
+		const isUserMappings = tableName === "pg_user_mappings"
+		const hashColumn = !nullable && !hasUniquenessQualifier && !isEnum && !isColumn && !isUserMappings ? name : undefined
 
 		const sel = `${tableName}.${name}::text`
 		const [ty, exp] = makeStr(tableName, name, nullable)

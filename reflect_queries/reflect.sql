@@ -157,4 +157,4 @@ group by enumtypid
 
 -- `pg_type`: https://www.postgresql.org/docs/17/catalog-pg-type.html
 
--- `pg_user_mapping`: https://www.postgresql.org/docs/17/catalog-pg-user-mapping.html
+-- `pg_user_mappings`: https://www.postgresql.org/docs/17/view-pg-user-mappings.html

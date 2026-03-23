@@ -61,7 +61,7 @@ pub struct PgState {
 	// pub pg_ts_parser: PgTsParser,
 	// pub pg_ts_template: PgTsTemplate,
 	pub pg_type: Set<PgType>,
-	// pub pg_user_mapping: PgUserMapping,
+	pub pg_user_mappings: Vec<PgUserMappings>,
 }
 
 pub async fn reflect_pg_state(
@@ -127,7 +127,7 @@ pub async fn reflect_pg_state(
 		// pg_ts_parser,
 		// pg_ts_template,
 		pg_type,
-		// pg_user_mapping,
+		pg_user_mappings,
 	) = tokio::try_join!(
 		reflect_pg_aggregate(client),
 		reflect_pg_am(client),
@@ -186,7 +186,7 @@ pub async fn reflect_pg_state(
 		// reflect_pg_ts_parser(client),
 		// reflect_pg_ts_template(client),
 		reflect_pg_type(client),
-		// reflect_pg_user_mapping(client),
+		reflect_pg_user_mappings(client),
 	)?;
 
 	Ok(PgState {
@@ -247,7 +247,7 @@ pub async fn reflect_pg_state(
 		// pg_ts_parser,
 		// pg_ts_template,
 		pg_type,
-		// pg_user_mapping,
+		pg_user_mappings,
 	})
 }
 
@@ -645,5 +645,5 @@ use reflect_gen::{PgNamespace, reflect_pg_namespace};
 // `pg_type`: https://www.postgresql.org/docs/17/catalog-pg-type.html
 use reflect_gen::{PgType, reflect_pg_type};
 
-// `pg_user_mapping`: https://www.postgresql.org/docs/17/catalog-pg-user-mapping.html
-// use reflect_gen::{PgUserMapping, reflect_pg_user_mapping};
+// `pg_user_mappings`: https://www.postgresql.org/docs/17/catalog-pg-user-mapping.html
+use reflect_gen::{PgUserMappings, reflect_pg_user_mappings};

@@ -1042,3 +1042,38 @@ pub async fn reflect_pg_type(
 	Ok(pg_type_coll)
 }
 
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgUserMappings {
+	// umid oid (references pg_user_mapping.oid) OID of the user mapping
+	// srvid oid (references pg_foreign_server.oid) The OID of the foreign server that contains this mapping
+	/// `name` `(references pg_foreign_server.srvname)` Name of the foreign server
+	srvname: Str,
+	/// `oid` `(references pg_authid.oid)` OID of the local role being mapped, or zero if the user mapping is public
+	umuser: Option<Str>,
+	/// `name`  Name of the local user to be mapped
+	usename: Str,
+	/// `text[]`  User mapping specific options, as “keyword=value” strings
+	umoptions: Option<Vec<Str>>,
+}
+
+pub async fn reflect_pg_user_mappings(
+	client: &PgClient
+) -> Result<Vec<PgUserMappings>, postgres::Error> {
+	let pg_user_mappings_coll = reflect_crate::queries::reflect_gen::reflect_pg_user_mappings().bind(client)
+		.map(|pg_user_mappings| {
+			PgUserMappings {
+				srvname: pg_user_mappings.srvname.into(),
+				umuser: pg_user_mappings.umuser.map(Into::into),
+				usename: pg_user_mappings.usename.into(),
+				umoptions: pg_user_mappings.umoptions.map(|items| items.map(Into::into).collect()),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_user_mappings_coll)
+}
+

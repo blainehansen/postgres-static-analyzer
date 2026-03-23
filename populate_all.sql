@@ -246,13 +246,13 @@ CREATE CAST (text AS point_composite)
 -- ====================================================================
 -- 10. FOREIGN DATA WRAPPERS
 -- Populates: pg_foreign_data_wrapper, pg_foreign_server,
---            pg_foreign_table, pg_user_mapping
+--            pg_foreign_table, pg_user_mappings
 -- ====================================================================
 
 CREATE SERVER ext_server FOREIGN DATA WRAPPER postgres_fdw          -- pg_foreign_server
 	OPTIONS (host 'localhost', dbname 'other_db');
 
-CREATE USER MAPPING FOR catalog_admin SERVER ext_server             -- pg_user_mapping
+CREATE USER MAPPING FOR catalog_admin SERVER ext_server             -- pg_user_mappings
 	OPTIONS (user 'remote_usr', password 'remote_pass');
 
 CREATE FOREIGN TABLE ext_table (                                    -- pg_foreign_table

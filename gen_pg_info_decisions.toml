@@ -1725,3 +1725,46 @@ desc = "Access privileges; see Section 5.8 for details"
 sel = "typacl::text[]"
 ty = "Option<Vec<aclitem::TypeAclItem>>"
 exp = "pg_type.typacl.map(|typacl| typacl.map(|acl| aclitem(acl, &TypeGrantParser)).collect())"
+
+[pg_user_mappings.columns.umid]
+typ = "oid"
+ref = "(references pg_user_mapping.oid)"
+desc = "OID of the user mapping"
+skip = true
+
+[pg_user_mappings.columns.srvid]
+typ = "oid"
+ref = "(references pg_foreign_server.oid)"
+desc = "The OID of the foreign server that contains this mapping"
+skip = true
+
+[pg_user_mappings.columns.srvname]
+typ = "name"
+ref = "(references pg_foreign_server.srvname)"
+desc = "Name of the foreign server"
+sel = "pg_user_mappings.srvname::text"
+ty = "Str"
+exp = "pg_user_mappings.srvname.into()"
+
+[pg_user_mappings.columns.umuser]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "OID of the local role being mapped, or zero if the user mapping is public"
+sel = "case when umuser = 0 then null else pg_get_userbyid(umuser)::text end"
+ty = "Option<Str>"
+exp = "pg_user_mappings.umuser.map(Into::into)"
+
+[pg_user_mappings.columns.usename]
+typ = "name"
+ref = ""
+desc = "Name of the local user to be mapped"
+sel = "pg_user_mappings.usename::text"
+ty = "Str"
+exp = "pg_user_mappings.usename.into()"
+
+[pg_user_mappings.columns.umoptions]
+typ = "text[]"
+ref = ""
+desc = "User mapping specific options, as “keyword=value” strings"
+ty = "Option<Vec<Str>>"
+exp = "pg_user_mappings.umoptions.map(|items| items.map(Into::into).collect())"

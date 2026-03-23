@@ -192,4 +192,6 @@ pg_type.typalign = { ty="PgTypeTypalign", exp="PgTypeTypalign::pg_from_char(pg_t
 # typstorage tells for varlena types (those with typlen = -1) if the type is prepared for toasting and what the default strategy for attributes of this type should be. Possible values are: p (plain): Values must always be stored plain (non-varlena types always use this value). e (external): Values can be stored in a secondary “TOAST” relation (if relation has one, see pg_class.reltoastrelid). m (main): Values can be compressed and stored inline. x (extended): Values can be compressed and/or moved to a secondary relation. x is the usual choice for toast-able types. Note that m values can also be moved out to secondary storage, but only as a last resort (e and x values are moved first).
 pg_type.typstorage = { ty="PgTypeTypstorage", exp="PgTypeTypstorage::pg_from_char(pg_type.typstorage)", pgEnum="'p' => Plain, 'e' => External, 'm' => Main, 'x' => Extended" }
 
-pg_user_mapping = 'todo'
+# pg_user_mappings = {}
+pg_user_mappings.umid = 'skip'
+pg_user_mappings.srvid = 'skip'

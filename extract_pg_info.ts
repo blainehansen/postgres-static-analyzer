@@ -123,7 +123,8 @@ const pages: [string, string][] = [
 	// ["pg_ts_parser", "https://www.postgresql.org/docs/17/catalog-pg-ts-parser.html"],
 	// ["pg_ts_template", "https://www.postgresql.org/docs/17/catalog-pg-ts-template.html"],
 	["pg_type", "https://www.postgresql.org/docs/17/catalog-pg-type.html"],
-	["pg_user_mapping", "https://www.postgresql.org/docs/17/catalog-pg-user-mapping.html"],
+	// ["pg_user_mapping", "https://www.postgresql.org/docs/17/catalog-pg-user-mapping.html"],
+	["pg_user_mappings", "https://www.postgresql.org/docs/17/view-pg-user-mappings.html"],
 ]
 
 const resolved: RawTable[] = await Promise.all(
