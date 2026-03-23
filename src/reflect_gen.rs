@@ -209,6 +209,37 @@ pub async fn reflect_pg_amproc(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgAttrdef {
+	// oid oid  Row identifier
+	/// `oid` `(references pg_class.oid)` The table this column belongs to
+	adrelid: Qual,
+	/// `int2` `(references pg_attribute.attnum)` The number of the column
+	adnum: u16,
+	/// `pg_node_tree`  The column default value, in nodeToString() representation. Use pg_get_expr(adbin, adrelid) to convert it to an SQL expression.
+	adbin: Str,
+}
+
+pub async fn reflect_pg_attrdef(
+	client: &PgClient
+) -> Result<Vec<PgAttrdef>, postgres::Error> {
+	let pg_attrdef_coll = reflect_crate::queries::reflect_gen::reflect_pg_attrdef().bind(client)
+		.map(|pg_attrdef| {
+			PgAttrdef {
+				adrelid: Qual::parse(pg_attrdef.adrelid),
+				adnum: pg_attrdef.adnum.unsigned_abs(),
+				adbin: pg_attrdef.adbin.into(),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_attrdef_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgAttribute {
 	/// `oid` `(references pg_class.oid)` The table this column belongs to
 	attrelid: Qual,

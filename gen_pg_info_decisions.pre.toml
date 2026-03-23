@@ -18,8 +18,9 @@ pg_amop.amoppurpose = { ty="PgAmopAmoppurpose", exp="PgAmopAmoppurpose::pg_from_
 
 pg_amproc = {}
 
-pg_attrdef = 'todo'
-# pg_attrdef.adbin = { sel="pg_get_expr(adbin, adrelid)", ty="Str" }
+# pg_attrdef = {}
+pg_attrdef.adnum = { filters=["pg_attrdef.adnum > 0"] }
+pg_attrdef.adbin = { sel="pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid)", ty="Str", exp="pg_attrdef.adbin.into()" }
 
 # pg_attribute = {}
 pg_attribute.attrelid = { filters=["not starts_with(pg_attribute.attrelid::regclass::text, 'pg_toast')"] }

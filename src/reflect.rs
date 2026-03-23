@@ -8,7 +8,7 @@ pub struct PgState {
 	pub pg_am: Set<PgAm>,
 	pub pg_amop: Vec<PgAmop>,
 	pub pg_amproc: Vec<PgAmproc>,
-	// pub pg_attrdef: PgAttrdef,
+	pub pg_attrdef: Vec<PgAttrdef>,
 	pub pg_attribute: Vec<PgAttribute>,
 	pub pg_roles: Set<PgRoles>,
 	pub pg_auth_members: Vec<PgAuthMembers>,
@@ -74,7 +74,7 @@ pub async fn reflect_pg_state(
 		pg_am,
 		pg_amop,
 		pg_amproc,
-		// pg_attrdef,
+		pg_attrdef,
 		pg_attribute,
 		pg_roles,
 		pg_auth_members,
@@ -133,7 +133,7 @@ pub async fn reflect_pg_state(
 		reflect_pg_am(client),
 		reflect_pg_amop(client),
 		reflect_pg_amproc(client),
-		// reflect_pg_attrdef(client),
+		reflect_pg_attrdef(client),
 		reflect_pg_attribute(client),
 		reflect_pg_roles(client),
 		reflect_pg_auth_members(client),
@@ -194,7 +194,7 @@ pub async fn reflect_pg_state(
 		pg_am,
 		pg_amop,
 		pg_amproc,
-		// pg_attrdef,
+		pg_attrdef,
 		pg_attribute,
 		pg_roles,
 		pg_auth_members,
@@ -370,7 +370,7 @@ use reflect_gen::{PgAmop, reflect_pg_amop};
 use reflect_gen::{PgAmproc, reflect_pg_amproc};
 
 // `pg_attrdef`: https://www.postgresql.org/docs/17/catalog-pg-attrdef.html
-// use reflect_gen::{PgAttrdef, reflect_pg_attrdef};
+use reflect_gen::{PgAttrdef, reflect_pg_attrdef};
 
 // `pg_attribute`: https://www.postgresql.org/docs/17/catalog-pg-attribute.html
 use reflect_gen::{PgAttribute, reflect_pg_attribute};

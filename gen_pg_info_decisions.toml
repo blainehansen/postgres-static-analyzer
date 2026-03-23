@@ -315,6 +315,36 @@ sel = "amproc::regproc::text"
 ty = "Qual"
 exp = "Qual::parse(pg_amproc.amproc)"
 
+[pg_attrdef.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_attrdef.columns.adrelid]
+typ = "oid"
+ref = "(references pg_class.oid)"
+desc = "The table this column belongs to"
+sel = "pg_attrdef.adrelid::regclass::text"
+ty = "Qual"
+exp = "Qual::parse(pg_attrdef.adrelid)"
+
+[pg_attrdef.columns.adnum]
+typ = "int2"
+ref = "(references pg_attribute.attnum)"
+desc = "The number of the column"
+ty = "u16"
+exp = "pg_attrdef.adnum.unsigned_abs()"
+filters = ["adnum > 0"]
+
+[pg_attrdef.columns.adbin]
+typ = "pg_node_tree"
+ref = ""
+desc = "The column default value, in nodeToString() representation. Use pg_get_expr(adbin, adrelid) to convert it to an SQL expression."
+sel = "pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid)"
+ty = "Str"
+exp = "pg_attrdef.adbin.into()"
+
 [pg_attribute.columns.attrelid]
 typ = "oid"
 ref = "(references pg_class.oid)"

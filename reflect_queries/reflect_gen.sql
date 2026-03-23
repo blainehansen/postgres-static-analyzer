@@ -74,6 +74,19 @@ from
 ;
 
 
+--! reflect_pg_attrdef : ()
+select
+	-- oid oid  Row identifier
+	pg_attrdef.adrelid::regclass::text as adrelid, -- oid (references pg_class.oid) The table this column belongs to
+	pg_attrdef.adnum as adnum, -- int2 (references pg_attribute.attnum) The number of the column
+	pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid) as adbin -- pg_node_tree  The column default value, in nodeToString() representation. Use pg_get_expr(adbin, adrelid) to convert it to an SQL expression.
+from
+	pg_attrdef
+where 
+	adnum > 0
+;
+
+
 --! reflect_pg_attribute : (atttypid?, atttypmod?, attcompression?, attidentity?, attgenerated?, attcollation?, attstattarget?, attacl?, attoptions?, attfdwoptions?)
 select
 	pg_attribute.attrelid::regclass::text as attrelid, -- oid (references pg_class.oid) The table this column belongs to
