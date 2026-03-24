@@ -124,7 +124,7 @@ pg_init_privs = 'todo'
 pg_language = {}
 
 # pg_namespace = {}
-pg_namespace.nspname = { filters=["nspname != 'pg_toast'"] }
+pg_namespace.nspname = { filters=["not starts_with(nspname, 'pg_temp')", "not starts_with(nspname, 'pg_toast')"] }
 
 pg_opclass = {}
 
@@ -136,7 +136,12 @@ pg_parameter_acl = 'todo'
 
 pg_partitioned_table = 'todo'
 
-pg_policy = 'todo'
+# pg_policy = {}
+pg_policy.polqual = { sel="pg_get_expr(pg_policy.polqual, pg_policy.polrelid)", ty="Option<Str>", exp="pg_policy.polqual.map(Into::into)" }
+pg_policy.polwithcheck = { sel="pg_get_expr(pg_policy.polwithcheck, pg_policy.polrelid)", ty="Option<Str>", exp="pg_policy.polwithcheck.map(Into::into)" }
+# The command type to which the policy is applied: r for SELECT, a for INSERT, w for UPDATE, d for DELETE, or * for all
+pg_policy.polcmd = { ty="PgPolicyPolcmd", exp="PgPolicyPolcmd::pg_from_char(pg_policy.polcmd)", pgEnum="'r' => Select, 'a' => Insert, 'w' => Update, 'd' => Delete, '*' => All" }
+
 
 pg_proc = 'todo'
 

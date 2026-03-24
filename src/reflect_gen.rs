@@ -1013,6 +1013,51 @@ pub async fn reflect_pg_opclass(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgPolicy {
+	// oid oid  Row identifier
+	/// `name`  The name of the policy
+	polname: Str,
+	/// `oid` `(references pg_class.oid)` The table to which the policy applies
+	polrelid: Qual,
+	/// `char`  The command type to which the policy is applied: r for SELECT, a for INSERT, w for UPDATE, d for DELETE, or * for all
+	polcmd: PgPolicyPolcmd,
+	/// `bool`  Is the policy permissive or restrictive?
+	polpermissive: bool,
+	/// `oid[]` `(references pg_authid.oid)` The roles to which the policy is applied; zero means PUBLIC (and normally appears alone in the array)
+	polroles: Vec<Option<Str>>,
+	/// `pg_node_tree`  The expression tree to be added to the security barrier qualifications for queries that use the table
+	polqual: Option<Str>,
+	/// `pg_node_tree`  The expression tree to be added to the WITH CHECK qualifications for queries that attempt to add rows to the table
+	polwithcheck: Option<Str>,
+}
+
+pg_char_enum!(PgPolicyPolcmd { 'r' => Select, 'a' => Insert, 'w' => Update, 'd' => Delete, '*' => All });
+
+pub async fn reflect_pg_policy(
+	client: &PgClient
+) -> Result<Vec<PgPolicy>, postgres::Error> {
+	let pg_policy_coll = reflect_crate::queries::reflect_gen::reflect_pg_policy().bind(client)
+		.map(|pg_policy| {
+			PgPolicy {
+				polname: pg_policy.polname.into(),
+				polrelid: Qual::parse(pg_policy.polrelid),
+				polcmd: PgPolicyPolcmd::pg_from_char(pg_policy.polcmd),
+				polpermissive: pg_policy.polpermissive,
+				polroles: pg_policy.polroles.map(|item| item.map(Into::into)).collect(),
+				polqual: pg_policy.polqual.map(Into::into),
+				polwithcheck: pg_policy.polwithcheck.map(Into::into),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_policy_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgPublication {
 	// oid oid  Row identifier
 	/// `name`  Name of the publication

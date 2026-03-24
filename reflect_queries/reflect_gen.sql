@@ -353,7 +353,8 @@ select
 from
 	pg_namespace
 where 
-	nspname != 'pg_toast'
+	not starts_with(nspname, 'pg_temp')
+	and not starts_with(nspname, 'pg_toast')
 ;
 
 
@@ -373,6 +374,21 @@ from
 	join pg_am as opcmethod_pg_am on pg_opclass.opcmethod = opcmethod_pg_am.oid
 	join pg_opfamily as opcfamily_pg_opfamily on pg_opclass.opcfamily = opcfamily_pg_opfamily.oid
 	join pg_namespace as opcfamily_pg_namespace on opcfamily_pg_opfamily.opfnamespace = opcfamily_pg_namespace.oid
+;
+
+
+--! reflect_pg_policy : (polroles[?], polqual?, polwithcheck?)
+select
+	-- oid oid  Row identifier
+	pg_policy.polname::text as polname, -- name  The name of the policy
+	pg_policy.polrelid::regclass::text as polrelid, -- oid (references pg_class.oid) The table to which the policy applies
+	pg_policy.polcmd as polcmd, -- char  The command type to which the policy is applied: r for SELECT, a for INSERT, w for UPDATE, d for DELETE, or * for all
+	pg_policy.polpermissive as polpermissive, -- bool  Is the policy permissive or restrictive?
+	pg_temp.format_role_oid_array(pg_policy.polroles) as polroles, -- oid[] (references pg_authid.oid) The roles to which the policy is applied; zero means PUBLIC (and normally appears alone in the array)
+	pg_get_expr(pg_policy.polqual, pg_policy.polrelid) as polqual, -- pg_node_tree  The expression tree to be added to the security barrier qualifications for queries that use the table
+	pg_get_expr(pg_policy.polwithcheck, pg_policy.polrelid) as polwithcheck -- pg_node_tree  The expression tree to be added to the WITH CHECK qualifications for queries that attempt to add rows to the table
+from
+	pg_policy
 ;
 
 

@@ -44,7 +44,10 @@ function formatTable(
 		const actualSel = sel ?? `${tableName}.${name}`
 		const actualExp = exp ?? `${tableName}.${name}`
 
-		if (nullable) nullableQueryColumns.push(name)
+		if (nullable)
+			nullableQueryColumns.push(`${name}?`)
+		if (ty.startsWith("Vec<Option<"))
+			nullableQueryColumns.push(`${name}[?]`)
 		formattedQueryColumns.push(`${actualSel} as ${name} -- ${typ} ${ref} ${desc}`)
 		const prettyRef = ref ? `\`${ref}\`` : ref
 		formattedStructColumns.push(`/// \`${typ}\` ${prettyRef} ${desc}\n\t\t\t${name}: ${ty},`)
@@ -68,7 +71,7 @@ function formatTable(
 	}).join("\n\t\t\t")
 
 	const query = dedent(`
-		--! reflect_${tableName} : (${nullableQueryColumns.map(f => `${f}?`).join(", ")})
+		--! reflect_${tableName} : (${nullableQueryColumns.join(", ")})
 		select
 			${finalFormattedQueryColumns}
 		from

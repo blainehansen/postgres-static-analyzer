@@ -38,7 +38,7 @@ pub struct PgState {
 	// pub pg_opfamily: PgOpfamily,
 	// pub pg_parameter_acl: PgParameterAcl,
 	// pub pg_partitioned_table: PgPartitionedTable,
-	// pub pg_policy: PgPolicy,
+	pub pg_policy: Vec<PgPolicy>,
 	// pub pg_proc: PgProc,
 	pub pg_publication: Set<PgPublication>,
 	// pub pg_publication_namespace: PgPublicationNamespace,
@@ -67,7 +67,7 @@ pub struct PgState {
 pub async fn reflect_pg_state(
 	client: &PgClient
 ) -> Result<PgState, postgres::Error> {
-	client.batch_execute("set search_path = '';").await?;
+	client.batch_execute(include_str!("../reflect_fns.sql")).await?;
 
 	let (
 		pg_aggregate,
@@ -104,7 +104,7 @@ pub async fn reflect_pg_state(
 		// pg_opfamily,
 		// pg_parameter_acl,
 		// pg_partitioned_table,
-		// pg_policy,
+		pg_policy,
 		// pg_proc,
 		pg_publication,
 		// pg_publication_namespace,
@@ -163,7 +163,7 @@ pub async fn reflect_pg_state(
 		// reflect_pg_opfamily(client),
 		// reflect_pg_parameter_acl(client),
 		// reflect_pg_partitioned_table(client),
-		// reflect_pg_policy(client),
+		reflect_pg_policy(client),
 		// reflect_pg_proc(client),
 		reflect_pg_publication(client),
 		// reflect_pg_publication_namespace(client),
@@ -224,7 +224,7 @@ pub async fn reflect_pg_state(
 		// pg_opfamily,
 		// pg_parameter_acl,
 		// pg_partitioned_table,
-		// pg_policy,
+		pg_policy,
 		// pg_proc,
 		pg_publication,
 		// pg_publication_namespace,
@@ -577,7 +577,7 @@ use reflect_gen::{PgOpclass, reflect_pg_opclass};
 // use reflect_gen::{PgPartitionedTable, reflect_pg_partitioned_table};
 
 // `pg_policy`: https://www.postgresql.org/docs/17/catalog-pg-policy.html
-// use reflect_gen::{PgPolicy, reflect_pg_policy};
+use reflect_gen::{PgPolicy, reflect_pg_policy};
 
 // `pg_proc`: https://www.postgresql.org/docs/17/catalog-pg-proc.html
 // use reflect_gen::{PgProc, reflect_pg_proc};

@@ -20,7 +20,7 @@ command = "clorinde"
 install_crate = "clorinde"
 install_crate_args = ["--version", "^1.3"]
 args = [
-	"schema", "empty.sql",
+	"schema", "reflect_fns.sql",
 	"--podman", "true",
 	"--container-image", "docker.io/library/postgres:17",
 	"--queries-path", "reflect_queries",

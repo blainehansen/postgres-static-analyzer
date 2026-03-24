@@ -1523,7 +1523,7 @@ desc = "Name of the namespace"
 sel = "pg_namespace.nspname::text"
 ty = "Str"
 exp = "pg_namespace.nspname.into()"
-filters = ["nspname != 'pg_toast'"]
+filters = ["not starts_with(nspname, 'pg_temp')","not starts_with(nspname, 'pg_toast')"]
 
 [pg_namespace.columns.nspowner]
 typ = "oid"
@@ -1610,6 +1610,66 @@ desc = "Type of data stored in index, or zero if same as opcintype"
 sel = "case when pg_opclass.opckeytype = 0 then null else pg_opclass.opckeytype::regtype::text end"
 ty = "Option<Qual>"
 exp = "Qual::maybe_parse(pg_opclass.opckeytype)"
+
+[pg_policy.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_policy.columns.polname]
+typ = "name"
+ref = ""
+desc = "The name of the policy"
+sel = "pg_policy.polname::text"
+ty = "Str"
+exp = "pg_policy.polname.into()"
+
+[pg_policy.columns.polrelid]
+typ = "oid"
+ref = "(references pg_class.oid)"
+desc = "The table to which the policy applies"
+sel = "pg_policy.polrelid::regclass::text"
+ty = "Qual"
+exp = "Qual::parse(pg_policy.polrelid)"
+
+[pg_policy.columns.polcmd]
+typ = "char"
+ref = ""
+desc = "The command type to which the policy is applied: r for SELECT, a for INSERT, w for UPDATE, d for DELETE, or * for all"
+ty = "PgPolicyPolcmd"
+exp = "PgPolicyPolcmd::pg_from_char(pg_policy.polcmd)"
+pgEnum = "'r' => Select, 'a' => Insert, 'w' => Update, 'd' => Delete, '*' => All"
+
+[pg_policy.columns.polpermissive]
+typ = "bool"
+ref = ""
+desc = "Is the policy permissive or restrictive?"
+ty = "bool"
+
+[pg_policy.columns.polroles]
+typ = "oid[]"
+ref = "(references pg_authid.oid)"
+desc = "The roles to which the policy is applied; zero means PUBLIC (and normally appears alone in the array)"
+sel = "pg_temp.format_role_oid_array(pg_policy.polroles)"
+ty = "Vec<Option<Str>>"
+exp = "pg_policy.polroles.map(|item| item.map(Into::into)).collect()"
+
+[pg_policy.columns.polqual]
+typ = "pg_node_tree"
+ref = ""
+desc = "The expression tree to be added to the security barrier qualifications for queries that use the table"
+sel = "pg_get_expr(pg_policy.polqual, pg_policy.polrelid)"
+ty = "Option<Str>"
+exp = "pg_policy.polqual.map(Into::into)"
+
+[pg_policy.columns.polwithcheck]
+typ = "pg_node_tree"
+ref = ""
+desc = "The expression tree to be added to the WITH CHECK qualifications for queries that attempt to add rows to the table"
+sel = "pg_get_expr(pg_policy.polwithcheck, pg_policy.polrelid)"
+ty = "Option<Str>"
+exp = "pg_policy.polwithcheck.map(Into::into)"
 
 [pg_publication]
 hashCol = "pubname"

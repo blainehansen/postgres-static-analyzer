@@ -154,7 +154,7 @@ async function decideColumn(
 		const exp = `${nullable ? 'Qual::maybe_parse' : 'Qual::parse'}(${tableName}.${name})`
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
-	if (ref === "(references pg_authid.oid)") {
+	if (typ === "oid" && ref === "(references pg_authid.oid)") {
 		const zeroable = ovZero ?? /zero/i.test(desc)
 		const nullable = ovNullable ?? zeroable ?? false
 		const sel = zeroable
@@ -163,15 +163,12 @@ async function decideColumn(
 		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
-	// if ( ref === "(references pg_authid.oid)") {
-	// 	const zeroable = ovZero ?? /zero/i.test(desc)
-	// 	const nullable = ovNullable ?? zeroable ?? false
-	// 	const sel = zeroable
-	// 		? `case when ${name} = 0 then null else pg_get_userbyid(${name})::text end`
-	// 		: `pg_get_userbyid(${name})::text`
-	// 	const [ty, exp] = makeStr(tableName, name, nullable)
-	// 	return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
-	// }
+	if (typ === "oid[]" && ref === "(references pg_authid.oid)") {
+		const sel = `pg_temp.format_role_oid_array(${tableName}.${name})`
+		const ty = "Vec<Option<Str>>"
+		const exp = `${tableName}.${name}.map(|item| item.map(Into::into)).collect()`
+		return [undefined, { typ, ref, desc, ...override, sel, ty, exp }]
+	}
 	if (typ === "oid" && ref === "(references pg_namespace.oid)") {
 		const zeroable = ovZero ?? /zero/i.test(desc)
 		const nullable = ovNullable ?? zeroable ?? false
