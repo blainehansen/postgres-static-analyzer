@@ -1,32 +1,11 @@
+-- show search_path;
+-- select current_schemas(true);
+
+-- show search_path;
+-- select current_schemas(true);
+
 set search_path = '';
--- show search_path;
--- select current_schemas(true);
 
--- show search_path;
--- select current_schemas(true);
-
-
-create function pg_temp.format_role_oid_array(role_oids oid[]) returns text[] as $$
-	begin
-		return array (
-			-- select case when ${name} = 0 then null else pg_get_userbyid(${name})::text end
-			-- pg_catalog.format_type(p.arg_type_oid, null)
-			select case when role_oid = 0 then null else pg_get_userbyid(role_oid)::text end
-			from unnest(role_oids)
-				with ordinality as p(role_oid, ordinality)
-			order by ordinality
-		);
-	end;
-$$ language plpgsql immutable;
-
-
-select count(*)
-from pg_policy
-where polqual is null;
-
-select count(*)
-from pg_policy
-where polwithcheck is null;
 
 -- select
 -- 	polname,

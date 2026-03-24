@@ -39,7 +39,7 @@ pub struct PgState {
 	// pub pg_parameter_acl: PgParameterAcl,
 	// pub pg_partitioned_table: PgPartitionedTable,
 	pub pg_policy: Vec<PgPolicy>,
-	// pub pg_proc: PgProc,
+	pub pg_proc: Set<PgProc>,
 	pub pg_publication: Set<PgPublication>,
 	// pub pg_publication_namespace: PgPublicationNamespace,
 	// pub pg_publication_rel: PgPublicationRel,
@@ -105,7 +105,7 @@ pub async fn reflect_pg_state(
 		// pg_parameter_acl,
 		// pg_partitioned_table,
 		pg_policy,
-		// pg_proc,
+		pg_proc,
 		pg_publication,
 		// pg_publication_namespace,
 		// pg_publication_rel,
@@ -164,7 +164,7 @@ pub async fn reflect_pg_state(
 		// reflect_pg_parameter_acl(client),
 		// reflect_pg_partitioned_table(client),
 		reflect_pg_policy(client),
-		// reflect_pg_proc(client),
+		reflect_pg_proc(client),
 		reflect_pg_publication(client),
 		// reflect_pg_publication_namespace(client),
 		// reflect_pg_publication_rel(client),
@@ -225,7 +225,7 @@ pub async fn reflect_pg_state(
 		// pg_parameter_acl,
 		// pg_partitioned_table,
 		pg_policy,
-		// pg_proc,
+		pg_proc,
 		pg_publication,
 		// pg_publication_namespace,
 		// pg_publication_rel,
@@ -580,7 +580,125 @@ use reflect_gen::{PgOpclass, reflect_pg_opclass};
 use reflect_gen::{PgPolicy, reflect_pg_policy};
 
 // `pg_proc`: https://www.postgresql.org/docs/17/catalog-pg-proc.html
-// use reflect_gen::{PgProc, reflect_pg_proc};
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgProc {
+	/// `oid`  Row identifier
+	oid: Qual,
+	/// `name`  Name of the function
+	proname: Str,
+	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this function
+	pronamespace: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the function
+	proowner: Str,
+	/// `oid` `(references pg_language.oid)` Implementation language or call interface of this function
+	prolang: Str,
+	/// `float4`  Estimated execution cost (in units of cpu_operator_cost); if proretset, this is cost per row returned
+	procost: Option<Str>,
+	/// `float4`  Estimated number of result rows (zero if not proretset)
+	prorows: Option<Str>,
+	/// `oid` `(references pg_type.oid)` Data type of the variadic array parameter's elements, or zero if the function does not have a variadic parameter
+	provariadic: Option<Qual>,
+	/// `regproc` `(references pg_proc.oid)` Planner support function for this function (see Section 36.11), or zero if none
+	prosupport: Option<Qual>,
+	/// `char`  f for a normal function, p for a procedure, a for an aggregate function, or w for a window function
+	prokind: PgProcProkind,
+	/// `bool`  Function is a security definer (i.e., a “setuid” function)
+	prosecdef: bool,
+	/// `bool`  The function has no side effects. No information about the arguments is conveyed except via the return value. Any function that might throw an error depending on the values of its arguments is not leak-proof.
+	proleakproof: bool,
+	/// `bool`  Function returns null if any call argument is null. In that case the function won't actually be called at all. Functions that are not “strict” must be prepared to handle null inputs.
+	proisstrict: bool,
+	/// `bool`  Function returns a set (i.e., multiple values of the specified data type)
+	proretset: bool,
+	/// `char`  provolatile tells whether the function's result depends only on its input arguments, or is affected by outside factors. It is i for “immutable” functions, which always deliver the same result for the same inputs. It is s for “stable” functions, whose results (for fixed inputs) do not change within a scan. It is v for “volatile” functions, whose results might change at any time. (Use v also for functions with side-effects, so that calls to them cannot get optimized away.)
+	provolatile: PgProcProvolatile,
+	/// `char`  proparallel tells whether the function can be safely run in parallel mode. It is s for functions which are safe to run in parallel mode without restriction. It is r for functions which can be run in parallel mode, but their execution is restricted to the parallel group leader; parallel worker processes cannot invoke these functions. It is u for functions which are unsafe in parallel mode; the presence of such a function forces a serial execution plan.
+	proparallel: PgProcProparallel,
+	/// `int2`  Number of input arguments
+	pronargs: u16,
+	/// `int2`  Number of arguments that have defaults
+	pronargdefaults: u16,
+	/// `oid` `(references pg_type.oid)` Data type of the return value
+	prorettype: Qual,
+	// `oidvector` `(references pg_type.oid)` An array of the data types of the function arguments. This includes only input arguments (including INOUT and VARIADIC arguments), and thus represents the call signature of the function.
+	proargtypes: Vec<Qual>,
+	/// `oid[]` `(references pg_type.oid)` An array of the data types of the function arguments. This includes all arguments (including OUT and INOUT arguments); however, if all the arguments are IN arguments, this field will be null. Note that subscripting is 1-based, whereas for historical reasons proargtypes is subscripted from 0.
+	proallargtypes: Option<Vec<Qual>>,
+	/// `char[]`  An array of the modes of the function arguments, encoded as i for IN arguments, o for OUT arguments, b for INOUT arguments, v for VARIADIC arguments, t for TABLE arguments. If all the arguments are IN arguments, this field will be null. Note that subscripts correspond to positions of proallargtypes not proargtypes.
+	proargmodes: Option<Vec<PgProcProargmodes>>,
+	/// `text[]`  An array of the names of the function arguments. Arguments without a name are set to empty strings in the array. If none of the arguments have a name, this field will be null. Note that subscripts correspond to positions of proallargtypes not proargtypes.
+	proargnames: Option<Vec<Str>>,
+	/// `pg_node_tree`  Expression trees (in nodeToString() representation) for default values. This is a list with pronargdefaults elements, corresponding to the last N input arguments (i.e., the last N proargtypes positions). If none of the arguments have defaults, this field will be null.
+	proargdefaults: Option<Vec<Option<Str>>>,
+	/// `oid[]` `(references pg_type.oid)` An array of the argument/result data type(s) for which to apply transforms (from the function's TRANSFORM clause). Null if none.
+	protrftypes: Option<Vec<Qual>>,
+	/// `text`  This tells the function handler how to invoke the function. It might be the actual source code of the function for interpreted languages, a link symbol, a file name, or just about anything else, depending on the implementation language/call convention.
+	prosrc: Option<Str>,
+	/// `text`  Additional information about how to invoke the function. Again, the interpretation is language-specific.
+	probin: Option<Str>,
+	/// pg_node_tree  Pre-parsed SQL function body. This is used for SQL-language functions when the body is given in SQL-standard notation rather than as a string literal. It's null in other cases.
+	prosqlbody: Option<Str>,
+	/// `text[]`  Function's local settings for run-time configuration variables
+	proconfig: Option<Vec<Str>>,
+	/// `aclitem[]`  Access privileges; see Section 5.8 for details
+	proacl: Option<Vec<aclitem::FunctionAclItem>>,
+}
+impl_qual_hash_and_equivalent!(PgProc);
+
+// f for a normal function, p for a procedure, a for an aggregate function, or w for a window function
+pg_char_enum!(PgProcProkind { 'f' => NormalFunction, 'p' => Procedure, 'a' => AggregateFunction, 'w' => WindowFunction });
+// It is i for “immutable” functions, which always deliver the same result for the same inputs. It is s for “stable” functions, whose results (for fixed inputs) do not change within a scan. It is v for “volatile” functions, whose results might change at any time
+pg_char_enum!(PgProcProvolatile { 'i' => Immutable, 's' => Stable, 'v' => Volatile });
+// It is s for functions which are safe to run in parallel mode without restriction. It is r for functions which can be run in parallel mode, but their execution is restricted to the parallel group leader; parallel worker processes cannot invoke these functions. It is u for functions which are unsafe in parallel mode; the presence of such a function forces a serial execution plan.
+pg_char_enum!(PgProcProparallel { 's' => SafeWithoutRestriction, 'r' => RestrictedToGroupLeader, 'u' => Unsafe });
+// i for IN arguments, o for OUT arguments, b for INOUT arguments, v for VARIADIC arguments, t for TABLE arguments
+pg_char_enum!(PgProcProargmodes { 'i' => In, 'o' => Out, 'b' => Inout, 'v' => Variadic, 't' => Table });
+
+pub async fn reflect_pg_proc(
+	client: &PgClient
+) -> Result<Set<PgProc>, postgres::Error> {
+	let pg_proc_coll = reflect_crate::queries::reflect::reflect_pg_proc().bind(client)
+		.map(|pg_proc| {
+			PgProc {
+				oid: Qual::parse(pg_proc.oid),
+				proname: pg_proc.proname.into(),
+				pronamespace: pg_proc.pronamespace.into(),
+				proowner: pg_proc.proowner.into(),
+				prolang: pg_proc.prolang.into(),
+				procost: pg_proc.procost.map(Into::into),
+				prorows: pg_proc.prorows.map(Into::into),
+				provariadic: Qual::maybe_parse(pg_proc.provariadic),
+				prosupport: Qual::maybe_parse(pg_proc.prosupport),
+				prokind: PgProcProkind::pg_from_char(pg_proc.prokind),
+				prosecdef: pg_proc.prosecdef,
+				proleakproof: pg_proc.proleakproof,
+				proisstrict: pg_proc.proisstrict,
+				proretset: pg_proc.proretset,
+				provolatile: PgProcProvolatile::pg_from_char(pg_proc.provolatile),
+				proparallel: PgProcProparallel::pg_from_char(pg_proc.proparallel),
+				pronargs: pg_proc.pronargs.unsigned_abs(),
+				pronargdefaults: pg_proc.pronargdefaults.unsigned_abs(),
+				prorettype: Qual::parse(pg_proc.prorettype),
+		    proargtypes: pg_proc.proargtypes.map(Qual::parse).collect(),
+				proallargtypes: pg_proc.proallargtypes.map(|items| items.map(Qual::parse).collect()),
+		    proargmodes: pg_proc.proargmodes.map(|items| items.map(PgProcProargmodes::pg_from_char).collect()),
+				proargnames: pg_proc.proargnames.map(|items| items.map(Into::into).collect()),
+		    proargdefaults: pg_proc.proargdefaults.map(|items| items.map(|item| item.map(Into::into)).collect()),
+				protrftypes: pg_proc.protrftypes.map(|items| items.map(Qual::parse).collect()),
+				prosrc: pg_proc.prosrc.map(Into::into),
+				probin: pg_proc.probin.map(Into::into),
+		    prosqlbody: pg_proc.prosqlbody.map(Into::into),
+				proconfig: pg_proc.proconfig.map(|items| items.map(Into::into).collect()),
+				proacl: pg_proc.proacl.map(|proacl| proacl.map(|acl| aclitem(acl, &FunctionGrantParser)).collect()),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_proc_coll)
+}
 
 // `pg_publication`: https://www.postgresql.org/docs/17/catalog-pg-publication.html
 use reflect_gen::{PgPublication, reflect_pg_publication};

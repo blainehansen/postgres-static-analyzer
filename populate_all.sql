@@ -214,6 +214,20 @@ LANGUAGE sql IMMUTABLE AS $$
 	SELECT $1;
 $$;
 
+create function add(a integer, b integer = 0) returns integer
+	language sql
+	immutable
+	strict
+	return a + b;
+
+create function yo(int = 1) returns table(f1 int, f2 text)
+	as $$ select $1, cast($1 as text) || ' is text' $$
+	language sql;
+
+create function rec(int, out f1 int, inout f2 text = 'yeah')
+	as $$ select $1, cast($1 as text) || ' is text' $$
+	language sql;
+
 CREATE AGGREGATE catalog_sum(numeric) (
 	SFUNC    = numeric_add,
 	STYPE    = numeric,
