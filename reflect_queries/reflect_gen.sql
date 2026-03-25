@@ -147,9 +147,9 @@ from
 --! reflect_pg_auth_members : ()
 select
 	-- oid oid  Row identifier
-	pg_get_userbyid(roleid)::text as roleid, -- oid (references pg_authid.oid) ID of a role that has a member
-	pg_get_userbyid(member)::text as member, -- oid (references pg_authid.oid) ID of a role that is a member of roleid
-	pg_get_userbyid(grantor)::text as grantor, -- oid (references pg_authid.oid) ID of the role that granted this membership
+	pg_get_userbyid(pg_auth_members.roleid)::text as roleid, -- oid (references pg_authid.oid) ID of a role that has a member
+	pg_get_userbyid(pg_auth_members.member)::text as member, -- oid (references pg_authid.oid) ID of a role that is a member of roleid
+	pg_get_userbyid(pg_auth_members.grantor)::text as grantor, -- oid (references pg_authid.oid) ID of the role that granted this membership
 	pg_auth_members.admin_option as admin_option, -- bool  True if member can grant membership in roleid to others
 	pg_auth_members.inherit_option as inherit_option, -- bool  True if the member automatically inherits the privileges of the granted role
 	pg_auth_members.set_option as set_option -- bool  True if the member can SET ROLE to the granted role
@@ -178,7 +178,7 @@ select
 	pg_class.relnamespace::regnamespace::text as relnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this relation
 	case when pg_class.reltype = 0 then null else pg_class.reltype::regtype::text end as reltype, -- oid (references pg_type.oid) The OID of the data type that corresponds to this table's row type, if any; zero for indexes, sequences, and toast tables, which have no pg_type entry
 	case when pg_class.reloftype = 0 then null else pg_class.reloftype::regtype::text end as reloftype, -- oid (references pg_type.oid) For typed tables, the OID of the underlying composite type; zero for all other relations
-	pg_get_userbyid(relowner)::text as relowner, -- oid (references pg_authid.oid) Owner of the relation
+	pg_get_userbyid(pg_class.relowner)::text as relowner, -- oid (references pg_authid.oid) Owner of the relation
 	relam_pg_am.amname::text as relam, -- oid (references pg_am.oid) The access method used to access this table or index. Not meaningful if the relation is a sequence or has no on-disk file, except for partitioned tables, where, if set, it takes precedence over default_table_access_method when determining the access method to use for partitions created when one is not specified in the creation command.
 	-- relfilenode oid  Name of the on-disk file of this relation; zero means this is a “mapped” relation whose disk file name is determined by low-level state
 	-- reltablespace oid (references pg_tablespace.oid) The tablespace in which this relation is stored. If zero, the database's default tablespace is implied. Not meaningful if the relation has no on-disk file, except for partitioned tables, where this is the tablespace in which partitions will be created when one is not specified in the creation command.
@@ -219,7 +219,7 @@ select
 	pg_collation.oid::regcollation::text as oid, -- oid  Row identifier
 	pg_collation.collname::text as collname, -- name  Collation name (unique per namespace and encoding)
 	pg_collation.collnamespace::regnamespace::text as collnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this collation
-	pg_get_userbyid(collowner)::text as collowner, -- oid (references pg_authid.oid) Owner of the collation
+	pg_get_userbyid(pg_collation.collowner)::text as collowner, -- oid (references pg_authid.oid) Owner of the collation
 	pg_collation.collprovider as collprovider, -- char  Provider of the collation: d = database default, b = builtin, c = libc, i = icu
 	pg_collation.collisdeterministic as collisdeterministic, -- bool  Is the collation deterministic?
 	case when collencoding < 0 then null else pg_encoding_to_char(collencoding)::text end as collencoding, -- int4  Encoding in which the collation is applicable, or -1 if it works for any encoding
@@ -277,7 +277,7 @@ select
 	-- oid oid  Row identifier
 	pg_conversion.conname::text as conname, -- name  Conversion name (unique within a namespace)
 	pg_conversion.connamespace::regnamespace::text as connamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this conversion
-	pg_get_userbyid(conowner)::text as conowner, -- oid (references pg_authid.oid) Owner of the conversion
+	pg_get_userbyid(pg_conversion.conowner)::text as conowner, -- oid (references pg_authid.oid) Owner of the conversion
 	pg_encoding_to_char(conforencoding)::text as conforencoding, -- int4  Source encoding ID (pg_encoding_to_char() can translate this number to the encoding name)
 	pg_encoding_to_char(contoencoding)::text as contoencoding, -- int4  Destination encoding ID (pg_encoding_to_char() can translate this number to the encoding name)
 	conproc::regproc::text as conproc, -- regproc (references pg_proc.oid) Conversion function
@@ -290,7 +290,7 @@ from
 --! reflect_pg_default_acl : (defaclnamespace?, defaclacl?)
 select
 	-- oid oid  Row identifier
-	pg_get_userbyid(defaclrole)::text as defaclrole, -- oid (references pg_authid.oid) The OID of the role associated with this entry
+	pg_get_userbyid(pg_default_acl.defaclrole)::text as defaclrole, -- oid (references pg_authid.oid) The OID of the role associated with this entry
 	case when pg_default_acl.defaclnamespace = 0 then null else pg_default_acl.defaclnamespace::regnamespace::text end as defaclnamespace, -- oid (references pg_namespace.oid) The OID of the namespace associated with this entry, or zero if none
 	pg_default_acl.defaclobjtype as defaclobjtype, -- char  Type of object this entry is for: r = relation (table, view), S = sequence, f = function, T = type, n = schema
 	defaclacl::text[] as defaclacl -- aclitem[]  Access privileges that this type of object should have on creation
@@ -304,7 +304,7 @@ select
 	-- oid oid  Row identifier
 	pg_event_trigger.evtname::text as evtname, -- name  Trigger name (must be unique)
 	pg_event_trigger.evtevent::text as evtevent, -- name  Identifies the event for which this trigger fires
-	pg_get_userbyid(evtowner)::text as evtowner, -- oid (references pg_authid.oid) Owner of the event trigger
+	pg_get_userbyid(pg_event_trigger.evtowner)::text as evtowner, -- oid (references pg_authid.oid) Owner of the event trigger
 	pg_event_trigger.evtfoid::regprocedure::text as evtfoid, -- oid (references pg_proc.oid) The function to be called
 	pg_event_trigger.evtenabled as evtenabled, -- char  Controls in which session_replication_role modes the event trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always.
 	pg_event_trigger.evttags as evttags -- text[]  Command tags for which this trigger will fire. If NULL, the firing of this trigger is not restricted on the basis of the command tag.
@@ -317,7 +317,7 @@ from
 select
 	-- oid oid  Row identifier
 	pg_extension.extname::text as extname, -- name  Name of the extension
-	pg_get_userbyid(extowner)::text as extowner, -- oid (references pg_authid.oid) Owner of the extension
+	pg_get_userbyid(pg_extension.extowner)::text as extowner, -- oid (references pg_authid.oid) Owner of the extension
 	pg_extension.extnamespace::regnamespace::text as extnamespace, -- oid (references pg_namespace.oid) Schema containing the extension's exported objects
 	pg_extension.extrelocatable as extrelocatable, -- bool  True if extension can be relocated to another schema
 	pg_extension.extversion as extversion, -- text  Version name for the extension
@@ -328,11 +328,52 @@ from
 ;
 
 
+--! reflect_pg_foreign_data_wrapper : (fdwhandler?, fdwvalidator?, fdwacl?, fdwoptions?)
+select
+	-- oid oid  Row identifier
+	pg_foreign_data_wrapper.fdwname::text as fdwname, -- name  Name of the foreign-data wrapper
+	pg_get_userbyid(pg_foreign_data_wrapper.fdwowner)::text as fdwowner, -- oid (references pg_authid.oid) Owner of the foreign-data wrapper
+	case when pg_foreign_data_wrapper.fdwhandler = 0 then null else pg_foreign_data_wrapper.fdwhandler::regprocedure::text end as fdwhandler, -- oid (references pg_proc.oid) References a handler function that is responsible for supplying execution routines for the foreign-data wrapper. Zero if no handler is provided
+	case when pg_foreign_data_wrapper.fdwvalidator = 0 then null else pg_foreign_data_wrapper.fdwvalidator::regprocedure::text end as fdwvalidator, -- oid (references pg_proc.oid) References a validator function that is responsible for checking the validity of the options given to the foreign-data wrapper, as well as options for foreign servers and user mappings using the foreign-data wrapper. Zero if no validator is provided
+	fdwacl::text[] as fdwacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_foreign_data_wrapper.fdwoptions as fdwoptions -- text[]  Foreign-data wrapper specific options, as “keyword=value” strings
+from
+	pg_foreign_data_wrapper
+;
+
+
+--! reflect_pg_foreign_server : (srvtype?, srvversion?, srvacl?, srvoptions?)
+select
+	-- oid oid  Row identifier
+	pg_foreign_server.srvname::text as srvname, -- name  Name of the foreign server
+	pg_get_userbyid(pg_foreign_server.srvowner)::text as srvowner, -- oid (references pg_authid.oid) Owner of the foreign server
+	srvfdw_pg_foreign_data_wrapper.fdwname::text as srvfdw, -- oid (references pg_foreign_data_wrapper.oid) OID of the foreign-data wrapper of this foreign server
+	pg_foreign_server.srvtype as srvtype, -- text  Type of the server (optional)
+	pg_foreign_server.srvversion as srvversion, -- text  Version of the server (optional)
+	srvacl::text[] as srvacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_foreign_server.srvoptions as srvoptions -- text[]  Foreign server specific options, as “keyword=value” strings
+from
+	pg_foreign_server
+	join pg_foreign_data_wrapper as srvfdw_pg_foreign_data_wrapper on pg_foreign_server.srvfdw = srvfdw_pg_foreign_data_wrapper.oid
+;
+
+
+--! reflect_pg_foreign_table : (ftoptions?)
+select
+	pg_foreign_table.ftrelid::regclass::text as ftrelid, -- oid (references pg_class.oid) The OID of the pg_class entry for this foreign table
+	ftserver_pg_foreign_server.srvname::text as ftserver, -- oid (references pg_foreign_server.oid) OID of the foreign server for this foreign table
+	pg_foreign_table.ftoptions as ftoptions -- text[]  Foreign table options, as “keyword=value” strings
+from
+	pg_foreign_table
+	join pg_foreign_server as ftserver_pg_foreign_server on pg_foreign_table.ftserver = ftserver_pg_foreign_server.oid
+;
+
+
 --! reflect_pg_language : (lanplcallfoid?, laninline?, lanvalidator?, lanacl?)
 select
 	-- oid oid  Row identifier
 	pg_language.lanname::text as lanname, -- name  Name of the language
-	pg_get_userbyid(lanowner)::text as lanowner, -- oid (references pg_authid.oid) Owner of the language
+	pg_get_userbyid(pg_language.lanowner)::text as lanowner, -- oid (references pg_authid.oid) Owner of the language
 	pg_language.lanispl as lanispl, -- bool  This is false for internal languages (such as SQL) and true for user-defined languages. Currently, pg_dump still uses this to determine which languages need to be dumped, but this might be replaced by a different mechanism in the future.
 	pg_language.lanpltrusted as lanpltrusted, -- bool  True if this is a trusted language, which means that it is believed not to grant access to anything outside the normal SQL execution environment. Only superusers can create functions in untrusted languages.
 	case when pg_language.lanplcallfoid = 0 then null else pg_language.lanplcallfoid::regprocedure::text end as lanplcallfoid, -- oid (references pg_proc.oid) For noninternal languages this references the language handler, which is a special function that is responsible for executing all functions that are written in the particular language. Zero for internal languages.
@@ -348,7 +389,7 @@ from
 select
 	-- oid oid  Row identifier
 	pg_namespace.nspname::text as nspname, -- name  Name of the namespace
-	pg_get_userbyid(nspowner)::text as nspowner, -- oid (references pg_authid.oid) Owner of the namespace
+	pg_get_userbyid(pg_namespace.nspowner)::text as nspowner, -- oid (references pg_authid.oid) Owner of the namespace
 	nspacl::text[] as nspacl -- aclitem[]  Access privileges; see Section 5.8 for details
 from
 	pg_namespace
@@ -364,7 +405,7 @@ select
 	opcmethod_pg_am.amname::text as opcmethod, -- oid (references pg_am.oid) Index access method operator class is for
 	pg_opclass.opcname::text as opcname, -- name  Name of this operator class
 	pg_opclass.opcnamespace::regnamespace::text as opcnamespace, -- oid (references pg_namespace.oid) Namespace of this operator class
-	pg_get_userbyid(opcowner)::text as opcowner, -- oid (references pg_authid.oid) Owner of the operator class
+	pg_get_userbyid(pg_opclass.opcowner)::text as opcowner, -- oid (references pg_authid.oid) Owner of the operator class
 	quote_ident(opcfamily_pg_namespace.nspname) || '.' || quote_ident(opcfamily_pg_opfamily.opfname) as opcfamily, -- oid (references pg_opfamily.oid) Operator family containing the operator class
 	pg_opclass.opcintype::regtype::text as opcintype, -- oid (references pg_type.oid) Data type that the operator class indexes
 	pg_opclass.opcdefault as opcdefault, -- bool  True if this operator class is the default for opcintype
@@ -396,7 +437,7 @@ from
 select
 	-- oid oid  Row identifier
 	pg_publication.pubname::text as pubname, -- name  Name of the publication
-	pg_get_userbyid(pubowner)::text as pubowner, -- oid (references pg_authid.oid) Owner of the publication
+	pg_get_userbyid(pg_publication.pubowner)::text as pubowner, -- oid (references pg_authid.oid) Owner of the publication
 	pg_publication.puballtables as puballtables, -- bool  If true, this publication automatically includes all tables in the database, including any that will be created in the future.
 	pg_publication.pubinsert as pubinsert, -- bool  If true, INSERT operations are replicated for tables in the publication.
 	pg_publication.pubupdate as pubupdate, -- bool  If true, UPDATE operations are replicated for tables in the publication.
@@ -413,7 +454,7 @@ select
 	pg_type.oid::regtype::text as oid, -- oid  Row identifier
 	pg_type.typname::text as typname, -- name  Data type name
 	pg_type.typnamespace::regnamespace::text as typnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this type
-	pg_get_userbyid(typowner)::text as typowner, -- oid (references pg_authid.oid) Owner of the type
+	pg_get_userbyid(pg_type.typowner)::text as typowner, -- oid (references pg_authid.oid) Owner of the type
 	pg_type.typlen as typlen, -- int2  For a fixed-size type, typlen is the number of bytes in the internal representation of the type. But for a variable-length type, typlen is negative. -1 indicates a “varlena” type (one that has a length word), -2 indicates a null-terminated C string.
 	pg_type.typbyval as typbyval, -- bool  typbyval determines whether internal routines pass a value of this type by value or by reference. typbyval had better be false if typlen is not 1, 2, or 4 (or 8 on machines where Datum is 8 bytes). Variable-length types are always passed by reference. Note that typbyval can be false even if the length would allow pass-by-value.
 	pg_type.typtype as typtype, -- char  typtype is b for a base type, c for a composite type (e.g., a table's row type), d for a domain, e for an enum type, p for a pseudo-type, r for a range type, or m for a multirange type. See also typrelid and typbasetype.
@@ -452,7 +493,7 @@ select
 	-- umid oid (references pg_user_mapping.oid) OID of the user mapping
 	-- srvid oid (references pg_foreign_server.oid) The OID of the foreign server that contains this mapping
 	pg_user_mappings.srvname::text as srvname, -- name (references pg_foreign_server.srvname) Name of the foreign server
-	case when umuser = 0 then null else pg_get_userbyid(umuser)::text end as umuser, -- oid (references pg_authid.oid) OID of the local role being mapped, or zero if the user mapping is public
+	case when pg_user_mappings.umuser = 0 then null else pg_get_userbyid(pg_user_mappings.umuser)::text end as umuser, -- oid (references pg_authid.oid) OID of the local role being mapped, or zero if the user mapping is public
 	pg_user_mappings.usename::text as usename, -- name  Name of the local user to be mapped
 	pg_user_mappings.umoptions as umoptions -- text[]  User mapping specific options, as “keyword=value” strings
 from

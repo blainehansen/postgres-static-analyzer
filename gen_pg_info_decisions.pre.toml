@@ -96,8 +96,6 @@ pg_db_role_setting = 'manual'
 # Type of object this entry is for: r = relation (table, view), S = sequence, f = function, T = type, n = schema
 pg_default_acl.defaclobjtype = { ty="PgDefaultAclDefaclobjtype", exp="PgDefaultAclDefaclobjtype::pg_from_char(pg_default_acl.defaclobjtype)", pgEnum="'r' => Relation, 'S' => Sequence, 'f' => Function, 'T' => Type, 'n' => Schema" }
 
-pg_depend = 'todo'
-
 pg_description = 'todo'
 
 pg_enum = 'manual'
@@ -108,11 +106,13 @@ pg_event_trigger.evtenabled = { ty="PgEventTriggerEvtenabled", exp="PgEventTrigg
 
 pg_extension = {}
 
-pg_foreign_data_wrapper = 'todo'
+pg_foreign_data_wrapper = {}
 
-pg_foreign_server = 'todo'
+# pg_foreign_server = {}
+pg_foreign_server.srvfdw = { sel="srvfdw_pg_foreign_data_wrapper.fdwname::text", ty="Str", exp="pg_foreign_server.srvfdw.into()", joins=["join pg_foreign_data_wrapper as srvfdw_pg_foreign_data_wrapper on pg_foreign_server.srvfdw = srvfdw_pg_foreign_data_wrapper.oid"] }
 
-pg_foreign_table = 'todo'
+# pg_foreign_table = {}
+pg_foreign_table.ftserver = { sel="ftserver_pg_foreign_server.srvname::text", ty="Str", exp="pg_foreign_table.ftserver.into()", joins=["join pg_foreign_server as ftserver_pg_foreign_server on pg_foreign_table.ftserver = ftserver_pg_foreign_server.oid"] }
 
 pg_index = 'todo'
 
@@ -160,8 +160,6 @@ pg_rewrite = 'todo'
 # pg_seclabel = 'todo'
 
 pg_sequence = 'todo'
-
-pg_shdepend = 'todo'
 
 pg_shdescription = 'todo'
 

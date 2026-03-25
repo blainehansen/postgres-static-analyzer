@@ -35,6 +35,8 @@ export const aclitemMapping: { [key: string]: string } = {
 }
 
 export const ignoredTables = new Set([
+	"pg_depend",
+	"pg_shdepend",
 	"pg_largeobject",
 	"pg_largeobject_metadata",
 	"pg_seclabel",

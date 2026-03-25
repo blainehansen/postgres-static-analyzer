@@ -158,8 +158,8 @@ async function decideColumn(
 		const zeroable = ovZero ?? /zero/i.test(desc)
 		const nullable = ovNullable ?? zeroable ?? false
 		const sel = zeroable
-			? `case when ${name} = 0 then null else pg_get_userbyid(${name})::text end`
-			: `pg_get_userbyid(${name})::text`
+			? `case when ${tableName}.${name} = 0 then null else pg_get_userbyid(${tableName}.${name})::text end`
+			: `pg_get_userbyid(${tableName}.${name})::text`
 		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
@@ -335,10 +335,6 @@ async function decideColumn(
 		return [undefined, { typ, ref, desc, sel, ty, exp }]
 	}
 
-	// if (typ === "pg_node_tree") {
-	// 	`pg_get_expr(adbin, adrelid)`
-	// }
-
 	const { decision } = await ask.select({
 		name: "decision",
 		message: `don't know how to handle ${tableName}.${name}: ${typ} ${ref} ${desc}`,
@@ -364,32 +360,21 @@ async function decideColumn(
 	Deno.exit(1)
 }
 
-// const referencesNamespace = fields.some(field => field.ref === "(references pg_namespace.oid)")
-// const referencesDatabase = fields.some(field => field.ref === "(references pg_database.oid)")
-
-
-
 // const toml = resolved.map(({ fields, tableName }) => {
 // 	return `[${tableName}]\n` + fields.map(({ name, typ, ref, desc }) => `[${tableName}.${name}]\n# ${typ} ${ref} ${desc}`).join('\n')
 // }).join('\n\n')
 
 
 
-// function decideZero(typ: string, name: string, desc: string) {
-// 	if (typ === "oid" && /zero/i.test(desc))
-// 		return true
-
-// 	// | Classification | Conceptual Meaning   | String Patterns / Keywords          | Example from your list                        |
-// 	// | -------------- | -------------------- | ----------------------------------- | --------------------------------------------- |
-// 	// | Cast to Null   | Absence of relation  | zero if none, else zero, zero if no | "Final function (zero if none)"               |
-// 	// | Cast to Null   | Inapplicable context | zero for a, zero if not a           | "zero for a dropped column"                   |
-// 	// | Cast to Null   | Fallback to default  | zero to use, or zero if             | "zero to use a default estimate"              |
-// 	// | Cast to Null   | Unknown state        | zero value means.*unknown           | "zero value means the number... is unknown"   |
-// 	// | Keep as Zero   | Quantity or index    | Number of, counting from            | "Number of dimensions"                        |
-// 	// | Keep as Zero   | Explicit contrast    | zero.*null value                    | "A zero value indicates... A null value says" |
-// 	// | Keep as Zero   | Byte characters      | zero byte                           | "If a zero byte ('')"                         |
-// 	return false
-// }
+// | Classification | Conceptual Meaning   | String Patterns / Keywords          | Example from your list                        |
+// | -------------- | -------------------- | ----------------------------------- | --------------------------------------------- |
+// | Cast to Null   | Absence of relation  | zero if none, else zero, zero if no | "Final function (zero if none)"               |
+// | Cast to Null   | Inapplicable context | zero for a, zero if not a           | "zero for a dropped column"                   |
+// | Cast to Null   | Fallback to default  | zero to use, or zero if             | "zero to use a default estimate"              |
+// | Cast to Null   | Unknown state        | zero value means.*unknown           | "zero value means the number... is unknown"   |
+// | Keep as Zero   | Quantity or index    | Number of, counting from            | "Number of dimensions"                        |
+// | Keep as Zero   | Explicit contrast    | zero.*null value                    | "A zero value indicates... A null value says" |
+// | Keep as Zero   | Byte characters      | zero byte                           | "If a zero byte ('')"                         |
 
 // function makeQual(tableName: string, name: string, nullable: boolean): [string, string, string, string] {
 // 	const sel = `${joinNamespaceName}.nspname::text as ${name}_schema_name, ${joinTableName}.relname::text as ${name}_table_name`

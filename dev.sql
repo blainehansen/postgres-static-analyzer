@@ -1,3 +1,31 @@
+drop table if exists a;
+
+create table a (
+	i int not null
+);
+
+comment on table a is 'yoyo a table';
+comment on column a.i is 'yoyo i column';
+
+
+select
+	pg_class.relname::text as relname,
+
+	-- resolved.obj_type,
+	-- resolved.qualified_name,
+	-- pg_description.classoid,
+	-- pg_description.objoid,
+	pg_description.objsubid,
+	pg_description.description
+from
+	pg_catalog.pg_description
+	join pg_catalog.pg_class on pg_class.oid = pg_description.classoid
+	-- cross join lateral
+	-- 	pg_temp.pg_desc_resolve(pg_description.classoid, pg_description.objoid, pg_description.objsubid) as resolved
+where pg_description.classoid = 'pg_catalog.pg_class'::regclass
+;
+
+
 -- show search_path;
 -- select current_schemas(true);
 

@@ -888,6 +888,119 @@ pub async fn reflect_pg_extension(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgForeignDataWrapper {
+	// oid oid  Row identifier
+	/// `name`  Name of the foreign-data wrapper
+	fdwname: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the foreign-data wrapper
+	fdwowner: Str,
+	/// `oid` `(references pg_proc.oid)` References a handler function that is responsible for supplying execution routines for the foreign-data wrapper. Zero if no handler is provided
+	fdwhandler: Option<Qual>,
+	/// `oid` `(references pg_proc.oid)` References a validator function that is responsible for checking the validity of the options given to the foreign-data wrapper, as well as options for foreign servers and user mappings using the foreign-data wrapper. Zero if no validator is provided
+	fdwvalidator: Option<Qual>,
+	/// `aclitem[]`  Access privileges; see Section 5.8 for details
+	fdwacl: Option<Vec<aclitem::ForeignDataWrapperAclItem>>,
+	/// `text[]`  Foreign-data wrapper specific options, as “keyword=value” strings
+	fdwoptions: Option<Vec<Str>>,
+}
+
+pub async fn reflect_pg_foreign_data_wrapper(
+	client: &PgClient
+) -> Result<Vec<PgForeignDataWrapper>, postgres::Error> {
+	let pg_foreign_data_wrapper_coll = reflect_crate::queries::reflect_gen::reflect_pg_foreign_data_wrapper().bind(client)
+		.map(|pg_foreign_data_wrapper| {
+			PgForeignDataWrapper {
+				fdwname: pg_foreign_data_wrapper.fdwname.into(),
+				fdwowner: pg_foreign_data_wrapper.fdwowner.into(),
+				fdwhandler: Qual::maybe_parse(pg_foreign_data_wrapper.fdwhandler),
+				fdwvalidator: Qual::maybe_parse(pg_foreign_data_wrapper.fdwvalidator),
+				fdwacl: pg_foreign_data_wrapper.fdwacl.map(|fdwacl| fdwacl.map(|acl| aclitem(acl, &ForeignDataWrapperGrantParser)).collect()),
+				fdwoptions: pg_foreign_data_wrapper.fdwoptions.map(|items| items.map(Into::into).collect()),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_foreign_data_wrapper_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgForeignServer {
+	// oid oid  Row identifier
+	/// `name`  Name of the foreign server
+	srvname: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the foreign server
+	srvowner: Str,
+	/// `oid` `(references pg_foreign_data_wrapper.oid)` OID of the foreign-data wrapper of this foreign server
+	srvfdw: Str,
+	/// `text`  Type of the server (optional)
+	srvtype: Option<Str>,
+	/// `text`  Version of the server (optional)
+	srvversion: Option<Str>,
+	/// `aclitem[]`  Access privileges; see Section 5.8 for details
+	srvacl: Option<Vec<aclitem::ForeignServerAclItem>>,
+	/// `text[]`  Foreign server specific options, as “keyword=value” strings
+	srvoptions: Option<Vec<Str>>,
+}
+
+pub async fn reflect_pg_foreign_server(
+	client: &PgClient
+) -> Result<Vec<PgForeignServer>, postgres::Error> {
+	let pg_foreign_server_coll = reflect_crate::queries::reflect_gen::reflect_pg_foreign_server().bind(client)
+		.map(|pg_foreign_server| {
+			PgForeignServer {
+				srvname: pg_foreign_server.srvname.into(),
+				srvowner: pg_foreign_server.srvowner.into(),
+				srvfdw: pg_foreign_server.srvfdw.into(),
+				srvtype: pg_foreign_server.srvtype.map(Into::into),
+				srvversion: pg_foreign_server.srvversion.map(Into::into),
+				srvacl: pg_foreign_server.srvacl.map(|srvacl| srvacl.map(|acl| aclitem(acl, &ForeignServerGrantParser)).collect()),
+				srvoptions: pg_foreign_server.srvoptions.map(|items| items.map(Into::into).collect()),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_foreign_server_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgForeignTable {
+	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for this foreign table
+	ftrelid: Qual,
+	/// `oid` `(references pg_foreign_server.oid)` OID of the foreign server for this foreign table
+	ftserver: Str,
+	/// `text[]`  Foreign table options, as “keyword=value” strings
+	ftoptions: Option<Vec<Str>>,
+}
+
+pub async fn reflect_pg_foreign_table(
+	client: &PgClient
+) -> Result<Vec<PgForeignTable>, postgres::Error> {
+	let pg_foreign_table_coll = reflect_crate::queries::reflect_gen::reflect_pg_foreign_table().bind(client)
+		.map(|pg_foreign_table| {
+			PgForeignTable {
+				ftrelid: Qual::parse(pg_foreign_table.ftrelid),
+				ftserver: pg_foreign_table.ftserver.into(),
+				ftoptions: pg_foreign_table.ftoptions.map(|items| items.map(Into::into).collect()),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_foreign_table_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgLanguage {
 	// oid oid  Row identifier
 	/// `name`  Name of the language

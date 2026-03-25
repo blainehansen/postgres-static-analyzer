@@ -25,9 +25,9 @@ pub struct PgState {
 	pub pg_enum: Set<PgEnum>,
 	pub pg_event_trigger: Vec<PgEventTrigger>,
 	pub pg_extension: Vec<PgExtension>,
-	// pub pg_foreign_data_wrapper: PgForeignDataWrapper,
-	// pub pg_foreign_server: PgForeignServer,
-	// pub pg_foreign_table: PgForeignTable,
+	pub pg_foreign_data_wrapper: Vec<PgForeignDataWrapper>,
+	pub pg_foreign_server: Vec<PgForeignServer>,
+	pub pg_foreign_table: Vec<PgForeignTable>,
 	// pub pg_index: PgIndex,
 	// pub pg_inherits: PgInherits,
 	// pub pg_init_privs: PgInitPrivs,
@@ -91,9 +91,9 @@ pub async fn reflect_pg_state(
 		pg_enum,
 		pg_event_trigger,
 		pg_extension,
-		// pg_foreign_data_wrapper,
-		// pg_foreign_server,
-		// pg_foreign_table,
+		pg_foreign_data_wrapper,
+		pg_foreign_server,
+		pg_foreign_table,
 		// pg_index,
 		// pg_inherits,
 		// pg_init_privs,
@@ -150,9 +150,9 @@ pub async fn reflect_pg_state(
 		reflect_pg_enum(client),
 		reflect_pg_event_trigger(client),
 		reflect_pg_extension(client),
-		// reflect_pg_foreign_data_wrapper(client),
-		// reflect_pg_foreign_server(client),
-		// reflect_pg_foreign_table(client),
+		reflect_pg_foreign_data_wrapper(client),
+		reflect_pg_foreign_server(client),
+		reflect_pg_foreign_table(client),
 		// reflect_pg_index(client),
 		// reflect_pg_inherits(client),
 		// reflect_pg_init_privs(client),
@@ -211,9 +211,9 @@ pub async fn reflect_pg_state(
 		pg_enum,
 		pg_event_trigger,
 		pg_extension,
-		// pg_foreign_data_wrapper,
-		// pg_foreign_server,
-		// pg_foreign_table,
+		pg_foreign_data_wrapper,
+		pg_foreign_server,
+		pg_foreign_table,
 		// pg_index,
 		// pg_inherits,
 		// pg_init_privs,
@@ -538,13 +538,13 @@ use reflect_gen::{PgEventTrigger, reflect_pg_event_trigger};
 use reflect_gen::{PgExtension, reflect_pg_extension};
 
 // `pg_foreign_data_wrapper`: https://www.postgresql.org/docs/17/catalog-pg-foreign-data-wrapper.html
-// use reflect_gen::{PgForeignDataWrapper, reflect_pg_foreign_data_wrapper};
+use reflect_gen::{PgForeignDataWrapper, reflect_pg_foreign_data_wrapper};
 
 // `pg_foreign_server`: https://www.postgresql.org/docs/17/catalog-pg-foreign-server.html
-// use reflect_gen::{PgForeignServer, reflect_pg_foreign_server};
+use reflect_gen::{PgForeignServer, reflect_pg_foreign_server};
 
 // `pg_foreign_table`: https://www.postgresql.org/docs/17/catalog-pg-foreign-table.html
-// use reflect_gen::{PgForeignTable, reflect_pg_foreign_table};
+use reflect_gen::{PgForeignTable, reflect_pg_foreign_table};
 
 // `pg_index`: https://www.postgresql.org/docs/17/catalog-pg-index.html
 // use reflect_gen::{PgIndex, reflect_pg_index};

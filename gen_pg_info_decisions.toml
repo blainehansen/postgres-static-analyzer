@@ -627,7 +627,7 @@ skip = true
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "ID of a role that has a member"
-sel = "pg_get_userbyid(roleid)::text"
+sel = "pg_get_userbyid(pg_auth_members.roleid)::text"
 ty = "Str"
 exp = "pg_auth_members.roleid.into()"
 
@@ -635,7 +635,7 @@ exp = "pg_auth_members.roleid.into()"
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "ID of a role that is a member of roleid"
-sel = "pg_get_userbyid(member)::text"
+sel = "pg_get_userbyid(pg_auth_members.member)::text"
 ty = "Str"
 exp = "pg_auth_members.member.into()"
 
@@ -643,7 +643,7 @@ exp = "pg_auth_members.member.into()"
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "ID of the role that granted this membership"
-sel = "pg_get_userbyid(grantor)::text"
+sel = "pg_get_userbyid(pg_auth_members.grantor)::text"
 ty = "Str"
 exp = "pg_auth_members.grantor.into()"
 
@@ -759,7 +759,7 @@ exp = "Qual::maybe_parse(pg_class.reloftype)"
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "Owner of the relation"
-sel = "pg_get_userbyid(relowner)::text"
+sel = "pg_get_userbyid(pg_class.relowner)::text"
 ty = "Str"
 exp = "pg_class.relowner.into()"
 
@@ -969,7 +969,7 @@ exp = "pg_collation.collnamespace.into()"
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "Owner of the collation"
-sel = "pg_get_userbyid(collowner)::text"
+sel = "pg_get_userbyid(pg_collation.collowner)::text"
 ty = "Str"
 exp = "pg_collation.collowner.into()"
 
@@ -1255,7 +1255,7 @@ exp = "pg_conversion.connamespace.into()"
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "Owner of the conversion"
-sel = "pg_get_userbyid(conowner)::text"
+sel = "pg_get_userbyid(pg_conversion.conowner)::text"
 ty = "Str"
 exp = "pg_conversion.conowner.into()"
 
@@ -1299,7 +1299,7 @@ skip = true
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "The OID of the role associated with this entry"
-sel = "pg_get_userbyid(defaclrole)::text"
+sel = "pg_get_userbyid(pg_default_acl.defaclrole)::text"
 ty = "Str"
 exp = "pg_default_acl.defaclrole.into()"
 
@@ -1353,7 +1353,7 @@ exp = "pg_event_trigger.evtevent.into()"
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "Owner of the event trigger"
-sel = "pg_get_userbyid(evtowner)::text"
+sel = "pg_get_userbyid(pg_event_trigger.evtowner)::text"
 ty = "Str"
 exp = "pg_event_trigger.evtowner.into()"
 
@@ -1398,7 +1398,7 @@ exp = "pg_extension.extname.into()"
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "Owner of the extension"
-sel = "pg_get_userbyid(extowner)::text"
+sel = "pg_get_userbyid(pg_extension.extowner)::text"
 ty = "Str"
 exp = "pg_extension.extowner.into()"
 
@@ -1438,6 +1438,143 @@ desc = "Array of WHERE-clause filter conditions for the extension's configuratio
 ty = "Option<Vec<Str>>"
 exp = "pg_extension.extcondition.map(|items| items.map(Into::into).collect())"
 
+[pg_foreign_data_wrapper.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_foreign_data_wrapper.columns.fdwname]
+typ = "name"
+ref = ""
+desc = "Name of the foreign-data wrapper"
+sel = "pg_foreign_data_wrapper.fdwname::text"
+ty = "Str"
+exp = "pg_foreign_data_wrapper.fdwname.into()"
+
+[pg_foreign_data_wrapper.columns.fdwowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the foreign-data wrapper"
+sel = "pg_get_userbyid(pg_foreign_data_wrapper.fdwowner)::text"
+ty = "Str"
+exp = "pg_foreign_data_wrapper.fdwowner.into()"
+
+[pg_foreign_data_wrapper.columns.fdwhandler]
+typ = "oid"
+ref = "(references pg_proc.oid)"
+desc = "References a handler function that is responsible for supplying execution routines for the foreign-data wrapper. Zero if no handler is provided"
+sel = "case when pg_foreign_data_wrapper.fdwhandler = 0 then null else pg_foreign_data_wrapper.fdwhandler::regprocedure::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_foreign_data_wrapper.fdwhandler)"
+
+[pg_foreign_data_wrapper.columns.fdwvalidator]
+typ = "oid"
+ref = "(references pg_proc.oid)"
+desc = "References a validator function that is responsible for checking the validity of the options given to the foreign-data wrapper, as well as options for foreign servers and user mappings using the foreign-data wrapper. Zero if no validator is provided"
+sel = "case when pg_foreign_data_wrapper.fdwvalidator = 0 then null else pg_foreign_data_wrapper.fdwvalidator::regprocedure::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_foreign_data_wrapper.fdwvalidator)"
+
+[pg_foreign_data_wrapper.columns.fdwacl]
+typ = "aclitem[]"
+ref = ""
+desc = "Access privileges; see Section 5.8 for details"
+sel = "fdwacl::text[]"
+ty = "Option<Vec<aclitem::ForeignDataWrapperAclItem>>"
+exp = "pg_foreign_data_wrapper.fdwacl.map(|fdwacl| fdwacl.map(|acl| aclitem(acl, &ForeignDataWrapperGrantParser)).collect())"
+
+[pg_foreign_data_wrapper.columns.fdwoptions]
+typ = "text[]"
+ref = ""
+desc = "Foreign-data wrapper specific options, as “keyword=value” strings"
+ty = "Option<Vec<Str>>"
+exp = "pg_foreign_data_wrapper.fdwoptions.map(|items| items.map(Into::into).collect())"
+
+[pg_foreign_server.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_foreign_server.columns.srvname]
+typ = "name"
+ref = ""
+desc = "Name of the foreign server"
+sel = "pg_foreign_server.srvname::text"
+ty = "Str"
+exp = "pg_foreign_server.srvname.into()"
+
+[pg_foreign_server.columns.srvowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the foreign server"
+sel = "pg_get_userbyid(pg_foreign_server.srvowner)::text"
+ty = "Str"
+exp = "pg_foreign_server.srvowner.into()"
+
+[pg_foreign_server.columns.srvfdw]
+typ = "oid"
+ref = "(references pg_foreign_data_wrapper.oid)"
+desc = "OID of the foreign-data wrapper of this foreign server"
+sel = "srvfdw_pg_foreign_data_wrapper.fdwname::text"
+ty = "Str"
+exp = "pg_foreign_server.srvfdw.into()"
+joins = ["join pg_foreign_data_wrapper as srvfdw_pg_foreign_data_wrapper on pg_foreign_server.srvfdw = srvfdw_pg_foreign_data_wrapper.oid"]
+
+[pg_foreign_server.columns.srvtype]
+typ = "text"
+ref = ""
+desc = "Type of the server (optional)"
+ty = "Option<Str>"
+exp = "pg_foreign_server.srvtype.map(Into::into)"
+
+[pg_foreign_server.columns.srvversion]
+typ = "text"
+ref = ""
+desc = "Version of the server (optional)"
+ty = "Option<Str>"
+exp = "pg_foreign_server.srvversion.map(Into::into)"
+
+[pg_foreign_server.columns.srvacl]
+typ = "aclitem[]"
+ref = ""
+desc = "Access privileges; see Section 5.8 for details"
+sel = "srvacl::text[]"
+ty = "Option<Vec<aclitem::ForeignServerAclItem>>"
+exp = "pg_foreign_server.srvacl.map(|srvacl| srvacl.map(|acl| aclitem(acl, &ForeignServerGrantParser)).collect())"
+
+[pg_foreign_server.columns.srvoptions]
+typ = "text[]"
+ref = ""
+desc = "Foreign server specific options, as “keyword=value” strings"
+ty = "Option<Vec<Str>>"
+exp = "pg_foreign_server.srvoptions.map(|items| items.map(Into::into).collect())"
+
+[pg_foreign_table.columns.ftrelid]
+typ = "oid"
+ref = "(references pg_class.oid)"
+desc = "The OID of the pg_class entry for this foreign table"
+sel = "pg_foreign_table.ftrelid::regclass::text"
+ty = "Qual"
+exp = "Qual::parse(pg_foreign_table.ftrelid)"
+
+[pg_foreign_table.columns.ftserver]
+typ = "oid"
+ref = "(references pg_foreign_server.oid)"
+desc = "OID of the foreign server for this foreign table"
+sel = "ftserver_pg_foreign_server.srvname::text"
+ty = "Str"
+exp = "pg_foreign_table.ftserver.into()"
+joins = ["join pg_foreign_server as ftserver_pg_foreign_server on pg_foreign_table.ftserver = ftserver_pg_foreign_server.oid"]
+
+[pg_foreign_table.columns.ftoptions]
+typ = "text[]"
+ref = ""
+desc = "Foreign table options, as “keyword=value” strings"
+ty = "Option<Vec<Str>>"
+exp = "pg_foreign_table.ftoptions.map(|items| items.map(Into::into).collect())"
+
 [pg_language]
 hashCol = "lanname"
 
@@ -1459,7 +1596,7 @@ exp = "pg_language.lanname.into()"
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "Owner of the language"
-sel = "pg_get_userbyid(lanowner)::text"
+sel = "pg_get_userbyid(pg_language.lanowner)::text"
 ty = "Str"
 exp = "pg_language.lanowner.into()"
 
@@ -1529,7 +1666,7 @@ filters = ["not starts_with(nspname, 'pg_temp')","not starts_with(nspname, 'pg_t
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "Owner of the namespace"
-sel = "pg_get_userbyid(nspowner)::text"
+sel = "pg_get_userbyid(pg_namespace.nspowner)::text"
 ty = "Str"
 exp = "pg_namespace.nspowner.into()"
 
@@ -1576,7 +1713,7 @@ exp = "pg_opclass.opcnamespace.into()"
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "Owner of the operator class"
-sel = "pg_get_userbyid(opcowner)::text"
+sel = "pg_get_userbyid(pg_opclass.opcowner)::text"
 ty = "Str"
 exp = "pg_opclass.opcowner.into()"
 
@@ -1692,7 +1829,7 @@ exp = "pg_publication.pubname.into()"
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "Owner of the publication"
-sel = "pg_get_userbyid(pubowner)::text"
+sel = "pg_get_userbyid(pg_publication.pubowner)::text"
 ty = "Str"
 exp = "pg_publication.pubowner.into()"
 
@@ -1763,7 +1900,7 @@ exp = "pg_type.typnamespace.into()"
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "Owner of the type"
-sel = "pg_get_userbyid(typowner)::text"
+sel = "pg_get_userbyid(pg_type.typowner)::text"
 ty = "Str"
 exp = "pg_type.typowner.into()"
 
@@ -1999,7 +2136,7 @@ exp = "pg_user_mappings.srvname.into()"
 typ = "oid"
 ref = "(references pg_authid.oid)"
 desc = "OID of the local role being mapped, or zero if the user mapping is public"
-sel = "case when umuser = 0 then null else pg_get_userbyid(umuser)::text end"
+sel = "case when pg_user_mappings.umuser = 0 then null else pg_get_userbyid(pg_user_mappings.umuser)::text end"
 ty = "Option<Str>"
 exp = "pg_user_mappings.umuser.map(Into::into)"
 

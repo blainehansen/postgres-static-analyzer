@@ -74,7 +74,7 @@ const pages: [string, string][] = [
 	["pg_database", "https://www.postgresql.org/docs/17/catalog-pg-database.html"],
 	["pg_db_role_setting", "https://www.postgresql.org/docs/17/catalog-pg-db-role-setting.html"],
 	["pg_default_acl", "https://www.postgresql.org/docs/17/catalog-pg-default-acl.html"],
-	["pg_depend", "https://www.postgresql.org/docs/17/catalog-pg-depend.html"],
+	// ["pg_depend", "https://www.postgresql.org/docs/17/catalog-pg-depend.html"],
 	// ugh really complicated, comments point to *any oid*, and specify what *system catalog* the pointed to object lives in
 	["pg_description", "https://www.postgresql.org/docs/17/catalog-pg-description.html"],
 	["pg_enum", "https://www.postgresql.org/docs/17/catalog-pg-enum.html"],
@@ -106,7 +106,7 @@ const pages: [string, string][] = [
 	["pg_rewrite", "https://www.postgresql.org/docs/17/catalog-pg-rewrite.html"],
 	// ["pg_seclabel", "https://www.postgresql.org/docs/17/catalog-pg-seclabel.html"],
 	["pg_sequence", "https://www.postgresql.org/docs/17/catalog-pg-sequence.html"],
-	["pg_shdepend", "https://www.postgresql.org/docs/17/catalog-pg-shdepend.html"],
+	// ["pg_shdepend", "https://www.postgresql.org/docs/17/catalog-pg-shdepend.html"],
 	["pg_shdescription", "https://www.postgresql.org/docs/17/catalog-pg-shdescription.html"],
 	// ["pg_shseclabel", "https://www.postgresql.org/docs/17/catalog-pg-shseclabel.html"],
 	// ["pg_statistic", "https://www.postgresql.org/docs/17/catalog-pg-statistic.html"],
