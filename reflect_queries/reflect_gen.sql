@@ -369,6 +369,36 @@ from
 ;
 
 
+--! reflect_pg_index : (indcollation[?], indexprs?, indpred?)
+select
+	pg_index.indexrelid::regclass::text as indexrelid, -- oid (references pg_class.oid) The OID of the pg_class entry for this index
+	pg_index.indrelid::regclass::text as indrelid, -- oid (references pg_class.oid) The OID of the pg_class entry for the table this index is for
+	pg_index.indnatts as indnatts, -- int2  The total number of columns in the index (duplicates pg_class.relnatts); this number includes both key and included attributes
+	pg_index.indnkeyatts as indnkeyatts, -- int2  The number of key columns in the index, not counting any included columns, which are merely stored and do not participate in the index semantics
+	pg_index.indisunique as indisunique, -- bool  If true, this is a unique index
+	pg_index.indnullsnotdistinct as indnullsnotdistinct, -- bool  This value is only used for unique indexes. If false, this unique index will consider null values distinct (so the index can contain multiple null values in a column, the default PostgreSQL behavior). If it is true, it will consider null values to be equal (so the index can only contain one null value in a column).
+	pg_index.indisprimary as indisprimary, -- bool  If true, this index represents the primary key of the table (indisunique should always be true when this is true)
+	pg_index.indisexclusion as indisexclusion, -- bool  If true, this index supports an exclusion constraint
+	pg_index.indimmediate as indimmediate, -- bool  If true, the uniqueness check is enforced immediately on insertion (irrelevant if indisunique is not true)
+	pg_index.indisclustered as indisclustered, -- bool  If true, the table was last clustered on this index
+	-- indisvalid bool  If true, the index is currently valid for queries. False means the index is possibly incomplete: it must still be modified by INSERT/UPDATE operations, but it cannot safely be used for queries. If it is unique, the uniqueness property is not guaranteed true either.
+	-- indcheckxmin bool  If true, queries must not use the index until the xmin of this pg_index row is below their TransactionXmin event horizon, because the table may contain broken HOT chains with incompatible rows that they can see
+	-- indisready bool  If true, the index is currently ready for inserts. False means the index must be ignored by INSERT/UPDATE operations.
+	-- indislive bool  If false, the index is in process of being dropped, and should be ignored for all purposes (including HOT-safety decisions)
+	pg_index.indisreplident as indisreplident, -- bool  If true this index has been chosen as “replica identity” using ALTER TABLE ... REPLICA IDENTITY USING INDEX ...
+	pg_index.indkey as indkey, -- int2vector (references pg_attribute.attnum) This is an array of indnatts values that indicate which table columns this index indexes. For example, a value of 1 3 would mean that the first and the third table columns make up the index entries. Key columns come before non-key (included) columns. A zero in this array indicates that the corresponding index attribute is an expression over the table columns, rather than a simple column reference.
+	pg_temp.format_pg_collation_oidvector(pg_index.indcollation) as indcollation, -- oidvector (references pg_collation.oid) For each column in the index key (indnkeyatts values), this contains the OID of the collation to use for the index, or zero if the column is not of a collatable data type.
+	pg_temp.format_pg_opclass_oidvector(pg_index.indclass) as indclass, -- oidvector (references pg_opclass.oid) For each column in the index key (indnkeyatts values), this contains the OID of the operator class to use. See pg_opclass for details.
+	pg_index.indoption::int2[] as indoption, -- int2vector  This is an array of indnkeyatts values that store per-column flag bits. The meaning of the bits is defined by the index's access method.
+	pg_get_expr(pg_index.indexprs, pg_index.indrelid) as indexprs, -- pg_node_tree  Expression trees (in nodeToString() representation) for index attributes that are not simple column references. This is a list with one element for each zero entry in indkey. Null if all index attributes are simple references.
+	pg_get_expr(pg_index.indpred, pg_index.indrelid) as indpred -- pg_node_tree  Expression tree (in nodeToString() representation) for partial index predicate. Null if not a partial index.
+from
+	pg_index
+where 
+	not starts_with(pg_index.indrelid::regclass::text, 'pg_toast')
+;
+
+
 --! reflect_pg_language : (lanplcallfoid?, laninline?, lanvalidator?, lanacl?)
 select
 	-- oid oid  Row identifier

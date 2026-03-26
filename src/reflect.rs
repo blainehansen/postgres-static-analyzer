@@ -28,7 +28,7 @@ pub struct PgState {
 	pub pg_foreign_data_wrapper: Vec<PgForeignDataWrapper>,
 	pub pg_foreign_server: Vec<PgForeignServer>,
 	pub pg_foreign_table: Vec<PgForeignTable>,
-	// pub pg_index: PgIndex,
+	pub pg_index: Vec<PgIndex>,
 	// pub pg_inherits: PgInherits,
 	// pub pg_init_privs: PgInitPrivs,
 	pub pg_language: Set<PgLanguage>,
@@ -94,7 +94,7 @@ pub async fn reflect_pg_state(
 		pg_foreign_data_wrapper,
 		pg_foreign_server,
 		pg_foreign_table,
-		// pg_index,
+		pg_index,
 		// pg_inherits,
 		// pg_init_privs,
 		pg_language,
@@ -153,7 +153,7 @@ pub async fn reflect_pg_state(
 		reflect_pg_foreign_data_wrapper(client),
 		reflect_pg_foreign_server(client),
 		reflect_pg_foreign_table(client),
-		// reflect_pg_index(client),
+		reflect_pg_index(client),
 		// reflect_pg_inherits(client),
 		// reflect_pg_init_privs(client),
 		reflect_pg_language(client),
@@ -214,7 +214,7 @@ pub async fn reflect_pg_state(
 		pg_foreign_data_wrapper,
 		pg_foreign_server,
 		pg_foreign_table,
-		// pg_index,
+		pg_index,
 		// pg_inherits,
 		// pg_init_privs,
 		pg_language,
@@ -547,7 +547,7 @@ use reflect_gen::{PgForeignServer, reflect_pg_foreign_server};
 use reflect_gen::{PgForeignTable, reflect_pg_foreign_table};
 
 // `pg_index`: https://www.postgresql.org/docs/17/catalog-pg-index.html
-// use reflect_gen::{PgIndex, reflect_pg_index};
+use reflect_gen::{PgIndex, reflect_pg_index};
 
 // `pg_inherits`: https://www.postgresql.org/docs/17/catalog-pg-inherits.html
 // use reflect_gen::{PgInherits, reflect_pg_inherits};

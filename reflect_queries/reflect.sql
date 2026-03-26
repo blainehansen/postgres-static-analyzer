@@ -151,6 +151,7 @@ select
 from
 	pg_proc
 	join pg_language as prolang_pg_language on pg_proc.prolang = prolang_pg_language.oid
+where not starts_with(pg_proc.pronamespace::regnamespace::text, 'pg_temp')
 ;
 
 -- `pg_publication`: https://www.postgresql.org/docs/17/catalog-pg-publication.html

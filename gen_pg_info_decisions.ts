@@ -307,7 +307,16 @@ async function decideColumn(
 		const exp = `${tableName}.${name}.map(|items| items.map(i16::unsigned_abs).collect())`
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, filters: [`(${tableName}.${name} is null or not (0 >= any(${tableName}.${name})))`] }]
 	}
-	// pg_attribute.attnum
+	if (typ === "int2vector" && ref === "(references pg_attribute.attnum)") {
+		const nullable = ovNullable ?? /null/i.test(desc)
+		const ty = nullable
+			? 'Option<Vec<u16>>'
+			: 'Vec<u16>'
+		const exp = nullable
+			? `${tableName}.${name}.map(|items| items.map(i16::unsigned_abs).collect())`
+			: `${tableName}.${name}.map(i16::unsigned_abs).collect()`
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
+	}
 	if (name.endsWith("encoding")) {
 		const negativeable = /-1/.test(desc)
 		const sel = negativeable

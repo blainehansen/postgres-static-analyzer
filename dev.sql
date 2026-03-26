@@ -1,38 +1,27 @@
-drop table if exists a;
-
-create table a (
-	i int not null
-);
-
-comment on table a is 'yoyo a table';
-comment on column a.i is 'yoyo i column';
-
-
-select
-	pg_class.relname::text as relname,
-
-	-- resolved.obj_type,
-	-- resolved.qualified_name,
-	-- pg_description.classoid,
-	-- pg_description.objoid,
-	pg_description.objsubid,
-	pg_description.description
-from
-	pg_catalog.pg_description
-	join pg_catalog.pg_class on pg_class.oid = pg_description.classoid
-	-- cross join lateral
-	-- 	pg_temp.pg_desc_resolve(pg_description.classoid, pg_description.objoid, pg_description.objsubid) as resolved
-where pg_description.classoid = 'pg_catalog.pg_class'::regclass
-;
-
-
--- show search_path;
--- select current_schemas(true);
-
--- show search_path;
--- select current_schemas(true);
-
 set search_path = '';
+-- show search_path;
+-- select current_schemas(true);
+
+-- show search_path;
+-- select current_schemas(true);
+
+create function pg_temp.format_pg_opclass_oidvector(oids oidvector) returns text[] as $$
+	begin
+		return array (
+			select quote_ident(pg_namespace.nspname) || '.' || quote_ident(pg_opclass.opcname)
+			from
+				unnest(oids) with ordinality as p(o, ordinality)
+				left join pg_opclass on p.o = pg_opclass.oid
+				left join pg_namespace on pg_opclass.opcnamespace = pg_namespace.oid
+			order by ordinality
+		);
+	end;
+$$ language plpgsql immutable;
+
+select pg_temp.format_pg_opclass_oidvector(pg_index.indclass)
+from pg_index
+-- where 0 = any(pg_index.indclass)
+;
 
 
 -- select

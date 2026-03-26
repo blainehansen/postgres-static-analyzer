@@ -1001,6 +1001,82 @@ pub async fn reflect_pg_foreign_table(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgIndex {
+	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for this index
+	indexrelid: Qual,
+	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for the table this index is for
+	indrelid: Qual,
+	/// `int2`  The total number of columns in the index (duplicates pg_class.relnatts); this number includes both key and included attributes
+	indnatts: u16,
+	/// `int2`  The number of key columns in the index, not counting any included columns, which are merely stored and do not participate in the index semantics
+	indnkeyatts: u16,
+	/// `bool`  If true, this is a unique index
+	indisunique: bool,
+	/// `bool`  This value is only used for unique indexes. If false, this unique index will consider null values distinct (so the index can contain multiple null values in a column, the default PostgreSQL behavior). If it is true, it will consider null values to be equal (so the index can only contain one null value in a column).
+	indnullsnotdistinct: bool,
+	/// `bool`  If true, this index represents the primary key of the table (indisunique should always be true when this is true)
+	indisprimary: bool,
+	/// `bool`  If true, this index supports an exclusion constraint
+	indisexclusion: bool,
+	/// `bool`  If true, the uniqueness check is enforced immediately on insertion (irrelevant if indisunique is not true)
+	indimmediate: bool,
+	/// `bool`  If true, the table was last clustered on this index
+	indisclustered: bool,
+	// indisvalid bool  If true, the index is currently valid for queries. False means the index is possibly incomplete: it must still be modified by INSERT/UPDATE operations, but it cannot safely be used for queries. If it is unique, the uniqueness property is not guaranteed true either.
+	// indcheckxmin bool  If true, queries must not use the index until the xmin of this pg_index row is below their TransactionXmin event horizon, because the table may contain broken HOT chains with incompatible rows that they can see
+	// indisready bool  If true, the index is currently ready for inserts. False means the index must be ignored by INSERT/UPDATE operations.
+	// indislive bool  If false, the index is in process of being dropped, and should be ignored for all purposes (including HOT-safety decisions)
+	/// `bool`  If true this index has been chosen as “replica identity” using ALTER TABLE ... REPLICA IDENTITY USING INDEX ...
+	indisreplident: bool,
+	/// `int2vector` `(references pg_attribute.attnum)` This is an array of indnatts values that indicate which table columns this index indexes. For example, a value of 1 3 would mean that the first and the third table columns make up the index entries. Key columns come before non-key (included) columns. A zero in this array indicates that the corresponding index attribute is an expression over the table columns, rather than a simple column reference.
+	indkey: Vec<u16>,
+	/// `oidvector` `(references pg_collation.oid)` For each column in the index key (indnkeyatts values), this contains the OID of the collation to use for the index, or zero if the column is not of a collatable data type.
+	indcollation: Vec<Option<Qual>>,
+	/// `oidvector` `(references pg_opclass.oid)` For each column in the index key (indnkeyatts values), this contains the OID of the operator class to use. See pg_opclass for details.
+	indclass: Vec<Qual>,
+	/// `int2vector`  This is an array of indnkeyatts values that store per-column flag bits. The meaning of the bits is defined by the index's access method.
+	indoption: Vec<i16>,
+	/// `pg_node_tree`  Expression trees (in nodeToString() representation) for index attributes that are not simple column references. This is a list with one element for each zero entry in indkey. Null if all index attributes are simple references.
+	indexprs: Option<Str>,
+	/// `pg_node_tree`  Expression tree (in nodeToString() representation) for partial index predicate. Null if not a partial index.
+	indpred: Option<Str>,
+}
+
+pub async fn reflect_pg_index(
+	client: &PgClient
+) -> Result<Vec<PgIndex>, postgres::Error> {
+	let pg_index_coll = reflect_crate::queries::reflect_gen::reflect_pg_index().bind(client)
+		.map(|pg_index| {
+			PgIndex {
+				indexrelid: Qual::parse(pg_index.indexrelid),
+				indrelid: Qual::parse(pg_index.indrelid),
+				indnatts: pg_index.indnatts.unsigned_abs(),
+				indnkeyatts: pg_index.indnkeyatts.unsigned_abs(),
+				indisunique: pg_index.indisunique,
+				indnullsnotdistinct: pg_index.indnullsnotdistinct,
+				indisprimary: pg_index.indisprimary,
+				indisexclusion: pg_index.indisexclusion,
+				indimmediate: pg_index.indimmediate,
+				indisclustered: pg_index.indisclustered,
+				indisreplident: pg_index.indisreplident,
+				indkey: pg_index.indkey.map(i16::unsigned_abs).collect(),
+				indcollation: pg_index.indcollation.map(Qual::maybe_parse).collect(),
+				indclass: pg_index.indclass.map(Qual::parse).collect(),
+				indoption: pg_index.indoption.collect(),
+				indexprs: pg_index.indexprs.map(Into::into),
+				indpred: pg_index.indpred.map(Into::into),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_index_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgLanguage {
 	// oid oid  Row identifier
 	/// `name`  Name of the language

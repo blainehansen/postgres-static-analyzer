@@ -114,7 +114,17 @@ pg_foreign_server.srvfdw = { sel="srvfdw_pg_foreign_data_wrapper.fdwname::text",
 # pg_foreign_table = {}
 pg_foreign_table.ftserver = { sel="ftserver_pg_foreign_server.srvname::text", ty="Str", exp="pg_foreign_table.ftserver.into()", joins=["join pg_foreign_server as ftserver_pg_foreign_server on pg_foreign_table.ftserver = ftserver_pg_foreign_server.oid"] }
 
-pg_index = 'todo'
+# pg_index = {}
+pg_index.indrelid = { filters=["not starts_with(pg_index.indrelid::regclass::text, 'pg_toast')"] }
+pg_index.indexprs = { sel="pg_get_expr(pg_index.indexprs, pg_index.indrelid)", ty="Option<Str>", exp="pg_index.indexprs.map(Into::into)" }
+pg_index.indpred = { sel="pg_get_expr(pg_index.indpred, pg_index.indrelid)", ty="Option<Str>", exp="pg_index.indpred.map(Into::into)" }
+pg_index.indisvalid = 'skip'
+pg_index.indcheckxmin = 'skip'
+pg_index.indisready = 'skip'
+pg_index.indislive = 'skip'
+pg_index.indoption = { sel="pg_index.indoption::int2[]", ty="Vec<i16>", exp="pg_index.indoption.collect()" }
+pg_index.indcollation = { sel="pg_temp.format_pg_collation_oidvector(pg_index.indcollation)", ty="Vec<Option<Qual>>", exp="pg_index.indcollation.map(Qual::maybe_parse).collect()" }
+pg_index.indclass = { sel="pg_temp.format_pg_opclass_oidvector(pg_index.indclass)", ty="Vec<Qual>", exp="pg_index.indclass.map(Qual::parse).collect()" }
 
 pg_inherits = 'todo'
 # pg_inherits.inhseqno
