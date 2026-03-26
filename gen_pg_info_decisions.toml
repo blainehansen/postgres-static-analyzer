@@ -2100,6 +2100,68 @@ sel = "paracl::text[]"
 ty = "Option<Vec<aclitem::ParameterAclItem>>"
 exp = "pg_parameter_acl.paracl.map(|paracl| paracl.map(|acl| aclitem(acl, &ParameterGrantParser)).collect())"
 
+[pg_partitioned_table.columns.partrelid]
+typ = "oid"
+ref = "(references pg_class.oid)"
+desc = "The OID of the pg_class entry for this partitioned table"
+sel = "pg_partitioned_table.partrelid::regclass::text"
+ty = "Qual"
+exp = "Qual::parse(pg_partitioned_table.partrelid)"
+
+[pg_partitioned_table.columns.partstrat]
+typ = "char"
+ref = ""
+desc = "Partitioning strategy; h = hash partitioned table, l = list partitioned table, r = range partitioned table"
+ty = "PgPartitionedTablePartstrat"
+exp = "PgPartitionedTablePartstrat::pg_from_char(pg_partitioned_table.partstrat)"
+pgEnum = "'h' => HashPartitionedTable, 'l' => ListPartitionedTable, 'r' => RangePartitionedTable"
+
+[pg_partitioned_table.columns.partnatts]
+typ = "int2"
+ref = ""
+desc = "The number of columns in the partition key"
+ty = "u16"
+exp = "pg_partitioned_table.partnatts.unsigned_abs()"
+
+[pg_partitioned_table.columns.partdefid]
+typ = "oid"
+ref = "(references pg_class.oid)"
+desc = "The OID of the pg_class entry for the default partition of this partitioned table, or zero if this partitioned table does not have a default partition"
+sel = "case when pg_partitioned_table.partdefid = 0 then null else pg_partitioned_table.partdefid::regclass::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_partitioned_table.partdefid)"
+
+[pg_partitioned_table.columns.partattrs]
+typ = "int2vector"
+ref = "(references pg_attribute.attnum)"
+desc = "This is an array of partnatts values that indicate which table columns are part of the partition key. For example, a value of 1 3 would mean that the first and the third table columns make up the partition key. A zero in this array indicates that the corresponding partition key column is an expression, rather than a simple column reference."
+ty = "Vec<u16>"
+exp = "pg_partitioned_table.partattrs.map(i16::unsigned_abs).collect()"
+
+[pg_partitioned_table.columns.partclass]
+typ = "oidvector"
+ref = "(references pg_opclass.oid)"
+desc = "For each column in the partition key, this contains the OID of the operator class to use. See pg_opclass for details."
+sel = "pg_temp.format_pg_opclass_oidvector(pg_partitioned_table.partclass)"
+ty = "Vec<Qual>"
+exp = "pg_partitioned_table.partclass.map(Qual::parse).collect()"
+
+[pg_partitioned_table.columns.partcollation]
+typ = "oidvector"
+ref = "(references pg_collation.oid)"
+desc = "For each column in the partition key, this contains the OID of the collation to use for partitioning, or zero if the column is not of a collatable data type."
+sel = "pg_temp.format_pg_collation_oidvector(pg_partitioned_table.partcollation)"
+ty = "Vec<Option<Qual>>"
+exp = "pg_partitioned_table.partcollation.map(Qual::maybe_parse).collect()"
+
+[pg_partitioned_table.columns.partexprs]
+typ = "pg_node_tree"
+ref = ""
+desc = "Expression trees (in nodeToString() representation) for partition key columns that are not simple column references. This is a list with one element for each zero entry in partattrs. Null if all partition key columns are simple references."
+sel = "pg_get_expr(pg_partitioned_table.partexprs, pg_partitioned_table.partrelid)"
+ty = "Option<Str>"
+exp = "pg_partitioned_table.partexprs.map(Into::into)"
+
 [pg_policy.columns.oid]
 typ = "oid"
 ref = ""

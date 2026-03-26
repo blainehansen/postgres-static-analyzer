@@ -1364,6 +1364,53 @@ pub async fn reflect_pg_parameter_acl(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgPartitionedTable {
+	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for this partitioned table
+	partrelid: Qual,
+	/// `char`  Partitioning strategy; h = hash partitioned table, l = list partitioned table, r = range partitioned table
+	partstrat: PgPartitionedTablePartstrat,
+	/// `int2`  The number of columns in the partition key
+	partnatts: u16,
+	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for the default partition of this partitioned table, or zero if this partitioned table does not have a default partition
+	partdefid: Option<Qual>,
+	/// `int2vector` `(references pg_attribute.attnum)` This is an array of partnatts values that indicate which table columns are part of the partition key. For example, a value of 1 3 would mean that the first and the third table columns make up the partition key. A zero in this array indicates that the corresponding partition key column is an expression, rather than a simple column reference.
+	partattrs: Vec<u16>,
+	/// `oidvector` `(references pg_opclass.oid)` For each column in the partition key, this contains the OID of the operator class to use. See pg_opclass for details.
+	partclass: Vec<Qual>,
+	/// `oidvector` `(references pg_collation.oid)` For each column in the partition key, this contains the OID of the collation to use for partitioning, or zero if the column is not of a collatable data type.
+	partcollation: Vec<Option<Qual>>,
+	/// `pg_node_tree`  Expression trees (in nodeToString() representation) for partition key columns that are not simple column references. This is a list with one element for each zero entry in partattrs. Null if all partition key columns are simple references.
+	partexprs: Option<Str>,
+}
+
+pg_char_enum!(PgPartitionedTablePartstrat { 'h' => HashPartitionedTable, 'l' => ListPartitionedTable, 'r' => RangePartitionedTable });
+
+pub async fn reflect_pg_partitioned_table(
+	client: &PgClient
+) -> Result<Vec<PgPartitionedTable>, postgres::Error> {
+	let pg_partitioned_table_coll = reflect_crate::queries::reflect_gen::reflect_pg_partitioned_table().bind(client)
+		.map(|pg_partitioned_table| {
+			PgPartitionedTable {
+				partrelid: Qual::parse(pg_partitioned_table.partrelid),
+				partstrat: PgPartitionedTablePartstrat::pg_from_char(pg_partitioned_table.partstrat),
+				partnatts: pg_partitioned_table.partnatts.unsigned_abs(),
+				partdefid: Qual::maybe_parse(pg_partitioned_table.partdefid),
+				partattrs: pg_partitioned_table.partattrs.map(i16::unsigned_abs).collect(),
+				partclass: pg_partitioned_table.partclass.map(Qual::parse).collect(),
+				partcollation: pg_partitioned_table.partcollation.map(Qual::maybe_parse).collect(),
+				partexprs: pg_partitioned_table.partexprs.map(Into::into),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_partitioned_table_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgPolicy {
 	// oid oid  Row identifier
 	/// `name`  The name of the policy

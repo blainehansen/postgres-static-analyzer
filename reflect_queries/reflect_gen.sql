@@ -504,6 +504,21 @@ from
 ;
 
 
+--! reflect_pg_partitioned_table : (partdefid?, partcollation[?], partexprs?)
+select
+	pg_partitioned_table.partrelid::regclass::text as partrelid, -- oid (references pg_class.oid) The OID of the pg_class entry for this partitioned table
+	pg_partitioned_table.partstrat as partstrat, -- char  Partitioning strategy; h = hash partitioned table, l = list partitioned table, r = range partitioned table
+	pg_partitioned_table.partnatts as partnatts, -- int2  The number of columns in the partition key
+	case when pg_partitioned_table.partdefid = 0 then null else pg_partitioned_table.partdefid::regclass::text end as partdefid, -- oid (references pg_class.oid) The OID of the pg_class entry for the default partition of this partitioned table, or zero if this partitioned table does not have a default partition
+	pg_partitioned_table.partattrs as partattrs, -- int2vector (references pg_attribute.attnum) This is an array of partnatts values that indicate which table columns are part of the partition key. For example, a value of 1 3 would mean that the first and the third table columns make up the partition key. A zero in this array indicates that the corresponding partition key column is an expression, rather than a simple column reference.
+	pg_temp.format_pg_opclass_oidvector(pg_partitioned_table.partclass) as partclass, -- oidvector (references pg_opclass.oid) For each column in the partition key, this contains the OID of the operator class to use. See pg_opclass for details.
+	pg_temp.format_pg_collation_oidvector(pg_partitioned_table.partcollation) as partcollation, -- oidvector (references pg_collation.oid) For each column in the partition key, this contains the OID of the collation to use for partitioning, or zero if the column is not of a collatable data type.
+	pg_get_expr(pg_partitioned_table.partexprs, pg_partitioned_table.partrelid) as partexprs -- pg_node_tree  Expression trees (in nodeToString() representation) for partition key columns that are not simple column references. This is a list with one element for each zero entry in partattrs. Null if all partition key columns are simple references.
+from
+	pg_partitioned_table
+;
+
+
 --! reflect_pg_policy : (polroles[?], polqual?, polwithcheck?)
 select
 	-- oid oid  Row identifier

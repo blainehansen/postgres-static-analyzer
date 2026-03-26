@@ -147,7 +147,13 @@ pg_opfamily = {}
 
 pg_parameter_acl = {}
 
-pg_partitioned_table = 'todo'
+# pg_partitioned_table = {}
+pg_partitioned_table.partclass = { sel="pg_temp.format_pg_opclass_oidvector(pg_partitioned_table.partclass)", ty="Vec<Qual>", exp="pg_partitioned_table.partclass.map(Qual::parse).collect()" }
+pg_partitioned_table.partcollation = { sel="pg_temp.format_pg_collation_oidvector(pg_partitioned_table.partcollation)", ty="Vec<Option<Qual>>", exp="pg_partitioned_table.partcollation.map(Qual::maybe_parse).collect()" }
+pg_partitioned_table.partexprs = { sel="pg_get_expr(pg_partitioned_table.partexprs, pg_partitioned_table.partrelid)", ty="Option<Str>", exp="pg_partitioned_table.partexprs.map(Into::into)" }
+# Partitioning strategy; h = hash partitioned table, l = list partitioned table, r = range partitioned table
+pg_partitioned_table.partstrat = { ty="PgPartitionedTablePartstrat", exp="PgPartitionedTablePartstrat::pg_from_char(pg_partitioned_table.partstrat)", pgEnum="'h' => HashPartitionedTable, 'l' => ListPartitionedTable, 'r' => RangePartitionedTable" }
+
 
 # pg_policy = {}
 pg_policy.polqual = { sel="pg_get_expr(pg_policy.polqual, pg_policy.polrelid)", ty="Option<Str>", exp="pg_policy.polqual.map(Into::into)" }
