@@ -459,6 +459,41 @@ from
 ;
 
 
+--! reflect_pg_operator : (oprleft?, oprresult?, oprcom?, oprnegate?, oprcode?, oprrest?, oprjoin?)
+select
+	pg_operator.oid::regoperator::text as oid, -- oid  Row identifier
+	pg_operator.oprname::text as oprname, -- name  Name of the operator
+	pg_operator.oprnamespace::regnamespace::text as oprnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this operator
+	pg_get_userbyid(pg_operator.oprowner)::text as oprowner, -- oid (references pg_authid.oid) Owner of the operator
+	pg_operator.oprkind as oprkind, -- char  b = infix operator (“both”), or l = prefix operator (“left”)
+	pg_operator.oprcanmerge as oprcanmerge, -- bool  This operator supports merge joins
+	pg_operator.oprcanhash as oprcanhash, -- bool  This operator supports hash joins
+	case when pg_operator.oprleft = 0 then null else pg_operator.oprleft::regtype::text end as oprleft, -- oid (references pg_type.oid) Type of the left operand (zero for a prefix operator)
+	pg_operator.oprright::regtype::text as oprright, -- oid (references pg_type.oid) Type of the right operand
+	case when pg_operator.oprresult = 0 then null else pg_operator.oprresult::regtype::text end as oprresult, -- oid (references pg_type.oid) Type of the result (zero for a not-yet-defined “shell” operator)
+	case when pg_operator.oprcom = 0 then null else pg_operator.oprcom::regoperator::text end as oprcom, -- oid (references pg_operator.oid) Commutator of this operator (zero if none)
+	case when pg_operator.oprnegate = 0 then null else pg_operator.oprnegate::regoperator::text end as oprnegate, -- oid (references pg_operator.oid) Negator of this operator (zero if none)
+	case when oprcode = 0 then null else oprcode::regproc::text end as oprcode, -- regproc (references pg_proc.oid) Function that implements this operator (zero for a not-yet-defined “shell” operator)
+	case when oprrest = 0 then null else oprrest::regproc::text end as oprrest, -- regproc (references pg_proc.oid) Restriction selectivity estimation function for this operator (zero if none)
+	case when oprjoin = 0 then null else oprjoin::regproc::text end as oprjoin -- regproc (references pg_proc.oid) Join selectivity estimation function for this operator (zero if none)
+from
+	pg_operator
+;
+
+
+--! reflect_pg_opfamily : ()
+select
+	-- oid oid  Row identifier
+	opfmethod_pg_am.amname::text as opfmethod, -- oid (references pg_am.oid) Index access method operator family is for
+	pg_opfamily.opfname::text as opfname, -- name  Name of this operator family
+	pg_opfamily.opfnamespace::regnamespace::text as opfnamespace, -- oid (references pg_namespace.oid) Namespace of this operator family
+	pg_get_userbyid(pg_opfamily.opfowner)::text as opfowner -- oid (references pg_authid.oid) Owner of the operator family
+from
+	pg_opfamily
+	join pg_am as opfmethod_pg_am on pg_opfamily.opfmethod = opfmethod_pg_am.oid
+;
+
+
 --! reflect_pg_policy : (polroles[?], polqual?, polwithcheck?)
 select
 	-- oid oid  Row identifier

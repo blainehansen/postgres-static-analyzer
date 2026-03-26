@@ -1921,6 +1921,164 @@ sel = "case when pg_opclass.opckeytype = 0 then null else pg_opclass.opckeytype:
 ty = "Option<Qual>"
 exp = "Qual::maybe_parse(pg_opclass.opckeytype)"
 
+[pg_operator]
+hashCol = true
+
+[pg_operator.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+sel = "pg_operator.oid::regoperator::text"
+ty = "Qual"
+exp = "Qual::parse(pg_operator.oid)"
+
+[pg_operator.columns.oprname]
+typ = "name"
+ref = ""
+desc = "Name of the operator"
+sel = "pg_operator.oprname::text"
+ty = "Str"
+exp = "pg_operator.oprname.into()"
+
+[pg_operator.columns.oprnamespace]
+typ = "oid"
+ref = "(references pg_namespace.oid)"
+desc = "The OID of the namespace that contains this operator"
+sel = "pg_operator.oprnamespace::regnamespace::text"
+ty = "Str"
+exp = "pg_operator.oprnamespace.into()"
+
+[pg_operator.columns.oprowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the operator"
+sel = "pg_get_userbyid(pg_operator.oprowner)::text"
+ty = "Str"
+exp = "pg_operator.oprowner.into()"
+
+[pg_operator.columns.oprkind]
+typ = "char"
+ref = ""
+desc = "b = infix operator (“both”), or l = prefix operator (“left”)"
+ty = "PgOperatorOprkind"
+exp = "PgOperatorOprkind::pg_from_char(pg_operator.oprkind)"
+pgEnum = "'b' => InfixOperatorBoth, 'l' => PrefixOperatorLeft"
+
+[pg_operator.columns.oprcanmerge]
+typ = "bool"
+ref = ""
+desc = "This operator supports merge joins"
+ty = "bool"
+
+[pg_operator.columns.oprcanhash]
+typ = "bool"
+ref = ""
+desc = "This operator supports hash joins"
+ty = "bool"
+
+[pg_operator.columns.oprleft]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "Type of the left operand (zero for a prefix operator)"
+sel = "case when pg_operator.oprleft = 0 then null else pg_operator.oprleft::regtype::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_operator.oprleft)"
+
+[pg_operator.columns.oprright]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "Type of the right operand"
+sel = "pg_operator.oprright::regtype::text"
+ty = "Qual"
+exp = "Qual::parse(pg_operator.oprright)"
+
+[pg_operator.columns.oprresult]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "Type of the result (zero for a not-yet-defined “shell” operator)"
+sel = "case when pg_operator.oprresult = 0 then null else pg_operator.oprresult::regtype::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_operator.oprresult)"
+
+[pg_operator.columns.oprcom]
+typ = "oid"
+ref = "(references pg_operator.oid)"
+desc = "Commutator of this operator (zero if none)"
+sel = "case when pg_operator.oprcom = 0 then null else pg_operator.oprcom::regoperator::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_operator.oprcom)"
+
+[pg_operator.columns.oprnegate]
+typ = "oid"
+ref = "(references pg_operator.oid)"
+desc = "Negator of this operator (zero if none)"
+sel = "case when pg_operator.oprnegate = 0 then null else pg_operator.oprnegate::regoperator::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_operator.oprnegate)"
+
+[pg_operator.columns.oprcode]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "Function that implements this operator (zero for a not-yet-defined “shell” operator)"
+sel = "case when oprcode = 0 then null else oprcode::regproc::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_operator.oprcode)"
+
+[pg_operator.columns.oprrest]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "Restriction selectivity estimation function for this operator (zero if none)"
+sel = "case when oprrest = 0 then null else oprrest::regproc::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_operator.oprrest)"
+
+[pg_operator.columns.oprjoin]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "Join selectivity estimation function for this operator (zero if none)"
+sel = "case when oprjoin = 0 then null else oprjoin::regproc::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_operator.oprjoin)"
+
+[pg_opfamily.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_opfamily.columns.opfmethod]
+typ = "oid"
+ref = "(references pg_am.oid)"
+desc = "Index access method operator family is for"
+sel = "opfmethod_pg_am.amname::text"
+ty = "Str"
+exp = "pg_opfamily.opfmethod.into()"
+joins = ["join pg_am as opfmethod_pg_am on pg_opfamily.opfmethod = opfmethod_pg_am.oid"]
+
+[pg_opfamily.columns.opfname]
+typ = "name"
+ref = ""
+desc = "Name of this operator family"
+sel = "pg_opfamily.opfname::text"
+ty = "Str"
+exp = "pg_opfamily.opfname.into()"
+
+[pg_opfamily.columns.opfnamespace]
+typ = "oid"
+ref = "(references pg_namespace.oid)"
+desc = "Namespace of this operator family"
+sel = "pg_opfamily.opfnamespace::regnamespace::text"
+ty = "Str"
+exp = "pg_opfamily.opfnamespace.into()"
+
+[pg_opfamily.columns.opfowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the operator family"
+sel = "pg_get_userbyid(pg_opfamily.opfowner)::text"
+ty = "Str"
+exp = "pg_opfamily.opfowner.into()"
+
 [pg_policy.columns.oid]
 typ = "oid"
 ref = ""

@@ -176,6 +176,8 @@ async function decideColumn(
 			? `case when ${tableName}.${name} = 0 then null else ${tableName}.${name}::regnamespace::text end`
 			: `${tableName}.${name}::regnamespace::text`
 		const [ty, exp] = makeStr(tableName, name, nullable)
+		// TODO figure out if this is always a safe default
+		// const filters = ["not starts_with(nspname, 'pg_temp')", "not starts_with(nspname, 'pg_toast')"]
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
 	if (typ === "oid" && ref === "(references pg_database.oid)") {

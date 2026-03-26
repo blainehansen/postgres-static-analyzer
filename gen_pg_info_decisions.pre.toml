@@ -129,6 +129,7 @@ pg_index.indclass = { sel="pg_temp.format_pg_opclass_oidvector(pg_index.indclass
 # pg_inherits = {}
 pg_inherits.inhdetachpending = 'skip'
 
+# another nightmare anything references anything
 pg_init_privs = 'todo'
 
 pg_language = {}
@@ -138,9 +139,11 @@ pg_namespace.nspname = { filters=["not starts_with(nspname, 'pg_temp')", "not st
 
 pg_opclass = {}
 
-pg_operator = 'todo'
+# pg_operator = {}
+# b = infix operator (“both”), or l = prefix operator (“left”)
+pg_operator.oprkind = { ty="PgOperatorOprkind", exp="PgOperatorOprkind::pg_from_char(pg_operator.oprkind)", pgEnum="'b' => InfixOperatorBoth, 'l' => PrefixOperatorLeft" }
 
-pg_opfamily = 'todo'
+pg_opfamily = {}
 
 pg_parameter_acl = 'todo'
 

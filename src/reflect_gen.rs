@@ -1233,6 +1233,109 @@ pub async fn reflect_pg_opclass(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgOperator {
+	/// `oid`  Row identifier
+	oid: Qual,
+	/// `name`  Name of the operator
+	oprname: Str,
+	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this operator
+	oprnamespace: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the operator
+	oprowner: Str,
+	/// `char`  b = infix operator (“both”), or l = prefix operator (“left”)
+	oprkind: PgOperatorOprkind,
+	/// `bool`  This operator supports merge joins
+	oprcanmerge: bool,
+	/// `bool`  This operator supports hash joins
+	oprcanhash: bool,
+	/// `oid` `(references pg_type.oid)` Type of the left operand (zero for a prefix operator)
+	oprleft: Option<Qual>,
+	/// `oid` `(references pg_type.oid)` Type of the right operand
+	oprright: Qual,
+	/// `oid` `(references pg_type.oid)` Type of the result (zero for a not-yet-defined “shell” operator)
+	oprresult: Option<Qual>,
+	/// `oid` `(references pg_operator.oid)` Commutator of this operator (zero if none)
+	oprcom: Option<Qual>,
+	/// `oid` `(references pg_operator.oid)` Negator of this operator (zero if none)
+	oprnegate: Option<Qual>,
+	/// `regproc` `(references pg_proc.oid)` Function that implements this operator (zero for a not-yet-defined “shell” operator)
+	oprcode: Option<Qual>,
+	/// `regproc` `(references pg_proc.oid)` Restriction selectivity estimation function for this operator (zero if none)
+	oprrest: Option<Qual>,
+	/// `regproc` `(references pg_proc.oid)` Join selectivity estimation function for this operator (zero if none)
+	oprjoin: Option<Qual>,
+}
+impl_qual_hash_and_equivalent!(PgOperator);
+
+pg_char_enum!(PgOperatorOprkind { 'b' => InfixOperatorBoth, 'l' => PrefixOperatorLeft });
+
+pub async fn reflect_pg_operator(
+	client: &PgClient
+) -> Result<Set<PgOperator>, postgres::Error> {
+	let pg_operator_coll = reflect_crate::queries::reflect_gen::reflect_pg_operator().bind(client)
+		.map(|pg_operator| {
+			PgOperator {
+				oid: Qual::parse(pg_operator.oid),
+				oprname: pg_operator.oprname.into(),
+				oprnamespace: pg_operator.oprnamespace.into(),
+				oprowner: pg_operator.oprowner.into(),
+				oprkind: PgOperatorOprkind::pg_from_char(pg_operator.oprkind),
+				oprcanmerge: pg_operator.oprcanmerge,
+				oprcanhash: pg_operator.oprcanhash,
+				oprleft: Qual::maybe_parse(pg_operator.oprleft),
+				oprright: Qual::parse(pg_operator.oprright),
+				oprresult: Qual::maybe_parse(pg_operator.oprresult),
+				oprcom: Qual::maybe_parse(pg_operator.oprcom),
+				oprnegate: Qual::maybe_parse(pg_operator.oprnegate),
+				oprcode: Qual::maybe_parse(pg_operator.oprcode),
+				oprrest: Qual::maybe_parse(pg_operator.oprrest),
+				oprjoin: Qual::maybe_parse(pg_operator.oprjoin),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_operator_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgOpfamily {
+	// oid oid  Row identifier
+	/// `oid` `(references pg_am.oid)` Index access method operator family is for
+	opfmethod: Str,
+	/// `name`  Name of this operator family
+	opfname: Str,
+	/// `oid` `(references pg_namespace.oid)` Namespace of this operator family
+	opfnamespace: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the operator family
+	opfowner: Str,
+}
+
+pub async fn reflect_pg_opfamily(
+	client: &PgClient
+) -> Result<Vec<PgOpfamily>, postgres::Error> {
+	let pg_opfamily_coll = reflect_crate::queries::reflect_gen::reflect_pg_opfamily().bind(client)
+		.map(|pg_opfamily| {
+			PgOpfamily {
+				opfmethod: pg_opfamily.opfmethod.into(),
+				opfname: pg_opfamily.opfname.into(),
+				opfnamespace: pg_opfamily.opfnamespace.into(),
+				opfowner: pg_opfamily.opfowner.into(),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_opfamily_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgPolicy {
 	// oid oid  Row identifier
 	/// `name`  The name of the policy
