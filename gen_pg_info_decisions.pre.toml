@@ -126,8 +126,8 @@ pg_index.indoption = { sel="pg_index.indoption::int2[]", ty="Vec<i16>", exp="pg_
 pg_index.indcollation = { sel="pg_temp.format_pg_collation_oidvector(pg_index.indcollation)", ty="Vec<Option<Qual>>", exp="pg_index.indcollation.map(Qual::maybe_parse).collect()" }
 pg_index.indclass = { sel="pg_temp.format_pg_opclass_oidvector(pg_index.indclass)", ty="Vec<Qual>", exp="pg_index.indclass.map(Qual::parse).collect()" }
 
-pg_inherits = 'todo'
-# pg_inherits.inhseqno
+# pg_inherits = {}
+pg_inherits.inhdetachpending = 'skip'
 
 pg_init_privs = 'todo'
 

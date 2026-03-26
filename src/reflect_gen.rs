@@ -1077,6 +1077,37 @@ pub async fn reflect_pg_index(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgInherits {
+	/// `oid` `(references pg_class.oid)` The OID of the child table or index
+	inhrelid: Qual,
+	/// `oid` `(references pg_class.oid)` The OID of the parent table or index
+	inhparent: Qual,
+	/// `int4`  If there is more than one direct parent for a child table (multiple inheritance), this number tells the order in which the inherited columns are to be arranged. The count starts at 1. Indexes cannot have multiple inheritance, since they can only inherit when using declarative partitioning.
+	inhseqno: u32,
+	// inhdetachpending bool  true for a partition that is in the process of being detached; false otherwise.
+}
+
+pub async fn reflect_pg_inherits(
+	client: &PgClient
+) -> Result<Vec<PgInherits>, postgres::Error> {
+	let pg_inherits_coll = reflect_crate::queries::reflect_gen::reflect_pg_inherits().bind(client)
+		.map(|pg_inherits| {
+			PgInherits {
+				inhrelid: Qual::parse(pg_inherits.inhrelid),
+				inhparent: Qual::parse(pg_inherits.inhparent),
+				inhseqno: pg_inherits.inhseqno.unsigned_abs(),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_inherits_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgLanguage {
 	// oid oid  Row identifier
 	/// `name`  Name of the language

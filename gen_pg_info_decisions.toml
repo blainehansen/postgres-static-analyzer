@@ -1719,6 +1719,35 @@ sel = "pg_get_expr(pg_index.indpred, pg_index.indrelid)"
 ty = "Option<Str>"
 exp = "pg_index.indpred.map(Into::into)"
 
+[pg_inherits.columns.inhrelid]
+typ = "oid"
+ref = "(references pg_class.oid)"
+desc = "The OID of the child table or index"
+sel = "pg_inherits.inhrelid::regclass::text"
+ty = "Qual"
+exp = "Qual::parse(pg_inherits.inhrelid)"
+
+[pg_inherits.columns.inhparent]
+typ = "oid"
+ref = "(references pg_class.oid)"
+desc = "The OID of the parent table or index"
+sel = "pg_inherits.inhparent::regclass::text"
+ty = "Qual"
+exp = "Qual::parse(pg_inherits.inhparent)"
+
+[pg_inherits.columns.inhseqno]
+typ = "int4"
+ref = ""
+desc = "If there is more than one direct parent for a child table (multiple inheritance), this number tells the order in which the inherited columns are to be arranged. The count starts at 1. Indexes cannot have multiple inheritance, since they can only inherit when using declarative partitioning."
+ty = "u32"
+exp = "pg_inherits.inhseqno.unsigned_abs()"
+
+[pg_inherits.columns.inhdetachpending]
+typ = "bool"
+ref = ""
+desc = "true for a partition that is in the process of being detached; false otherwise."
+skip = true
+
 [pg_language]
 hashCol = "lanname"
 
