@@ -2079,6 +2079,27 @@ sel = "pg_get_userbyid(pg_opfamily.opfowner)::text"
 ty = "Str"
 exp = "pg_opfamily.opfowner.into()"
 
+[pg_parameter_acl.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_parameter_acl.columns.parname]
+typ = "text"
+ref = ""
+desc = "The name of a configuration parameter for which privileges are granted"
+ty = "Str"
+exp = "pg_parameter_acl.parname.into()"
+
+[pg_parameter_acl.columns.paracl]
+typ = "aclitem[]"
+ref = ""
+desc = "Access privileges; see Section 5.8 for details"
+sel = "paracl::text[]"
+ty = "Option<Vec<aclitem::ParameterAclItem>>"
+exp = "pg_parameter_acl.paracl.map(|paracl| paracl.map(|acl| aclitem(acl, &ParameterGrantParser)).collect())"
+
 [pg_policy.columns.oid]
 typ = "oid"
 ref = ""

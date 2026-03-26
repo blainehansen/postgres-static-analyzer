@@ -145,7 +145,7 @@ pg_operator.oprkind = { ty="PgOperatorOprkind", exp="PgOperatorOprkind::pg_from_
 
 pg_opfamily = {}
 
-pg_parameter_acl = 'todo'
+pg_parameter_acl = {}
 
 pg_partitioned_table = 'todo'
 

@@ -36,7 +36,7 @@ pub struct PgState {
 	pub pg_opclass: Vec<PgOpclass>,
 	pub pg_operator: Set<PgOperator>,
 	pub pg_opfamily: Vec<PgOpfamily>,
-	// pub pg_parameter_acl: Vec<PgParameterAcl>,
+	pub pg_parameter_acl: Vec<PgParameterAcl>,
 	// pub pg_partitioned_table: Vec<PgPartitionedTable>,
 	pub pg_policy: Vec<PgPolicy>,
 	pub pg_proc: Set<PgProc>,
@@ -102,7 +102,7 @@ pub async fn reflect_pg_state(
 		pg_opclass,
 		pg_operator,
 		pg_opfamily,
-		// pg_parameter_acl,
+		pg_parameter_acl,
 		// pg_partitioned_table,
 		pg_policy,
 		pg_proc,
@@ -161,7 +161,7 @@ pub async fn reflect_pg_state(
 		reflect_pg_opclass(client),
 		reflect_pg_operator(client),
 		reflect_pg_opfamily(client),
-		// reflect_pg_parameter_acl(client),
+		reflect_pg_parameter_acl(client),
 		// reflect_pg_partitioned_table(client),
 		reflect_pg_policy(client),
 		reflect_pg_proc(client),
@@ -222,7 +222,7 @@ pub async fn reflect_pg_state(
 		pg_opclass,
 		pg_operator,
 		pg_opfamily,
-		// pg_parameter_acl,
+		pg_parameter_acl,
 		// pg_partitioned_table,
 		pg_policy,
 		pg_proc,
@@ -571,7 +571,7 @@ use reflect_gen::{PgOperator, reflect_pg_operator};
 use reflect_gen::{PgOpfamily, reflect_pg_opfamily};
 
 // `pg_parameter_acl`: https://www.postgresql.org/docs/17/catalog-pg-parameter-acl.html
-// use reflect_gen::{PgParameterAcl, reflect_pg_parameter_acl};
+use reflect_gen::{PgParameterAcl, reflect_pg_parameter_acl};
 
 // `pg_partitioned_table`: https://www.postgresql.org/docs/17/catalog-pg-partitioned-table.html
 // use reflect_gen::{PgPartitionedTable, reflect_pg_partitioned_table};

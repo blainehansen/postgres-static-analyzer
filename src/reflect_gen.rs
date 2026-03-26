@@ -1336,6 +1336,34 @@ pub async fn reflect_pg_opfamily(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgParameterAcl {
+	// oid oid  Row identifier
+	/// `text`  The name of a configuration parameter for which privileges are granted
+	parname: Str,
+	/// `aclitem[]`  Access privileges; see Section 5.8 for details
+	paracl: Option<Vec<aclitem::ParameterAclItem>>,
+}
+
+pub async fn reflect_pg_parameter_acl(
+	client: &PgClient
+) -> Result<Vec<PgParameterAcl>, postgres::Error> {
+	let pg_parameter_acl_coll = reflect_crate::queries::reflect_gen::reflect_pg_parameter_acl().bind(client)
+		.map(|pg_parameter_acl| {
+			PgParameterAcl {
+				parname: pg_parameter_acl.parname.into(),
+				paracl: pg_parameter_acl.paracl.map(|paracl| paracl.map(|acl| aclitem(acl, &ParameterGrantParser)).collect()),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_parameter_acl_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgPolicy {
 	// oid oid  Row identifier
 	/// `name`  The name of the policy

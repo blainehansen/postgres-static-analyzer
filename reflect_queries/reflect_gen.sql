@@ -494,6 +494,16 @@ from
 ;
 
 
+--! reflect_pg_parameter_acl : (paracl?)
+select
+	-- oid oid  Row identifier
+	pg_parameter_acl.parname as parname, -- text  The name of a configuration parameter for which privileges are granted
+	paracl::text[] as paracl -- aclitem[]  Access privileges; see Section 5.8 for details
+from
+	pg_parameter_acl
+;
+
+
 --! reflect_pg_policy : (polroles[?], polqual?, polwithcheck?)
 select
 	-- oid oid  Row identifier
