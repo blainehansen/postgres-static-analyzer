@@ -198,7 +198,8 @@ pg_ts_config_map = 'todo'
 # pg_ts_config_map.maptokentype = { ty="i16" }
 # pg_ts_config_map.mapseqno = { ty="i16" }
 
-pg_ts_dict = 'todo'
+# pg_ts_dict = {}
+pg_ts_dict.dictinitoption = { nullable=true }
 
 # pg_type = {}
 pg_type.typlen = { ty="i16" }

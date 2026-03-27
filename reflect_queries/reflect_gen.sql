@@ -550,6 +550,19 @@ from
 ;
 
 
+--! reflect_pg_ts_dict : (dictinitoption?)
+select
+	pg_ts_dict.oid::regdictionary::text as oid, -- oid  Row identifier
+	pg_ts_dict.dictname::text as dictname, -- name  Text search dictionary name
+	pg_ts_dict.dictnamespace::regnamespace::text as dictnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this dictionary
+	pg_get_userbyid(pg_ts_dict.dictowner)::text as dictowner, -- oid (references pg_authid.oid) Owner of the dictionary
+	-- dicttemplate oid (references pg_ts_template.oid) The OID of the text search template for this dictionary
+	pg_ts_dict.dictinitoption as dictinitoption -- text  Initialization option string for the template
+from
+	pg_ts_dict
+;
+
+
 --! reflect_pg_type : (typrelid?, typsubscript?, typelem?, typarray?, typreceive?, typsend?, typmodin?, typmodout?, typanalyze?, typbasetype?, typtypmod?, typcollation?, typdefaultbin?, typdefault?, typacl?)
 select
 	pg_type.oid::regtype::text as oid, -- oid  Row identifier

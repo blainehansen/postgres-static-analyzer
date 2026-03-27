@@ -1503,6 +1503,44 @@ pub async fn reflect_pg_publication(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgTsDict {
+	/// `oid`  Row identifier
+	oid: Qual,
+	/// `name`  Text search dictionary name
+	dictname: Str,
+	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this dictionary
+	dictnamespace: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the dictionary
+	dictowner: Str,
+	// dicttemplate oid (references pg_ts_template.oid) The OID of the text search template for this dictionary
+	/// `text`  Initialization option string for the template
+	dictinitoption: Option<Str>,
+}
+impl_qual_hash_and_equivalent!(PgTsDict);
+
+pub async fn reflect_pg_ts_dict(
+	client: &PgClient
+) -> Result<Set<PgTsDict>, postgres::Error> {
+	let pg_ts_dict_coll = reflect_crate::queries::reflect_gen::reflect_pg_ts_dict().bind(client)
+		.map(|pg_ts_dict| {
+			PgTsDict {
+				oid: Qual::parse(pg_ts_dict.oid),
+				dictname: pg_ts_dict.dictname.into(),
+				dictnamespace: pg_ts_dict.dictnamespace.into(),
+				dictowner: pg_ts_dict.dictowner.into(),
+				dictinitoption: pg_ts_dict.dictinitoption.map(Into::into),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_ts_dict_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgType {
 	/// `oid`  Row identifier
 	oid: Qual,

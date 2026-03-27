@@ -2283,6 +2283,54 @@ ref = ""
 desc = "If true, operations on a leaf partition are replicated using the identity and schema of its topmost partitioned ancestor mentioned in the publication instead of its own."
 ty = "bool"
 
+[pg_ts_dict]
+hashCol = true
+
+[pg_ts_dict.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+sel = "pg_ts_dict.oid::regdictionary::text"
+ty = "Qual"
+exp = "Qual::parse(pg_ts_dict.oid)"
+
+[pg_ts_dict.columns.dictname]
+typ = "name"
+ref = ""
+desc = "Text search dictionary name"
+sel = "pg_ts_dict.dictname::text"
+ty = "Str"
+exp = "pg_ts_dict.dictname.into()"
+
+[pg_ts_dict.columns.dictnamespace]
+typ = "oid"
+ref = "(references pg_namespace.oid)"
+desc = "The OID of the namespace that contains this dictionary"
+sel = "pg_ts_dict.dictnamespace::regnamespace::text"
+ty = "Str"
+exp = "pg_ts_dict.dictnamespace.into()"
+
+[pg_ts_dict.columns.dictowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the dictionary"
+sel = "pg_get_userbyid(pg_ts_dict.dictowner)::text"
+ty = "Str"
+exp = "pg_ts_dict.dictowner.into()"
+
+[pg_ts_dict.columns.dicttemplate]
+typ = "oid"
+ref = "(references pg_ts_template.oid)"
+desc = "The OID of the text search template for this dictionary"
+skip = true
+
+[pg_ts_dict.columns.dictinitoption]
+typ = "text"
+ref = ""
+desc = "Initialization option string for the template"
+ty = "Option<Str>"
+exp = "pg_ts_dict.dictinitoption.map(Into::into)"
+
 [pg_type]
 hashCol = true
 
