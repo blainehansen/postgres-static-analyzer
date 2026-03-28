@@ -198,16 +198,16 @@ pg_statistic_ext.stxkind = { ty="Vec<PgStatisticExtStxkind>", exp="pg_statistic_
 # pg_node_tree  Expression trees (in nodeToString() representation) for statistics object attributes that are not simple column references. This is a list with one element per expression. Null if all statistics object attributes are simple references.
 pg_statistic_ext.stxexprs = { sel="pg_get_expr(pg_statistic_ext.stxexprs, pg_statistic_ext.stxrelid)", ty="Option<Str>", exp="pg_statistic_ext.stxexprs.map(Into::into)" }
 
-pg_subscription = 'todo'
-# pg_subscription.subdbid = 'skip'
-# pg_subscription.subname = { filters=["pg_subscription.subdbid = (select oid from pg_database where datname = current_database())"] }
-# # where (setdatabase = 0 or setdatabase = (select oid from pg_database where datname = current_database()))
-# pg_subscription.subskiplsn = 'skip'
-# pg_subscription.suborigin = { nullable=true }
-# # Controls how to handle the streaming of in-progress transactions: f = disallow streaming of in-progress transactions, t = spill the changes of in-progress transactions to disk and apply at once after the transaction is committed on the publisher and received by the subscriber, p = apply changes directly using a parallel apply worker if available (same as t if no worker is available)
-# pg_subscription.substream = { ty="PgSubscriptionSubstream", exp="PgSubscriptionSubstream::pg_from_char(pg_subscription.substream)", pgEnum="'f' => DisallowStreamingInProgress, 't' => SpillApplyAfterCommitted, 'p' => ApplyDirectlyParallel" }
-# # State codes for two-phase mode: d = disabled, p = pending enablement, e = enabled
-# pg_subscription.subtwophasestate = { ty="PgSubscriptionSubtwophasestate", exp="PgSubscriptionSubtwophasestate::pg_from_char(pg_subscription.subtwophasestate)", pgEnum="'d' => Disabled, 'p' => PendingEnablement, 'e' => Enabled" }
+# pg_subscription = {}
+pg_subscription.subdbid = 'skip'
+pg_subscription.subname = { filters=["pg_subscription.subdbid = (select oid from pg_database where datname = current_database())"] }
+# where (setdatabase = 0 or setdatabase = (select oid from pg_database where datname = current_database()))
+pg_subscription.subskiplsn = 'skip'
+pg_subscription.suborigin = { nullable=true }
+# Controls how to handle the streaming of in-progress transactions: f = disallow streaming of in-progress transactions, t = spill the changes of in-progress transactions to disk and apply at once after the transaction is committed on the publisher and received by the subscriber, p = apply changes directly using a parallel apply worker if available (same as t if no worker is available)
+pg_subscription.substream = { ty="PgSubscriptionSubstream", exp="PgSubscriptionSubstream::pg_from_char(pg_subscription.substream)", pgEnum="'f' => DisallowStreamingInProgress, 't' => SpillApplyAfterCommitted, 'p' => ApplyDirectlyParallel" }
+# State codes for two-phase mode: d = disabled, p = pending enablement, e = enabled
+pg_subscription.subtwophasestate = { ty="PgSubscriptionSubtwophasestate", exp="PgSubscriptionSubtwophasestate::pg_from_char(pg_subscription.subtwophasestate)", pgEnum="'d' => Disabled, 'p' => PendingEnablement, 'e' => Enabled" }
 
 pg_trigger = 'todo'
 # pg_trigger.tgtype = { ty="i16" }

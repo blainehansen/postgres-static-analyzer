@@ -1700,6 +1700,78 @@ pub async fn reflect_pg_statistic_ext(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgSubscription {
+	// oid oid  Row identifier
+	// subdbid oid (references pg_database.oid) OID of the database that the subscription resides in
+	// subskiplsn pg_lsn  Finish LSN of the transaction whose changes are to be skipped, if a valid LSN; otherwise 0/0.
+	/// `name`  Name of the subscription
+	subname: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the subscription
+	subowner: Str,
+	/// `bool`  If true, the subscription is enabled and should be replicating
+	subenabled: bool,
+	/// `bool`  If true, the subscription will request that the publisher send data in binary format
+	subbinary: bool,
+	/// `char`  Controls how to handle the streaming of in-progress transactions: f = disallow streaming of in-progress transactions, t = spill the changes of in-progress transactions to disk and apply at once after the transaction is committed on the publisher and received by the subscriber, p = apply changes directly using a parallel apply worker if available (same as t if no worker is available)
+	substream: PgSubscriptionSubstream,
+	/// `char`  State codes for two-phase mode: d = disabled, p = pending enablement, e = enabled
+	subtwophasestate: PgSubscriptionSubtwophasestate,
+	/// `bool`  If true, the subscription will be disabled if one of its workers detects an error
+	subdisableonerr: bool,
+	/// `bool`  If true, the subscription will be required to specify a password for authentication
+	subpasswordrequired: bool,
+	/// `bool`  If true, the subscription will be run with the permissions of the subscription owner
+	subrunasowner: bool,
+	/// `bool`  If true, the associated replication slots (i.e. the main slot and the table sync slots) in the upstream database are enabled to be synchronized to the standbys
+	subfailover: bool,
+	/// `text`  Connection string to the upstream database
+	subconninfo: Str,
+	/// `name`  Name of the replication slot in the upstream database (also used for the local replication origin name); null represents NONE
+	subslotname: Option<Str>,
+	/// `text`  The synchronous_commit setting for the subscription's workers to use
+	subsynccommit: Str,
+	/// `text[]`  Array of subscribed publication names. These reference publications defined in the upstream database. For more on publications see Section 29.1.
+	subpublications: Vec<Str>,
+	/// `text`  The origin value must be either none or any. The default is any. If none, the subscription will request the publisher to only send changes that don't have an origin. If any, the publisher sends changes regardless of their origin.
+	suborigin: Option<Str>,
+}
+
+pg_char_enum!(PgSubscriptionSubstream { 'f' => DisallowStreamingInProgress, 't' => SpillApplyAfterCommitted, 'p' => ApplyDirectlyParallel });
+pg_char_enum!(PgSubscriptionSubtwophasestate { 'd' => Disabled, 'p' => PendingEnablement, 'e' => Enabled });
+
+pub async fn reflect_pg_subscription(
+	client: &PgClient
+) -> Result<Vec<PgSubscription>, postgres::Error> {
+	let pg_subscription_coll = reflect_crate::queries::reflect_gen::reflect_pg_subscription().bind(client)
+		.map(|pg_subscription| {
+			PgSubscription {
+				subname: pg_subscription.subname.into(),
+				subowner: pg_subscription.subowner.into(),
+				subenabled: pg_subscription.subenabled,
+				subbinary: pg_subscription.subbinary,
+				substream: PgSubscriptionSubstream::pg_from_char(pg_subscription.substream),
+				subtwophasestate: PgSubscriptionSubtwophasestate::pg_from_char(pg_subscription.subtwophasestate),
+				subdisableonerr: pg_subscription.subdisableonerr,
+				subpasswordrequired: pg_subscription.subpasswordrequired,
+				subrunasowner: pg_subscription.subrunasowner,
+				subfailover: pg_subscription.subfailover,
+				subconninfo: pg_subscription.subconninfo.into(),
+				subslotname: pg_subscription.subslotname.map(Into::into),
+				subsynccommit: pg_subscription.subsynccommit.into(),
+				subpublications: pg_subscription.subpublications.map(Into::into).collect(),
+				suborigin: pg_subscription.suborigin.map(Into::into),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_subscription_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsDict {
 	/// `oid`  Row identifier
 	oid: Qual,

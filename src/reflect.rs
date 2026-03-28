@@ -52,7 +52,7 @@ pub struct PgState {
 	// pub pg_shdescription: Vec<PgShdescription>,
 	// pub pg_shseclabel: Vec<PgShseclabel>,
 	pub pg_statistic_ext: Vec<PgStatisticExt>,
-	// pub pg_subscription: Vec<PgSubscription>,
+	pub pg_subscription: Vec<PgSubscription>,
 	// pub pg_transform: Vec<PgTransform>,
 	// pub pg_trigger: Vec<PgTrigger>,
 	// pub pg_ts_config: Vec<PgTsConfig>,
@@ -118,7 +118,7 @@ pub async fn reflect_pg_state(
 		// pg_shdescription,
 		// pg_shseclabel,
 		pg_statistic_ext,
-		// pg_subscription,
+		pg_subscription,
 		// pg_transform,
 		// pg_trigger,
 		// pg_ts_config,
@@ -177,7 +177,7 @@ pub async fn reflect_pg_state(
 		// reflect_pg_shdescription(client),
 		// reflect_pg_shseclabel(client),
 		reflect_pg_statistic_ext(client),
-		// reflect_pg_subscription(client),
+		reflect_pg_subscription(client),
 		// reflect_pg_transform(client),
 		// reflect_pg_trigger(client),
 		// reflect_pg_ts_config(client),
@@ -238,7 +238,7 @@ pub async fn reflect_pg_state(
 		// pg_shdescription,
 		// pg_shseclabel,
 		pg_statistic_ext,
-		// pg_subscription,
+		pg_subscription,
 		// pg_transform,
 		// pg_trigger,
 		// pg_ts_config,
@@ -737,7 +737,7 @@ use reflect_gen::{PgSequence, reflect_pg_sequence};
 use reflect_gen::{PgStatisticExt, reflect_pg_statistic_ext};
 
 // `pg_subscription`: https://www.postgresql.org/docs/17/catalog-pg-subscription.html
-// use reflect_gen::{PgSubscription, reflect_pg_subscription};
+use reflect_gen::{PgSubscription, reflect_pg_subscription};
 
 // `pg_transform`: https://www.postgresql.org/docs/17/catalog-pg-transform.html
 // use reflect_gen::{PgTransform, reflect_pg_transform};

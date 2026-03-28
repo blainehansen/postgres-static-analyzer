@@ -621,6 +621,33 @@ from
 ;
 
 
+--! reflect_pg_subscription : (subslotname?, suborigin?)
+select
+	-- oid oid  Row identifier
+	-- subdbid oid (references pg_database.oid) OID of the database that the subscription resides in
+	-- subskiplsn pg_lsn  Finish LSN of the transaction whose changes are to be skipped, if a valid LSN; otherwise 0/0.
+	pg_subscription.subname::text as subname, -- name  Name of the subscription
+	pg_get_userbyid(pg_subscription.subowner)::text as subowner, -- oid (references pg_authid.oid) Owner of the subscription
+	pg_subscription.subenabled as subenabled, -- bool  If true, the subscription is enabled and should be replicating
+	pg_subscription.subbinary as subbinary, -- bool  If true, the subscription will request that the publisher send data in binary format
+	pg_subscription.substream as substream, -- char  Controls how to handle the streaming of in-progress transactions: f = disallow streaming of in-progress transactions, t = spill the changes of in-progress transactions to disk and apply at once after the transaction is committed on the publisher and received by the subscriber, p = apply changes directly using a parallel apply worker if available (same as t if no worker is available)
+	pg_subscription.subtwophasestate as subtwophasestate, -- char  State codes for two-phase mode: d = disabled, p = pending enablement, e = enabled
+	pg_subscription.subdisableonerr as subdisableonerr, -- bool  If true, the subscription will be disabled if one of its workers detects an error
+	pg_subscription.subpasswordrequired as subpasswordrequired, -- bool  If true, the subscription will be required to specify a password for authentication
+	pg_subscription.subrunasowner as subrunasowner, -- bool  If true, the subscription will be run with the permissions of the subscription owner
+	pg_subscription.subfailover as subfailover, -- bool  If true, the associated replication slots (i.e. the main slot and the table sync slots) in the upstream database are enabled to be synchronized to the standbys
+	pg_subscription.subconninfo as subconninfo, -- text  Connection string to the upstream database
+	pg_subscription.subslotname::text as subslotname, -- name  Name of the replication slot in the upstream database (also used for the local replication origin name); null represents NONE
+	pg_subscription.subsynccommit as subsynccommit, -- text  The synchronous_commit setting for the subscription's workers to use
+	pg_subscription.subpublications as subpublications, -- text[]  Array of subscribed publication names. These reference publications defined in the upstream database. For more on publications see Section 29.1.
+	pg_subscription.suborigin as suborigin -- text  The origin value must be either none or any. The default is any. If none, the subscription will request the publisher to only send changes that don't have an origin. If any, the publisher sends changes regardless of their origin.
+from
+	pg_subscription
+where 
+	pg_subscription.subdbid = (select oid from pg_database where datname = current_database())
+;
+
+
 --! reflect_pg_ts_dict : (dictinitoption?)
 select
 	pg_ts_dict.oid::regdictionary::text as oid, -- oid  Row identifier

@@ -2521,6 +2521,129 @@ sel = "pg_get_expr(pg_statistic_ext.stxexprs, pg_statistic_ext.stxrelid)"
 ty = "Option<Str>"
 exp = "pg_statistic_ext.stxexprs.map(Into::into)"
 
+[pg_subscription.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_subscription.columns.subdbid]
+typ = "oid"
+ref = "(references pg_database.oid)"
+desc = "OID of the database that the subscription resides in"
+skip = true
+
+[pg_subscription.columns.subskiplsn]
+typ = "pg_lsn"
+ref = ""
+desc = "Finish LSN of the transaction whose changes are to be skipped, if a valid LSN; otherwise 0/0."
+skip = true
+
+[pg_subscription.columns.subname]
+typ = "name"
+ref = ""
+desc = "Name of the subscription"
+sel = "pg_subscription.subname::text"
+ty = "Str"
+exp = "pg_subscription.subname.into()"
+filters = ["pg_subscription.subdbid = (select oid from pg_database where datname = current_database())"]
+
+[pg_subscription.columns.subowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the subscription"
+sel = "pg_get_userbyid(pg_subscription.subowner)::text"
+ty = "Str"
+exp = "pg_subscription.subowner.into()"
+
+[pg_subscription.columns.subenabled]
+typ = "bool"
+ref = ""
+desc = "If true, the subscription is enabled and should be replicating"
+ty = "bool"
+
+[pg_subscription.columns.subbinary]
+typ = "bool"
+ref = ""
+desc = "If true, the subscription will request that the publisher send data in binary format"
+ty = "bool"
+
+[pg_subscription.columns.substream]
+typ = "char"
+ref = ""
+desc = "Controls how to handle the streaming of in-progress transactions: f = disallow streaming of in-progress transactions, t = spill the changes of in-progress transactions to disk and apply at once after the transaction is committed on the publisher and received by the subscriber, p = apply changes directly using a parallel apply worker if available (same as t if no worker is available)"
+ty = "PgSubscriptionSubstream"
+exp = "PgSubscriptionSubstream::pg_from_char(pg_subscription.substream)"
+pgEnum = "'f' => DisallowStreamingInProgress, 't' => SpillApplyAfterCommitted, 'p' => ApplyDirectlyParallel"
+
+[pg_subscription.columns.subtwophasestate]
+typ = "char"
+ref = ""
+desc = "State codes for two-phase mode: d = disabled, p = pending enablement, e = enabled"
+ty = "PgSubscriptionSubtwophasestate"
+exp = "PgSubscriptionSubtwophasestate::pg_from_char(pg_subscription.subtwophasestate)"
+pgEnum = "'d' => Disabled, 'p' => PendingEnablement, 'e' => Enabled"
+
+[pg_subscription.columns.subdisableonerr]
+typ = "bool"
+ref = ""
+desc = "If true, the subscription will be disabled if one of its workers detects an error"
+ty = "bool"
+
+[pg_subscription.columns.subpasswordrequired]
+typ = "bool"
+ref = ""
+desc = "If true, the subscription will be required to specify a password for authentication"
+ty = "bool"
+
+[pg_subscription.columns.subrunasowner]
+typ = "bool"
+ref = ""
+desc = "If true, the subscription will be run with the permissions of the subscription owner"
+ty = "bool"
+
+[pg_subscription.columns.subfailover]
+typ = "bool"
+ref = ""
+desc = "If true, the associated replication slots (i.e. the main slot and the table sync slots) in the upstream database are enabled to be synchronized to the standbys"
+ty = "bool"
+
+[pg_subscription.columns.subconninfo]
+typ = "text"
+ref = ""
+desc = "Connection string to the upstream database"
+ty = "Str"
+exp = "pg_subscription.subconninfo.into()"
+
+[pg_subscription.columns.subslotname]
+typ = "name"
+ref = ""
+desc = "Name of the replication slot in the upstream database (also used for the local replication origin name); null represents NONE"
+sel = "pg_subscription.subslotname::text"
+ty = "Option<Str>"
+exp = "pg_subscription.subslotname.map(Into::into)"
+
+[pg_subscription.columns.subsynccommit]
+typ = "text"
+ref = ""
+desc = "The synchronous_commit setting for the subscription's workers to use"
+ty = "Str"
+exp = "pg_subscription.subsynccommit.into()"
+
+[pg_subscription.columns.subpublications]
+typ = "text[]"
+ref = ""
+desc = "Array of subscribed publication names. These reference publications defined in the upstream database. For more on publications see Section 29.1."
+ty = "Vec<Str>"
+exp = "pg_subscription.subpublications.map(Into::into).collect()"
+
+[pg_subscription.columns.suborigin]
+typ = "text"
+ref = ""
+desc = "The origin value must be either none or any. The default is any. If none, the subscription will request the publisher to only send changes that don't have an origin. If any, the publisher sends changes regardless of their origin."
+ty = "Option<Str>"
+exp = "pg_subscription.suborigin.map(Into::into)"
+
 [pg_ts_dict]
 hashCol = true
 
