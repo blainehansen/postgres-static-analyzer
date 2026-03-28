@@ -2644,6 +2644,147 @@ desc = "The origin value must be either none or any. The default is any. If none
 ty = "Option<Str>"
 exp = "pg_subscription.suborigin.map(Into::into)"
 
+[pg_trigger.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_trigger.columns.tgrelid]
+typ = "oid"
+ref = "(references pg_class.oid)"
+desc = "The table this trigger is on"
+sel = "pg_trigger.tgrelid::regclass::text"
+ty = "Qual"
+exp = "Qual::parse(pg_trigger.tgrelid)"
+
+[pg_trigger.columns.tgparentid]
+typ = "oid"
+ref = "(references pg_trigger.oid)"
+desc = "Parent trigger that this trigger is cloned from (this happens when partitions are created or attached to a partitioned table); zero if not a clone"
+sel = "tgparentid_pg_trigger.tgname::text"
+ty = "Option<Str>"
+exp = "pg_trigger.tgparentid.map(Into::into)"
+joins = ["left join pg_trigger as tgparentid_pg_trigger on pg_trigger.tgparentid = tgparentid_pg_trigger.oid"]
+
+[pg_trigger.columns.tgname]
+typ = "name"
+ref = ""
+desc = "Trigger name (must be unique among triggers of same table)"
+sel = "pg_trigger.tgname::text"
+ty = "Str"
+exp = "pg_trigger.tgname.into()"
+
+[pg_trigger.columns.tgfoid]
+typ = "oid"
+ref = "(references pg_proc.oid)"
+desc = "The function to be called"
+sel = "pg_trigger.tgfoid::regprocedure::text"
+ty = "Qual"
+exp = "Qual::parse(pg_trigger.tgfoid)"
+
+[pg_trigger.columns.tgtype]
+typ = "int2"
+ref = ""
+desc = "Bit mask identifying trigger firing conditions"
+ty = "i16"
+
+[pg_trigger.columns.tgenabled]
+typ = "char"
+ref = ""
+desc = "Controls in which session_replication_role modes the trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always."
+ty = "PgTriggerTgenabled"
+exp = "PgTriggerTgenabled::pg_from_char(pg_trigger.tgenabled)"
+pgEnum = "'O' => OriginAndLocalMode, 'D' => Disabled, 'R' => ReplicaMode, 'A' => Always"
+
+[pg_trigger.columns.tgisinternal]
+typ = "bool"
+ref = ""
+desc = "True if trigger is internally generated (usually, to enforce the constraint identified by tgconstraint)"
+ty = "bool"
+
+[pg_trigger.columns.tgconstrrelid]
+typ = "oid"
+ref = "(references pg_class.oid)"
+desc = "The table referenced by a referential integrity constraint (zero if trigger is not for a referential integrity constraint)"
+sel = "case when pg_trigger.tgconstrrelid = 0 then null else pg_trigger.tgconstrrelid::regclass::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_trigger.tgconstrrelid)"
+
+[pg_trigger.columns.tgconstrindid]
+typ = "oid"
+ref = "(references pg_class.oid)"
+desc = "The index supporting a unique, primary key, referential integrity, or exclusion constraint (zero if trigger is not for one of these types of constraint)"
+sel = "case when pg_trigger.tgconstrindid = 0 then null else pg_trigger.tgconstrindid::regclass::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_trigger.tgconstrindid)"
+
+[pg_trigger.columns.tgconstraint]
+typ = "oid"
+ref = "(references pg_constraint.oid)"
+desc = "The pg_constraint entry associated with the trigger (zero if trigger is not for a constraint)"
+sel = "quote_ident(tgconstraint_pg_namespace.nspname) || '.' || quote_ident(tgconstraint_pg_constraint.conname)"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_trigger.tgconstraint)"
+joins = ["left join pg_constraint as tgconstraint_pg_constraint on pg_trigger.tgconstraint = tgconstraint_pg_constraint.oid","left join pg_namespace as tgconstraint_pg_namespace on tgconstraint_pg_constraint.connamespace = tgconstraint_pg_namespace.oid"]
+
+[pg_trigger.columns.tgdeferrable]
+typ = "bool"
+ref = ""
+desc = "True if constraint trigger is deferrable"
+ty = "bool"
+
+[pg_trigger.columns.tginitdeferred]
+typ = "bool"
+ref = ""
+desc = "True if constraint trigger is initially deferred"
+ty = "bool"
+
+[pg_trigger.columns.tgnargs]
+typ = "int2"
+ref = ""
+desc = "Number of argument strings passed to trigger function"
+ty = "u16"
+exp = "pg_trigger.tgnargs.unsigned_abs()"
+
+[pg_trigger.columns.tgattr]
+typ = "int2vector"
+ref = "(references pg_attribute.attnum)"
+desc = "Column numbers, if trigger is column-specific; otherwise an empty array"
+ty = "Vec<u16>"
+exp = "pg_trigger.tgattr.map(i16::unsigned_abs).collect()"
+
+[pg_trigger.columns.tgargs]
+typ = "bytea"
+ref = ""
+desc = "Argument strings to pass to trigger, each NULL-terminated"
+ty = "Vec<u8>"
+exp = "pg_trigger.tgargs.into()"
+
+[pg_trigger.columns.tgqual]
+typ = "pg_node_tree"
+ref = ""
+desc = "Expression tree (in nodeToString() representation) for the trigger's WHEN condition, or null if none"
+sel = "pg_get_expr(pg_trigger.tgqual, pg_trigger.tgrelid)"
+ty = "Option<Str>"
+exp = "pg_trigger.tgqual.map(Into::into)"
+
+[pg_trigger.columns.tgoldtable]
+typ = "name"
+ref = ""
+desc = "REFERENCING clause name for OLD TABLE, or null if none"
+sel = "pg_trigger.tgoldtable::text"
+ty = "Option<Str>"
+exp = "pg_trigger.tgoldtable.map(Into::into)"
+
+[pg_trigger.columns.tgnewtable]
+typ = "name"
+ref = ""
+desc = "REFERENCING clause name for NEW TABLE, or null if none"
+sel = "pg_trigger.tgnewtable::text"
+ty = "Option<Str>"
+exp = "pg_trigger.tgnewtable.map(Into::into)"
+
 [pg_ts_dict]
 hashCol = true
 

@@ -1772,6 +1772,84 @@ pub async fn reflect_pg_subscription(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgTrigger {
+	// oid oid  Row identifier
+	/// `oid` `(references pg_class.oid)` The table this trigger is on
+	tgrelid: Qual,
+	/// `oid` `(references pg_trigger.oid)` Parent trigger that this trigger is cloned from (this happens when partitions are created or attached to a partitioned table); zero if not a clone
+	tgparentid: Option<Str>,
+	/// `name`  Trigger name (must be unique among triggers of same table)
+	tgname: Str,
+	/// `oid` `(references pg_proc.oid)` The function to be called
+	tgfoid: Qual,
+	/// `int2`  Bit mask identifying trigger firing conditions
+	tgtype: i16,
+	/// `char`  Controls in which session_replication_role modes the trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always.
+	tgenabled: PgTriggerTgenabled,
+	/// `bool`  True if trigger is internally generated (usually, to enforce the constraint identified by tgconstraint)
+	tgisinternal: bool,
+	/// `oid` `(references pg_class.oid)` The table referenced by a referential integrity constraint (zero if trigger is not for a referential integrity constraint)
+	tgconstrrelid: Option<Qual>,
+	/// `oid` `(references pg_class.oid)` The index supporting a unique, primary key, referential integrity, or exclusion constraint (zero if trigger is not for one of these types of constraint)
+	tgconstrindid: Option<Qual>,
+	/// `oid` `(references pg_constraint.oid)` The pg_constraint entry associated with the trigger (zero if trigger is not for a constraint)
+	tgconstraint: Option<Qual>,
+	/// `bool`  True if constraint trigger is deferrable
+	tgdeferrable: bool,
+	/// `bool`  True if constraint trigger is initially deferred
+	tginitdeferred: bool,
+	/// `int2`  Number of argument strings passed to trigger function
+	tgnargs: u16,
+	/// `int2vector` `(references pg_attribute.attnum)` Column numbers, if trigger is column-specific; otherwise an empty array
+	tgattr: Vec<u16>,
+	/// `bytea`  Argument strings to pass to trigger, each NULL-terminated
+	tgargs: Vec<u8>,
+	/// `pg_node_tree`  Expression tree (in nodeToString() representation) for the trigger's WHEN condition, or null if none
+	tgqual: Option<Str>,
+	/// `name`  REFERENCING clause name for OLD TABLE, or null if none
+	tgoldtable: Option<Str>,
+	/// `name`  REFERENCING clause name for NEW TABLE, or null if none
+	tgnewtable: Option<Str>,
+}
+
+pg_char_enum!(PgTriggerTgenabled { 'O' => OriginAndLocalMode, 'D' => Disabled, 'R' => ReplicaMode, 'A' => Always });
+
+pub async fn reflect_pg_trigger(
+	client: &PgClient
+) -> Result<Vec<PgTrigger>, postgres::Error> {
+	let pg_trigger_coll = reflect_crate::queries::reflect_gen::reflect_pg_trigger().bind(client)
+		.map(|pg_trigger| {
+			PgTrigger {
+				tgrelid: Qual::parse(pg_trigger.tgrelid),
+				tgparentid: pg_trigger.tgparentid.map(Into::into),
+				tgname: pg_trigger.tgname.into(),
+				tgfoid: Qual::parse(pg_trigger.tgfoid),
+				tgtype: pg_trigger.tgtype,
+				tgenabled: PgTriggerTgenabled::pg_from_char(pg_trigger.tgenabled),
+				tgisinternal: pg_trigger.tgisinternal,
+				tgconstrrelid: Qual::maybe_parse(pg_trigger.tgconstrrelid),
+				tgconstrindid: Qual::maybe_parse(pg_trigger.tgconstrindid),
+				tgconstraint: Qual::maybe_parse(pg_trigger.tgconstraint),
+				tgdeferrable: pg_trigger.tgdeferrable,
+				tginitdeferred: pg_trigger.tginitdeferred,
+				tgnargs: pg_trigger.tgnargs.unsigned_abs(),
+				tgattr: pg_trigger.tgattr.map(i16::unsigned_abs).collect(),
+				tgargs: pg_trigger.tgargs.into(),
+				tgqual: pg_trigger.tgqual.map(Into::into),
+				tgoldtable: pg_trigger.tgoldtable.map(Into::into),
+				tgnewtable: pg_trigger.tgnewtable.map(Into::into),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_trigger_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsDict {
 	/// `oid`  Row identifier
 	oid: Qual,

@@ -368,7 +368,7 @@ async function decideColumn(
 	}
 	if (typ === "bytea" && !ref) {
 		const ty = "Vec<u8>"
-		const exp = `${tableName}.${name}.collect()`
+		const exp = `${tableName}.${name}.into()`
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
 	}
 

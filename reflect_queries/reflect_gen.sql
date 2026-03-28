@@ -648,6 +648,35 @@ where
 ;
 
 
+--! reflect_pg_trigger : (tgparentid?, tgconstrrelid?, tgconstrindid?, tgconstraint?, tgqual?, tgoldtable?, tgnewtable?)
+select
+	-- oid oid  Row identifier
+	pg_trigger.tgrelid::regclass::text as tgrelid, -- oid (references pg_class.oid) The table this trigger is on
+	tgparentid_pg_trigger.tgname::text as tgparentid, -- oid (references pg_trigger.oid) Parent trigger that this trigger is cloned from (this happens when partitions are created or attached to a partitioned table); zero if not a clone
+	pg_trigger.tgname::text as tgname, -- name  Trigger name (must be unique among triggers of same table)
+	pg_trigger.tgfoid::regprocedure::text as tgfoid, -- oid (references pg_proc.oid) The function to be called
+	pg_trigger.tgtype as tgtype, -- int2  Bit mask identifying trigger firing conditions
+	pg_trigger.tgenabled as tgenabled, -- char  Controls in which session_replication_role modes the trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always.
+	pg_trigger.tgisinternal as tgisinternal, -- bool  True if trigger is internally generated (usually, to enforce the constraint identified by tgconstraint)
+	case when pg_trigger.tgconstrrelid = 0 then null else pg_trigger.tgconstrrelid::regclass::text end as tgconstrrelid, -- oid (references pg_class.oid) The table referenced by a referential integrity constraint (zero if trigger is not for a referential integrity constraint)
+	case when pg_trigger.tgconstrindid = 0 then null else pg_trigger.tgconstrindid::regclass::text end as tgconstrindid, -- oid (references pg_class.oid) The index supporting a unique, primary key, referential integrity, or exclusion constraint (zero if trigger is not for one of these types of constraint)
+	quote_ident(tgconstraint_pg_namespace.nspname) || '.' || quote_ident(tgconstraint_pg_constraint.conname) as tgconstraint, -- oid (references pg_constraint.oid) The pg_constraint entry associated with the trigger (zero if trigger is not for a constraint)
+	pg_trigger.tgdeferrable as tgdeferrable, -- bool  True if constraint trigger is deferrable
+	pg_trigger.tginitdeferred as tginitdeferred, -- bool  True if constraint trigger is initially deferred
+	pg_trigger.tgnargs as tgnargs, -- int2  Number of argument strings passed to trigger function
+	pg_trigger.tgattr as tgattr, -- int2vector (references pg_attribute.attnum) Column numbers, if trigger is column-specific; otherwise an empty array
+	pg_trigger.tgargs as tgargs, -- bytea  Argument strings to pass to trigger, each NULL-terminated
+	pg_get_expr(pg_trigger.tgqual, pg_trigger.tgrelid) as tgqual, -- pg_node_tree  Expression tree (in nodeToString() representation) for the trigger's WHEN condition, or null if none
+	pg_trigger.tgoldtable::text as tgoldtable, -- name  REFERENCING clause name for OLD TABLE, or null if none
+	pg_trigger.tgnewtable::text as tgnewtable -- name  REFERENCING clause name for NEW TABLE, or null if none
+from
+	pg_trigger
+	left join pg_trigger as tgparentid_pg_trigger on pg_trigger.tgparentid = tgparentid_pg_trigger.oid
+	left join pg_constraint as tgconstraint_pg_constraint on pg_trigger.tgconstraint = tgconstraint_pg_constraint.oid
+	left join pg_namespace as tgconstraint_pg_namespace on tgconstraint_pg_constraint.connamespace = tgconstraint_pg_namespace.oid
+;
+
+
 --! reflect_pg_ts_dict : (dictinitoption?)
 select
 	pg_ts_dict.oid::regdictionary::text as oid, -- oid  Row identifier

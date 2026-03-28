@@ -54,7 +54,7 @@ pub struct PgState {
 	pub pg_statistic_ext: Vec<PgStatisticExt>,
 	pub pg_subscription: Vec<PgSubscription>,
 	// pub pg_transform: Vec<PgTransform>,
-	// pub pg_trigger: Vec<PgTrigger>,
+	pub pg_trigger: Vec<PgTrigger>,
 	// pub pg_ts_config: Vec<PgTsConfig>,
 	// pub pg_ts_config_map: Vec<PgTsConfigMap>,
 	pub pg_ts_dict: Set<PgTsDict>,
@@ -120,7 +120,7 @@ pub async fn reflect_pg_state(
 		pg_statistic_ext,
 		pg_subscription,
 		// pg_transform,
-		// pg_trigger,
+		pg_trigger,
 		// pg_ts_config,
 		// pg_ts_config_map,
 		pg_ts_dict,
@@ -179,7 +179,7 @@ pub async fn reflect_pg_state(
 		reflect_pg_statistic_ext(client),
 		reflect_pg_subscription(client),
 		// reflect_pg_transform(client),
-		// reflect_pg_trigger(client),
+		reflect_pg_trigger(client),
 		// reflect_pg_ts_config(client),
 		// reflect_pg_ts_config_map(client),
 		reflect_pg_ts_dict(client),
@@ -240,7 +240,7 @@ pub async fn reflect_pg_state(
 		pg_statistic_ext,
 		pg_subscription,
 		// pg_transform,
-		// pg_trigger,
+		pg_trigger,
 		// pg_ts_config,
 		// pg_ts_config_map,
 		pg_ts_dict,
@@ -743,7 +743,7 @@ use reflect_gen::{PgSubscription, reflect_pg_subscription};
 // use reflect_gen::{PgTransform, reflect_pg_transform};
 
 // `pg_trigger`: https://www.postgresql.org/docs/17/catalog-pg-trigger.html
-// use reflect_gen::{PgTrigger, reflect_pg_trigger};
+use reflect_gen::{PgTrigger, reflect_pg_trigger};
 
 // `pg_ts_config`: https://www.postgresql.org/docs/17/catalog-pg-ts-config.html
 // use reflect_gen::{PgTsConfig, reflect_pg_ts_config};
