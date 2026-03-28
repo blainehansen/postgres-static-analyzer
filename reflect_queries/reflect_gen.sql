@@ -574,6 +574,22 @@ from
 ;
 
 
+--! reflect_pg_range : (rngcollation?, rngcanonical?, rngsubdiff?)
+select
+	pg_range.rngtypid::regtype::text as rngtypid, -- oid (references pg_type.oid) OID of the range type
+	pg_range.rngsubtype::regtype::text as rngsubtype, -- oid (references pg_type.oid) OID of the element type (subtype) of this range type
+	pg_range.rngmultitypid::regtype::text as rngmultitypid, -- oid (references pg_type.oid) OID of the multirange type for this range type
+	case when pg_range.rngcollation = 0 then null else pg_range.rngcollation::regcollation::text end as rngcollation, -- oid (references pg_collation.oid) OID of the collation used for range comparisons, or zero if none
+	quote_ident(rngsubopc_pg_namespace.nspname) || '.' || quote_ident(rngsubopc_pg_opclass.opcname) as rngsubopc, -- oid (references pg_opclass.oid) OID of the subtype's operator class used for range comparisons
+	case when rngcanonical = 0 then null else rngcanonical::regproc::text end as rngcanonical, -- regproc (references pg_proc.oid) OID of the function to convert a range value into canonical form, or zero if none
+	case when rngsubdiff = 0 then null else rngsubdiff::regproc::text end as rngsubdiff -- regproc (references pg_proc.oid) OID of the function to return the difference between two element values as double precision, or zero if none
+from
+	pg_range
+	join pg_opclass as rngsubopc_pg_opclass on pg_range.rngsubopc = rngsubopc_pg_opclass.oid
+	join pg_namespace as rngsubopc_pg_namespace on rngsubopc_pg_opclass.opcnamespace = rngsubopc_pg_namespace.oid
+;
+
+
 --! reflect_pg_ts_dict : (dictinitoption?)
 select
 	pg_ts_dict.oid::regdictionary::text as oid, -- oid  Row identifier

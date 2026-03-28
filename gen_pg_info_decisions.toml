@@ -2344,6 +2344,63 @@ desc = "This is an array of values that indicates which table columns are part o
 ty = "Option<Vec<u16>>"
 exp = "pg_publication_rel.prattrs.map(|items| items.map(i16::unsigned_abs).collect())"
 
+[pg_range.columns.rngtypid]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "OID of the range type"
+sel = "pg_range.rngtypid::regtype::text"
+ty = "Qual"
+exp = "Qual::parse(pg_range.rngtypid)"
+
+[pg_range.columns.rngsubtype]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "OID of the element type (subtype) of this range type"
+sel = "pg_range.rngsubtype::regtype::text"
+ty = "Qual"
+exp = "Qual::parse(pg_range.rngsubtype)"
+
+[pg_range.columns.rngmultitypid]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "OID of the multirange type for this range type"
+sel = "pg_range.rngmultitypid::regtype::text"
+ty = "Qual"
+exp = "Qual::parse(pg_range.rngmultitypid)"
+
+[pg_range.columns.rngcollation]
+typ = "oid"
+ref = "(references pg_collation.oid)"
+desc = "OID of the collation used for range comparisons, or zero if none"
+sel = "case when pg_range.rngcollation = 0 then null else pg_range.rngcollation::regcollation::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_range.rngcollation)"
+
+[pg_range.columns.rngsubopc]
+typ = "oid"
+ref = "(references pg_opclass.oid)"
+desc = "OID of the subtype's operator class used for range comparisons"
+sel = "quote_ident(rngsubopc_pg_namespace.nspname) || '.' || quote_ident(rngsubopc_pg_opclass.opcname)"
+ty = "Qual"
+exp = "Qual::parse(pg_range.rngsubopc)"
+joins = ["join pg_opclass as rngsubopc_pg_opclass on pg_range.rngsubopc = rngsubopc_pg_opclass.oid","join pg_namespace as rngsubopc_pg_namespace on rngsubopc_pg_opclass.opcnamespace = rngsubopc_pg_namespace.oid"]
+
+[pg_range.columns.rngcanonical]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "OID of the function to convert a range value into canonical form, or zero if none"
+sel = "case when rngcanonical = 0 then null else rngcanonical::regproc::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_range.rngcanonical)"
+
+[pg_range.columns.rngsubdiff]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "OID of the function to return the difference between two element values as double precision, or zero if none"
+sel = "case when rngsubdiff = 0 then null else rngsubdiff::regproc::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_range.rngsubdiff)"
+
 [pg_ts_dict]
 hashCol = true
 

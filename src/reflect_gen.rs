@@ -1565,6 +1565,48 @@ pub async fn reflect_pg_publication_rel(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgRange {
+	/// `oid` `(references pg_type.oid)` OID of the range type
+	rngtypid: Qual,
+	/// `oid` `(references pg_type.oid)` OID of the element type (subtype) of this range type
+	rngsubtype: Qual,
+	/// `oid` `(references pg_type.oid)` OID of the multirange type for this range type
+	rngmultitypid: Qual,
+	/// `oid` `(references pg_collation.oid)` OID of the collation used for range comparisons, or zero if none
+	rngcollation: Option<Qual>,
+	/// `oid` `(references pg_opclass.oid)` OID of the subtype's operator class used for range comparisons
+	rngsubopc: Qual,
+	/// `regproc` `(references pg_proc.oid)` OID of the function to convert a range value into canonical form, or zero if none
+	rngcanonical: Option<Qual>,
+	/// `regproc` `(references pg_proc.oid)` OID of the function to return the difference between two element values as double precision, or zero if none
+	rngsubdiff: Option<Qual>,
+}
+
+pub async fn reflect_pg_range(
+	client: &PgClient
+) -> Result<Vec<PgRange>, postgres::Error> {
+	let pg_range_coll = reflect_crate::queries::reflect_gen::reflect_pg_range().bind(client)
+		.map(|pg_range| {
+			PgRange {
+				rngtypid: Qual::parse(pg_range.rngtypid),
+				rngsubtype: Qual::parse(pg_range.rngsubtype),
+				rngmultitypid: Qual::parse(pg_range.rngmultitypid),
+				rngcollation: Qual::maybe_parse(pg_range.rngcollation),
+				rngsubopc: Qual::parse(pg_range.rngsubopc),
+				rngcanonical: Qual::maybe_parse(pg_range.rngcanonical),
+				rngsubdiff: Qual::maybe_parse(pg_range.rngsubdiff),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_range_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsDict {
 	/// `oid`  Row identifier
 	oid: Qual,
