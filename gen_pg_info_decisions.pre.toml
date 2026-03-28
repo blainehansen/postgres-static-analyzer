@@ -173,7 +173,7 @@ pg_publication_rel.prqual = { sel="pg_get_expr(pg_publication_rel.prqual, pg_pub
 
 pg_range = {}
 
-pg_replication_origin = 'todo'
+# pg_replication_origin = {}
 # pg_replication_origin.roident = 'skip'
 
 pg_rewrite = 'todo'
@@ -182,11 +182,11 @@ pg_rewrite = 'todo'
 # # Controls in which session_replication_role modes the rule fires. O = rule fires in “origin” and “local” modes, D = rule is disabled, R = rule fires in “replica” mode, A = rule fires always.
 # pg_rewrite.ev_enabled = { ty="PgRewriteEvEnabled", exp="PgRewriteEvEnabled::pg_from_char(pg_rewrite.ev_enabled)", pgEnum="'O' => OriginAndLocalMode, 'D' => Disabled, 'R' => ReplicaMode, 'A' => Always" }
 # pg_rewrite.ev_qual = { sel="pg_get_expr(pg_rewrite.ev_qual, pg_rewrite.ev_class)", ty="Option<Str>", exp="pg_rewrite.ev_qual.map(Into::into)" }
-# pg_rewrite.ev_action = { sel="pg_get_expr(pg_rewrite.ev_action, pg_rewrite.ev_class)", ty="Option<Str>", exp="pg_rewrite.ev_action.map(Into::into)" }
+# pg_rewrite.ev_action = { sel="case when pg_rewrite.ev_type = '1' and pg_rewrite.is_instead then pg_get_viewdef(pg_rewrite.ev_class) else pg_get_ruledef(pg_rewrite.oid) end", ty="Option<Str>", exp="pg_rewrite.ev_action.map(Into::into)" }
 
 # pg_seclabel = 'todo'
 
-pg_sequence = 'todo'
+pg_sequence = {}
 
 pg_shdescription = 'todo'
 

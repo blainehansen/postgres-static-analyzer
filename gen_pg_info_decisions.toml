@@ -2401,6 +2401,58 @@ sel = "case when rngsubdiff = 0 then null else rngsubdiff::regproc::text end"
 ty = "Option<Qual>"
 exp = "Qual::maybe_parse(pg_range.rngsubdiff)"
 
+[pg_sequence.columns.seqrelid]
+typ = "oid"
+ref = "(references pg_class.oid)"
+desc = "The OID of the pg_class entry for this sequence"
+sel = "pg_sequence.seqrelid::regclass::text"
+ty = "Qual"
+exp = "Qual::parse(pg_sequence.seqrelid)"
+
+[pg_sequence.columns.seqtypid]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "Data type of the sequence"
+sel = "pg_sequence.seqtypid::regtype::text"
+ty = "Qual"
+exp = "Qual::parse(pg_sequence.seqtypid)"
+
+[pg_sequence.columns.seqstart]
+typ = "int8"
+ref = ""
+desc = "Start value of the sequence"
+ty = "i64"
+
+[pg_sequence.columns.seqincrement]
+typ = "int8"
+ref = ""
+desc = "Increment value of the sequence"
+ty = "i64"
+
+[pg_sequence.columns.seqmax]
+typ = "int8"
+ref = ""
+desc = "Maximum value of the sequence"
+ty = "i64"
+
+[pg_sequence.columns.seqmin]
+typ = "int8"
+ref = ""
+desc = "Minimum value of the sequence"
+ty = "i64"
+
+[pg_sequence.columns.seqcache]
+typ = "int8"
+ref = ""
+desc = "Cache size of the sequence"
+ty = "i64"
+
+[pg_sequence.columns.seqcycle]
+typ = "bool"
+ref = ""
+desc = "Whether the sequence cycles"
+ty = "bool"
+
 [pg_ts_dict]
 hashCol = true
 

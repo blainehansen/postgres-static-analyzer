@@ -11,7 +11,7 @@ create function pg_temp.format_role_oid_array(role_oids oid[]) returns text[] as
 			order by ordinality
 		);
 	end;
-$$ language plpgsql immutable;
+$$ language plpgsql stable;
 
 create function pg_temp.format_fn_defaults(fn pg_proc) returns text[] as $$
 	declare
@@ -24,7 +24,7 @@ create function pg_temp.format_fn_defaults(fn pg_proc) returns text[] as $$
 			order by default_number
 		);
 	end;
-$$ language plpgsql immutable;
+$$ language plpgsql stable;
 
 create function pg_temp.format_pg_collation_oidvector(oids oidvector) returns text[] as $$
 	begin
@@ -34,7 +34,7 @@ create function pg_temp.format_pg_collation_oidvector(oids oidvector) returns te
 			order by ordinality
 		);
 	end;
-$$ language plpgsql immutable;
+$$ language plpgsql stable;
 
 create function pg_temp.format_pg_opclass_oidvector(oids oidvector) returns text[] as $$
 	begin
@@ -47,5 +47,4 @@ create function pg_temp.format_pg_opclass_oidvector(oids oidvector) returns text
 			order by ordinality
 		);
 	end;
-$$ language plpgsql immutable;
-
+$$ language plpgsql stable;

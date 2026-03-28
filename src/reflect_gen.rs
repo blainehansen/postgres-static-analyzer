@@ -1607,6 +1607,51 @@ pub async fn reflect_pg_range(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgSequence {
+	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for this sequence
+	seqrelid: Qual,
+	/// `oid` `(references pg_type.oid)` Data type of the sequence
+	seqtypid: Qual,
+	/// `int8`  Start value of the sequence
+	seqstart: i64,
+	/// `int8`  Increment value of the sequence
+	seqincrement: i64,
+	/// `int8`  Maximum value of the sequence
+	seqmax: i64,
+	/// `int8`  Minimum value of the sequence
+	seqmin: i64,
+	/// `int8`  Cache size of the sequence
+	seqcache: i64,
+	/// `bool`  Whether the sequence cycles
+	seqcycle: bool,
+}
+
+pub async fn reflect_pg_sequence(
+	client: &PgClient
+) -> Result<Vec<PgSequence>, postgres::Error> {
+	let pg_sequence_coll = reflect_crate::queries::reflect_gen::reflect_pg_sequence().bind(client)
+		.map(|pg_sequence| {
+			PgSequence {
+				seqrelid: Qual::parse(pg_sequence.seqrelid),
+				seqtypid: Qual::parse(pg_sequence.seqtypid),
+				seqstart: pg_sequence.seqstart,
+				seqincrement: pg_sequence.seqincrement,
+				seqmax: pg_sequence.seqmax,
+				seqmin: pg_sequence.seqmin,
+				seqcache: pg_sequence.seqcache,
+				seqcycle: pg_sequence.seqcycle,
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_sequence_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsDict {
 	/// `oid`  Row identifier
 	oid: Qual,

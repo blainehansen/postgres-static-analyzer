@@ -102,7 +102,7 @@ const pages: [string, string][] = [
 	["pg_publication_namespace", "https://www.postgresql.org/docs/17/catalog-pg-publication-namespace.html"],
 	["pg_publication_rel", "https://www.postgresql.org/docs/17/catalog-pg-publication-rel.html"],
 	["pg_range", "https://www.postgresql.org/docs/17/catalog-pg-range.html"],
-	["pg_replication_origin", "https://www.postgresql.org/docs/17/catalog-pg-replication-origin.html"],
+	// ["pg_replication_origin", "https://www.postgresql.org/docs/17/catalog-pg-replication-origin.html"],
 	["pg_rewrite", "https://www.postgresql.org/docs/17/catalog-pg-rewrite.html"],
 	// ["pg_seclabel", "https://www.postgresql.org/docs/17/catalog-pg-seclabel.html"],
 	["pg_sequence", "https://www.postgresql.org/docs/17/catalog-pg-sequence.html"],

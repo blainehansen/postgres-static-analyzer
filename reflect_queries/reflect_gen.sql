@@ -590,6 +590,21 @@ from
 ;
 
 
+--! reflect_pg_sequence : ()
+select
+	pg_sequence.seqrelid::regclass::text as seqrelid, -- oid (references pg_class.oid) The OID of the pg_class entry for this sequence
+	pg_sequence.seqtypid::regtype::text as seqtypid, -- oid (references pg_type.oid) Data type of the sequence
+	pg_sequence.seqstart as seqstart, -- int8  Start value of the sequence
+	pg_sequence.seqincrement as seqincrement, -- int8  Increment value of the sequence
+	pg_sequence.seqmax as seqmax, -- int8  Maximum value of the sequence
+	pg_sequence.seqmin as seqmin, -- int8  Minimum value of the sequence
+	pg_sequence.seqcache as seqcache, -- int8  Cache size of the sequence
+	pg_sequence.seqcycle as seqcycle -- bool  Whether the sequence cycles
+from
+	pg_sequence
+;
+
+
 --! reflect_pg_ts_dict : (dictinitoption?)
 select
 	pg_ts_dict.oid::regdictionary::text as oid, -- oid  Row identifier

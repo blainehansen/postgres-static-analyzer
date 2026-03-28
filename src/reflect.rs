@@ -47,7 +47,7 @@ pub struct PgState {
 	// pub pg_replication_origin: Vec<PgReplicationOrigin>,
 	// pub pg_rewrite: Vec<PgRewrite>,
 	// pub pg_seclabel: Vec<PgSeclabel>,
-	// pub pg_sequence: Vec<PgSequence>,
+	pub pg_sequence: Vec<PgSequence>,
 	// pub pg_shdepend: Vec<PgShdepend>,
 	// pub pg_shdescription: Vec<PgShdescription>,
 	// pub pg_shseclabel: Vec<PgShseclabel>,
@@ -113,7 +113,7 @@ pub async fn reflect_pg_state(
 		// pg_replication_origin,
 		// pg_rewrite,
 		// pg_seclabel,
-		// pg_sequence,
+		pg_sequence,
 		// pg_shdepend,
 		// pg_shdescription,
 		// pg_shseclabel,
@@ -172,7 +172,7 @@ pub async fn reflect_pg_state(
 		// reflect_pg_replication_origin(client),
 		// reflect_pg_rewrite(client),
 		// reflect_pg_seclabel(client),
-		// reflect_pg_sequence(client),
+		reflect_pg_sequence(client),
 		// reflect_pg_shdepend(client),
 		// reflect_pg_shdescription(client),
 		// reflect_pg_shseclabel(client),
@@ -233,7 +233,7 @@ pub async fn reflect_pg_state(
 		// pg_replication_origin,
 		// pg_rewrite,
 		// pg_seclabel,
-		// pg_sequence,
+		pg_sequence,
 		// pg_shdepend,
 		// pg_shdescription,
 		// pg_shseclabel,
@@ -722,7 +722,7 @@ use reflect_gen::{PgRange, reflect_pg_range};
 // use reflect_gen::{PgSeclabel, reflect_pg_seclabel};
 
 // `pg_sequence`: https://www.postgresql.org/docs/17/catalog-pg-sequence.html
-// use reflect_gen::{PgSequence, reflect_pg_sequence};
+use reflect_gen::{PgSequence, reflect_pg_sequence};
 
 // `pg_shdepend`: https://www.postgresql.org/docs/17/catalog-pg-shdepend.html
 // use reflect_gen::{PgShdepend, reflect_pg_shdepend};
