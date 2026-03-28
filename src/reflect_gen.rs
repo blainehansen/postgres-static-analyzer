@@ -1885,6 +1885,39 @@ pub async fn reflect_pg_ts_config(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgTsConfigMap {
+	/// `oid` `(references pg_ts_config.oid)` The OID of the pg_ts_config entry owning this map entry
+	mapcfg: Qual,
+	/// `int4`  A token type emitted by the configuration's parser
+	maptokentype: i32,
+	/// `int4`  Order in which to consult this entry (lower mapseqnos first)
+	mapseqno: i32,
+	/// `oid` `(references pg_ts_dict.oid)` The OID of the text search dictionary to consult
+	mapdict: Qual,
+}
+
+pub async fn reflect_pg_ts_config_map(
+	client: &PgClient
+) -> Result<Vec<PgTsConfigMap>, postgres::Error> {
+	let pg_ts_config_map_coll = reflect_crate::queries::reflect_gen::reflect_pg_ts_config_map().bind(client)
+		.map(|pg_ts_config_map| {
+			PgTsConfigMap {
+				mapcfg: Qual::parse(pg_ts_config_map.mapcfg),
+				maptokentype: pg_ts_config_map.maptokentype,
+				mapseqno: pg_ts_config_map.mapseqno,
+				mapdict: Qual::parse(pg_ts_config_map.mapdict),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_ts_config_map_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsDict {
 	/// `oid`  Row identifier
 	oid: Qual,

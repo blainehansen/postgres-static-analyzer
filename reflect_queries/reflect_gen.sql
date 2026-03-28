@@ -689,6 +689,17 @@ from
 ;
 
 
+--! reflect_pg_ts_config_map : ()
+select
+	pg_ts_config_map.mapcfg::regconfig::text as mapcfg, -- oid (references pg_ts_config.oid) The OID of the pg_ts_config entry owning this map entry
+	pg_ts_config_map.maptokentype as maptokentype, -- int4  A token type emitted by the configuration's parser
+	pg_ts_config_map.mapseqno as mapseqno, -- int4  Order in which to consult this entry (lower mapseqnos first)
+	pg_ts_config_map.mapdict::regdictionary::text as mapdict -- oid (references pg_ts_dict.oid) The OID of the text search dictionary to consult
+from
+	pg_ts_config_map
+;
+
+
 --! reflect_pg_ts_dict : (dictinitoption?)
 select
 	pg_ts_dict.oid::regdictionary::text as oid, -- oid  Row identifier

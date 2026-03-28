@@ -218,9 +218,9 @@ pg_trigger.tgenabled = { ty="PgTriggerTgenabled", exp="PgTriggerTgenabled::pg_fr
 
 pg_ts_config = {}
 
-pg_ts_config_map = 'todo'
-# pg_ts_config_map.maptokentype = { ty="i16" }
-# pg_ts_config_map.mapseqno = { ty="i16" }
+# pg_ts_config_map = {}
+pg_ts_config_map.maptokentype = { ty="i32" }
+pg_ts_config_map.mapseqno = { ty="i32" }
 
 # pg_ts_dict = {}
 pg_ts_dict.dictinitoption = { nullable=true }

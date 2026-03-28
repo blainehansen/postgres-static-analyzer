@@ -2826,6 +2826,34 @@ ref = "(references pg_ts_parser.oid)"
 desc = "The OID of the text search parser for this configuration"
 skip = true
 
+[pg_ts_config_map.columns.mapcfg]
+typ = "oid"
+ref = "(references pg_ts_config.oid)"
+desc = "The OID of the pg_ts_config entry owning this map entry"
+sel = "pg_ts_config_map.mapcfg::regconfig::text"
+ty = "Qual"
+exp = "Qual::parse(pg_ts_config_map.mapcfg)"
+
+[pg_ts_config_map.columns.maptokentype]
+typ = "int4"
+ref = ""
+desc = "A token type emitted by the configuration's parser"
+ty = "i32"
+
+[pg_ts_config_map.columns.mapseqno]
+typ = "int4"
+ref = ""
+desc = "Order in which to consult this entry (lower mapseqnos first)"
+ty = "i32"
+
+[pg_ts_config_map.columns.mapdict]
+typ = "oid"
+ref = "(references pg_ts_dict.oid)"
+desc = "The OID of the text search dictionary to consult"
+sel = "pg_ts_config_map.mapdict::regdictionary::text"
+ty = "Qual"
+exp = "Qual::parse(pg_ts_config_map.mapdict)"
+
 [pg_ts_dict]
 hashCol = true
 

@@ -56,7 +56,7 @@ pub struct PgState {
 	// pub pg_transform: Vec<PgTransform>,
 	pub pg_trigger: Vec<PgTrigger>,
 	pub pg_ts_config: Set<PgTsConfig>,
-	// pub pg_ts_config_map: Vec<PgTsConfigMap>,
+	pub pg_ts_config_map: Vec<PgTsConfigMap>,
 	pub pg_ts_dict: Set<PgTsDict>,
 	// pub pg_ts_parser: Vec<PgTsParser>,
 	// pub pg_ts_template: Vec<PgTsTemplate>,
@@ -122,7 +122,7 @@ pub async fn reflect_pg_state(
 		// pg_transform,
 		pg_trigger,
 		pg_ts_config,
-		// pg_ts_config_map,
+		pg_ts_config_map,
 		pg_ts_dict,
 		// pg_ts_parser,
 		// pg_ts_template,
@@ -181,7 +181,7 @@ pub async fn reflect_pg_state(
 		// reflect_pg_transform(client),
 		reflect_pg_trigger(client),
 		reflect_pg_ts_config(client),
-		// reflect_pg_ts_config_map(client),
+		reflect_pg_ts_config_map(client),
 		reflect_pg_ts_dict(client),
 		// reflect_pg_ts_parser(client),
 		// reflect_pg_ts_template(client),
@@ -242,7 +242,7 @@ pub async fn reflect_pg_state(
 		// pg_transform,
 		pg_trigger,
 		pg_ts_config,
-		// pg_ts_config_map,
+		pg_ts_config_map,
 		pg_ts_dict,
 		// pg_ts_parser,
 		// pg_ts_template,
@@ -749,7 +749,7 @@ use reflect_gen::{PgTrigger, reflect_pg_trigger};
 use reflect_gen::{PgTsConfig, reflect_pg_ts_config};
 
 // `pg_ts_config_map`: https://www.postgresql.org/docs/17/catalog-pg-ts-config-map.html
-// use reflect_gen::{PgTsConfigMap, reflect_pg_ts_config_map};
+use reflect_gen::{PgTsConfigMap, reflect_pg_ts_config_map};
 
 // `pg_ts_dict`: https://www.postgresql.org/docs/17/catalog-pg-ts-dict.html
 use reflect_gen::{PgTsDict, reflect_pg_ts_dict};
