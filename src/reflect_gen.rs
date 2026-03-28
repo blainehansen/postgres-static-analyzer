@@ -1531,6 +1531,40 @@ pub async fn reflect_pg_publication_namespace(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgPublicationRel {
+	// oid oid  Row identifier
+	/// `oid` `(references pg_publication.oid)` Reference to publication
+	prpubid: Str,
+	/// `oid` `(references pg_class.oid)` Reference to relation
+	prrelid: Qual,
+	/// `pg_node_tree`  Expression tree (in nodeToString() representation) for the relation's publication qualifying condition. Null if there is no publication qualifying condition.
+	prqual: Option<Str>,
+	/// `int2vector` `(references pg_attribute.attnum)` This is an array of values that indicates which table columns are part of the publication. For example, a value of 1 3 would mean that the first and the third table columns are published. A null value indicates that all columns are published.
+	prattrs: Option<Vec<u16>>,
+}
+
+pub async fn reflect_pg_publication_rel(
+	client: &PgClient
+) -> Result<Vec<PgPublicationRel>, postgres::Error> {
+	let pg_publication_rel_coll = reflect_crate::queries::reflect_gen::reflect_pg_publication_rel().bind(client)
+		.map(|pg_publication_rel| {
+			PgPublicationRel {
+				prpubid: pg_publication_rel.prpubid.into(),
+				prrelid: Qual::parse(pg_publication_rel.prrelid),
+				prqual: pg_publication_rel.prqual.map(Into::into),
+				prattrs: pg_publication_rel.prattrs.map(|items| items.map(i16::unsigned_abs).collect()),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_publication_rel_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsDict {
 	/// `oid`  Row identifier
 	oid: Qual,

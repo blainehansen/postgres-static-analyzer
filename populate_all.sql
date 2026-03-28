@@ -345,7 +345,7 @@ CREATE POLICY admin_all_policy ON parent_table                      -- pg_policy
 --            pg_replication_origin
 -- ====================================================================
 
-CREATE PUBLICATION test_pub FOR TABLE parent_table;                 -- pg_publication, pg_publication_rel
+CREATE PUBLICATION test_pub FOR TABLE parent_table where (score > 5);                 -- pg_publication, pg_publication_rel
 
 CREATE PUBLICATION test_schema_pub                                  -- pg_publication_namespace
 	FOR TABLES IN SCHEMA catalog_schema;

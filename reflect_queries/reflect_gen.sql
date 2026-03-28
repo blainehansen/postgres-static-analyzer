@@ -561,6 +561,19 @@ from
 ;
 
 
+--! reflect_pg_publication_rel : (prqual?, prattrs?)
+select
+	-- oid oid  Row identifier
+	prpubid_pg_publication.pubname::text as prpubid, -- oid (references pg_publication.oid) Reference to publication
+	pg_publication_rel.prrelid::regclass::text as prrelid, -- oid (references pg_class.oid) Reference to relation
+	pg_get_expr(pg_publication_rel.prqual, pg_publication_rel.prrelid) as prqual, -- pg_node_tree  Expression tree (in nodeToString() representation) for the relation's publication qualifying condition. Null if there is no publication qualifying condition.
+	pg_publication_rel.prattrs as prattrs -- int2vector (references pg_attribute.attnum) This is an array of values that indicates which table columns are part of the publication. For example, a value of 1 3 would mean that the first and the third table columns are published. A null value indicates that all columns are published.
+from
+	pg_publication_rel
+	join pg_publication as prpubid_pg_publication on pg_publication_rel.prpubid = prpubid_pg_publication.oid
+;
+
+
 --! reflect_pg_ts_dict : (dictinitoption?)
 select
 	pg_ts_dict.oid::regdictionary::text as oid, -- oid  Row identifier

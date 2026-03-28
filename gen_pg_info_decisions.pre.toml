@@ -168,7 +168,8 @@ pg_publication = {}
 
 pg_publication_namespace = {}
 
-pg_publication_rel = 'todo'
+# pg_publication_rel = {}
+pg_publication_rel.prqual = { sel="pg_get_expr(pg_publication_rel.prqual, pg_publication_rel.prrelid)", ty="Option<Str>", exp="pg_publication_rel.prqual.map(Into::into)" }
 
 pg_range = 'todo'
 

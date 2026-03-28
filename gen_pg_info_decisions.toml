@@ -2306,6 +2306,44 @@ sel = "pg_publication_namespace.pnnspid::regnamespace::text"
 ty = "Str"
 exp = "pg_publication_namespace.pnnspid.into()"
 
+[pg_publication_rel.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_publication_rel.columns.prpubid]
+typ = "oid"
+ref = "(references pg_publication.oid)"
+desc = "Reference to publication"
+sel = "prpubid_pg_publication.pubname::text"
+ty = "Str"
+exp = "pg_publication_rel.prpubid.into()"
+joins = ["join pg_publication as prpubid_pg_publication on pg_publication_rel.prpubid = prpubid_pg_publication.oid"]
+
+[pg_publication_rel.columns.prrelid]
+typ = "oid"
+ref = "(references pg_class.oid)"
+desc = "Reference to relation"
+sel = "pg_publication_rel.prrelid::regclass::text"
+ty = "Qual"
+exp = "Qual::parse(pg_publication_rel.prrelid)"
+
+[pg_publication_rel.columns.prqual]
+typ = "pg_node_tree"
+ref = ""
+desc = "Expression tree (in nodeToString() representation) for the relation's publication qualifying condition. Null if there is no publication qualifying condition."
+sel = "pg_get_expr(pg_publication_rel.prqual, pg_publication_rel.prrelid)"
+ty = "Option<Str>"
+exp = "pg_publication_rel.prqual.map(Into::into)"
+
+[pg_publication_rel.columns.prattrs]
+typ = "int2vector"
+ref = "(references pg_attribute.attnum)"
+desc = "This is an array of values that indicates which table columns are part of the publication. For example, a value of 1 3 would mean that the first and the third table columns are published. A null value indicates that all columns are published."
+ty = "Option<Vec<u16>>"
+exp = "pg_publication_rel.prattrs.map(|items| items.map(i16::unsigned_abs).collect())"
+
 [pg_ts_dict]
 hashCol = true
 
