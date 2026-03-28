@@ -108,24 +108,26 @@ export const TableOverride = z.union([
 export type TableOverride = z.infer<typeof TableOverride>
 
 
-export function commonPrefix(url: string, columns: string[], startingIndex: number = 7) {
+export function commonPrefix(url: string, rawColumns: string[], startingChar: number = 7) {
+	const columns = rawColumns.filter(c => c !== 'oid')
+
 	if (columns.length === 0) {
 		throw "empty columns "
 	}
 	const first = columns[0]!
-	let index = startingIndex
-	for (; index >= 1; index--) {
-		const currentChar = first[index]
-		const allSame = columns.every(s => s[index] === currentChar)
+	let char = startingChar
+	for (; char >= 1; char--) {
+		const currentChar = first[char]
+		const allSame = columns.every(s => s[char] === currentChar)
 		if (allSame) break
 	}
 
-	if (index === 0) {
+	if (char === 0) {
 		console.log(url)
 		return null
 	}
 
-	return first.substring(0, index + 1)
+	return first.substring(0, char + 1)
 }
 // const prefix = commonPrefix(url, prefixNames)
 

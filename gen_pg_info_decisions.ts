@@ -184,25 +184,6 @@ async function decideColumn(
 		throw new Error(`handle ${name} manually please, it references pg_database.oid`)
 	}
 
-	if (typ === "oid" && ref === "(references pg_opfamily.oid)") {
-		const zeroable = ovZero ?? /zero/i.test(desc)
-		const nullable = ovNullable ?? zeroable ?? false
-
-		const joinNamespaceName = `${name}_pg_namespace`
-		const joinTableName = `${name}_pg_opfamily`
-
-		const sel = `quote_ident(${joinNamespaceName}.nspname) || '.' || quote_ident(${joinTableName}.opfname)`
-		const ty = nullable ? `Option<Qual>` : `Qual`
-		const exp = `Qual::${nullable ? 'maybe_parse' : 'parse'}(${tableName}.${name})`
-
-		const leftPortion = nullable ? 'left ' : ''
-		const joins = [
-			leftPortion + `join pg_opfamily as ${joinTableName} on ${tableName}.${name} = ${joinTableName}.oid`,
-			leftPortion + `join pg_namespace as ${joinNamespaceName} on ${joinTableName}.opfnamespace = ${joinNamespaceName}.oid`,
-		]
-
-		return [undefined, { typ, ref, desc, ...override, sel, ty, exp, joins }]
-	}
 	if (typ === "oid" && ref === "(references pg_am.oid)") {
 		const nullable = ovNullable ?? false
 
@@ -214,25 +195,6 @@ async function decideColumn(
 		const leftPortion = nullable ? 'left ' : ''
 		const joins = [
 			leftPortion + `join pg_am as ${joinTableName} on ${tableName}.${name} = ${joinTableName}.oid`,
-		]
-
-		return [undefined, { typ, ref, desc, ...override, sel, ty, exp, joins }]
-	}
-	if (typ === "oid" && ref === "(references pg_constraint.oid)") {
-		const zeroable = ovZero ?? /zero/i.test(desc)
-		const nullable = ovNullable ?? zeroable ?? false
-
-		const joinNamespaceName = `${name}_pg_namespace`
-		const joinTableName = `${name}_pg_constraint`
-
-		const sel = `quote_ident(${joinNamespaceName}.nspname) || '.' || quote_ident(${joinTableName}.conname)`
-		const ty = nullable ? `Option<Qual>` : `Qual`
-		const exp = `Qual::${nullable ? 'maybe_parse' : 'parse'}(${tableName}.${name})`
-
-		const leftPortion = nullable ? 'left ' : ''
-		const joins = [
-			leftPortion + `join pg_constraint as ${joinTableName} on ${tableName}.${name} = ${joinTableName}.oid`,
-			leftPortion + `join pg_namespace as ${joinNamespaceName} on ${joinTableName}.connamespace = ${joinNamespaceName}.oid`,
 		]
 
 		return [undefined, { typ, ref, desc, ...override, sel, ty, exp, joins }]
@@ -261,6 +223,26 @@ async function decideColumn(
 		const ty = "Option<Vec<Qual>>"
 		const exp = `${tableName}.${name}.map(|items| items.map(Qual::parse).collect())`
 		return [undefined, { typ, ref, desc, ...override, sel, ty, exp }]
+	}
+	if (typ === "oid" && genericReferencesTable) {
+		const zeroable = ovZero ?? /zero/i.test(desc)
+		const nullable = ovNullable ?? zeroable ?? false
+
+		const joinNamespaceName = `${name}_pg_namespace`
+		const joinTableName = `${name}_${genericReferencesTable}`
+
+		const prefix = getTablePrefix(genericReferencesTable)
+		const sel = `quote_ident(${joinNamespaceName}.nspname) || '.' || quote_ident(${joinTableName}.${prefix}name)`
+		const ty = nullable ? `Option<Qual>` : `Qual`
+		const exp = `Qual::${nullable ? 'maybe_parse' : 'parse'}(${tableName}.${name})`
+
+		const leftPortion = nullable ? 'left ' : ''
+		const joins = [
+			leftPortion + `join ${genericReferencesTable} as ${joinTableName} on ${tableName}.${name} = ${joinTableName}.oid`,
+			leftPortion + `join pg_namespace as ${joinNamespaceName} on ${joinTableName}.${prefix}namespace = ${joinNamespaceName}.oid`,
+		]
+
+		return [undefined, { typ, ref, desc, ...override, sel, ty, exp, joins }]
 	}
 
 	if (typ === "char") {
