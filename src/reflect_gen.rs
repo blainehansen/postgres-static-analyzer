@@ -1652,6 +1652,54 @@ pub async fn reflect_pg_sequence(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgStatisticExt {
+	// oid oid  Row identifier
+	/// `oid` `(references pg_class.oid)` Table containing the columns described by this object
+	stxrelid: Qual,
+	/// `name`  Name of the statistics object
+	stxname: Str,
+	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this statistics object
+	stxnamespace: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the statistics object
+	stxowner: Str,
+	/// `int2vector` `(references pg_attribute.attnum)` An array of attribute numbers, indicating which table columns are covered by this statistics object; for example a value of 1 3 would mean that the first and the third table columns are covered
+	stxkeys: Vec<u16>,
+	/// `int2`  stxstattarget controls the level of detail of statistics accumulated for this statistics object by ANALYZE. A zero value indicates that no statistics should be collected. A null value says to use the maximum of the statistics targets of the referenced columns, if set, or the system default statistics target. Positive values of stxstattarget determine the target number of “most common values” to collect.
+	stxstattarget: Option<u16>,
+	/// `char[]`  An array containing codes for the enabled statistics kinds; valid values are: d for n-distinct statistics, f for functional dependency statistics, m for most common values (MCV) list statistics, and e for expression statistics
+	stxkind: Vec<PgStatisticExtStxkind>,
+	/// `pg_node_tree`  Expression trees (in nodeToString() representation) for statistics object attributes that are not simple column references. This is a list with one element per expression. Null if all statistics object attributes are simple references.
+	stxexprs: Option<Str>,
+}
+
+pg_char_enum!(PgStatisticExtStxkind { 'd' => NDistinct, 'f' => FunctionalDependency, 'm' => MostCommonValuesList, 'e' => Expression });
+
+pub async fn reflect_pg_statistic_ext(
+	client: &PgClient
+) -> Result<Vec<PgStatisticExt>, postgres::Error> {
+	let pg_statistic_ext_coll = reflect_crate::queries::reflect_gen::reflect_pg_statistic_ext().bind(client)
+		.map(|pg_statistic_ext| {
+			PgStatisticExt {
+				stxrelid: Qual::parse(pg_statistic_ext.stxrelid),
+				stxname: pg_statistic_ext.stxname.into(),
+				stxnamespace: pg_statistic_ext.stxnamespace.into(),
+				stxowner: pg_statistic_ext.stxowner.into(),
+				stxkeys: pg_statistic_ext.stxkeys.map(i16::unsigned_abs).collect(),
+				stxstattarget: pg_statistic_ext.stxstattarget.map(i16::unsigned_abs),
+				stxkind: pg_statistic_ext.stxkind.map(PgStatisticExtStxkind::pg_from_char).collect(),
+				stxexprs: pg_statistic_ext.stxexprs.map(Into::into),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_statistic_ext_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsDict {
 	/// `oid`  Row identifier
 	oid: Qual,

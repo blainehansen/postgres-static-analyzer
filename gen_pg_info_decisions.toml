@@ -2453,6 +2453,74 @@ ref = ""
 desc = "Whether the sequence cycles"
 ty = "bool"
 
+[pg_statistic_ext.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_statistic_ext.columns.stxrelid]
+typ = "oid"
+ref = "(references pg_class.oid)"
+desc = "Table containing the columns described by this object"
+sel = "pg_statistic_ext.stxrelid::regclass::text"
+ty = "Qual"
+exp = "Qual::parse(pg_statistic_ext.stxrelid)"
+
+[pg_statistic_ext.columns.stxname]
+typ = "name"
+ref = ""
+desc = "Name of the statistics object"
+sel = "pg_statistic_ext.stxname::text"
+ty = "Str"
+exp = "pg_statistic_ext.stxname.into()"
+
+[pg_statistic_ext.columns.stxnamespace]
+typ = "oid"
+ref = "(references pg_namespace.oid)"
+desc = "The OID of the namespace that contains this statistics object"
+sel = "pg_statistic_ext.stxnamespace::regnamespace::text"
+ty = "Str"
+exp = "pg_statistic_ext.stxnamespace.into()"
+
+[pg_statistic_ext.columns.stxowner]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the statistics object"
+sel = "pg_get_userbyid(pg_statistic_ext.stxowner)::text"
+ty = "Str"
+exp = "pg_statistic_ext.stxowner.into()"
+
+[pg_statistic_ext.columns.stxkeys]
+typ = "int2vector"
+ref = "(references pg_attribute.attnum)"
+desc = "An array of attribute numbers, indicating which table columns are covered by this statistics object; for example a value of 1 3 would mean that the first and the third table columns are covered"
+ty = "Vec<u16>"
+exp = "pg_statistic_ext.stxkeys.map(i16::unsigned_abs).collect()"
+
+[pg_statistic_ext.columns.stxstattarget]
+typ = "int2"
+ref = ""
+desc = "stxstattarget controls the level of detail of statistics accumulated for this statistics object by ANALYZE. A zero value indicates that no statistics should be collected. A null value says to use the maximum of the statistics targets of the referenced columns, if set, or the system default statistics target. Positive values of stxstattarget determine the target number of “most common values” to collect."
+ty = "Option<u16>"
+exp = "pg_statistic_ext.stxstattarget.map(i16::unsigned_abs)"
+
+[pg_statistic_ext.columns.stxkind]
+typ = "char[]"
+ref = ""
+desc = "An array containing codes for the enabled statistics kinds; valid values are: d for n-distinct statistics, f for functional dependency statistics, m for most common values (MCV) list statistics, and e for expression statistics"
+ty = "Vec<PgStatisticExtStxkind>"
+exp = "pg_statistic_ext.stxkind.map(PgStatisticExtStxkind::pg_from_char).collect()"
+pgEnum = "'d' => NDistinct, 'f' => FunctionalDependency, 'm' => MostCommonValuesList, 'e' => Expression"
+
+[pg_statistic_ext.columns.stxexprs]
+typ = "pg_node_tree"
+ref = ""
+desc = "Expression trees (in nodeToString() representation) for statistics object attributes that are not simple column references. This is a list with one element per expression. Null if all statistics object attributes are simple references."
+sel = "pg_get_expr(pg_statistic_ext.stxexprs, pg_statistic_ext.stxrelid)"
+ty = "Option<Str>"
+exp = "pg_statistic_ext.stxexprs.map(Into::into)"
+
 [pg_ts_dict]
 hashCol = true
 

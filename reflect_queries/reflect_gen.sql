@@ -605,6 +605,22 @@ from
 ;
 
 
+--! reflect_pg_statistic_ext : (stxstattarget?, stxexprs?)
+select
+	-- oid oid  Row identifier
+	pg_statistic_ext.stxrelid::regclass::text as stxrelid, -- oid (references pg_class.oid) Table containing the columns described by this object
+	pg_statistic_ext.stxname::text as stxname, -- name  Name of the statistics object
+	pg_statistic_ext.stxnamespace::regnamespace::text as stxnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this statistics object
+	pg_get_userbyid(pg_statistic_ext.stxowner)::text as stxowner, -- oid (references pg_authid.oid) Owner of the statistics object
+	pg_statistic_ext.stxkeys as stxkeys, -- int2vector (references pg_attribute.attnum) An array of attribute numbers, indicating which table columns are covered by this statistics object; for example a value of 1 3 would mean that the first and the third table columns are covered
+	pg_statistic_ext.stxstattarget as stxstattarget, -- int2  stxstattarget controls the level of detail of statistics accumulated for this statistics object by ANALYZE. A zero value indicates that no statistics should be collected. A null value says to use the maximum of the statistics targets of the referenced columns, if set, or the system default statistics target. Positive values of stxstattarget determine the target number of “most common values” to collect.
+	pg_statistic_ext.stxkind as stxkind, -- char[]  An array containing codes for the enabled statistics kinds; valid values are: d for n-distinct statistics, f for functional dependency statistics, m for most common values (MCV) list statistics, and e for expression statistics
+	pg_get_expr(pg_statistic_ext.stxexprs, pg_statistic_ext.stxrelid) as stxexprs -- pg_node_tree  Expression trees (in nodeToString() representation) for statistics object attributes that are not simple column references. This is a list with one element per expression. Null if all statistics object attributes are simple references.
+from
+	pg_statistic_ext
+;
+
+
 --! reflect_pg_ts_dict : (dictinitoption?)
 select
 	pg_ts_dict.oid::regdictionary::text as oid, -- oid  Row identifier
