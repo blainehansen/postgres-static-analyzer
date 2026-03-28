@@ -677,6 +677,18 @@ from
 ;
 
 
+--! reflect_pg_ts_config : ()
+select
+	pg_ts_config.oid::regconfig::text as oid, -- oid  Row identifier
+	pg_ts_config.cfgname::text as cfgname, -- name  Text search configuration name
+	pg_ts_config.cfgnamespace::regnamespace::text as cfgnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this configuration
+	pg_get_userbyid(pg_ts_config.cfgowner)::text as cfgowner -- oid (references pg_authid.oid) Owner of the configuration
+	-- cfgparser oid (references pg_ts_parser.oid) The OID of the text search parser for this configuration
+from
+	pg_ts_config
+;
+
+
 --! reflect_pg_ts_dict : (dictinitoption?)
 select
 	pg_ts_dict.oid::regdictionary::text as oid, -- oid  Row identifier

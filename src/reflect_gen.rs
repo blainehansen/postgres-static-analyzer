@@ -1850,6 +1850,41 @@ pub async fn reflect_pg_trigger(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgTsConfig {
+	/// `oid`  Row identifier
+	oid: Qual,
+	/// `name`  Text search configuration name
+	cfgname: Str,
+	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this configuration
+	cfgnamespace: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the configuration
+	cfgowner: Str,
+	// cfgparser oid (references pg_ts_parser.oid) The OID of the text search parser for this configuration
+}
+impl_qual_hash_and_equivalent!(PgTsConfig);
+
+pub async fn reflect_pg_ts_config(
+	client: &PgClient
+) -> Result<Set<PgTsConfig>, postgres::Error> {
+	let pg_ts_config_coll = reflect_crate::queries::reflect_gen::reflect_pg_ts_config().bind(client)
+		.map(|pg_ts_config| {
+			PgTsConfig {
+				oid: Qual::parse(pg_ts_config.oid),
+				cfgname: pg_ts_config.cfgname.into(),
+				cfgnamespace: pg_ts_config.cfgnamespace.into(),
+				cfgowner: pg_ts_config.cfgowner.into(),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_ts_config_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsDict {
 	/// `oid`  Row identifier
 	oid: Qual,

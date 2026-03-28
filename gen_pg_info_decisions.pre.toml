@@ -216,7 +216,7 @@ pg_trigger.tgqual = { sel="pg_get_expr(pg_trigger.tgqual, pg_trigger.tgrelid)", 
 # Controls in which session_replication_role modes the trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always.
 pg_trigger.tgenabled = { ty="PgTriggerTgenabled", exp="PgTriggerTgenabled::pg_from_char(pg_trigger.tgenabled)", pgEnum="'O' => OriginAndLocalMode, 'D' => Disabled, 'R' => ReplicaMode, 'A' => Always" }
 
-pg_ts_config = 'todo'
+pg_ts_config = {}
 
 pg_ts_config_map = 'todo'
 # pg_ts_config_map.maptokentype = { ty="i16" }
