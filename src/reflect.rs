@@ -41,7 +41,7 @@ pub struct PgState {
 	pub pg_policy: Vec<PgPolicy>,
 	pub pg_proc: Set<PgProc>,
 	pub pg_publication: Set<PgPublication>,
-	// pub pg_publication_namespace: Vec<PgPublicationNamespace>,
+	pub pg_publication_namespace: Vec<PgPublicationNamespace>,
 	// pub pg_publication_rel: Vec<PgPublicationRel>,
 	// pub pg_range: Vec<PgRange>,
 	// pub pg_replication_origin: Vec<PgReplicationOrigin>,
@@ -107,7 +107,7 @@ pub async fn reflect_pg_state(
 		pg_policy,
 		pg_proc,
 		pg_publication,
-		// pg_publication_namespace,
+		pg_publication_namespace,
 		// pg_publication_rel,
 		// pg_range,
 		// pg_replication_origin,
@@ -166,7 +166,7 @@ pub async fn reflect_pg_state(
 		reflect_pg_policy(client),
 		reflect_pg_proc(client),
 		reflect_pg_publication(client),
-		// reflect_pg_publication_namespace(client),
+		reflect_pg_publication_namespace(client),
 		// reflect_pg_publication_rel(client),
 		// reflect_pg_range(client),
 		// reflect_pg_replication_origin(client),
@@ -227,7 +227,7 @@ pub async fn reflect_pg_state(
 		pg_policy,
 		pg_proc,
 		pg_publication,
-		// pg_publication_namespace,
+		pg_publication_namespace,
 		// pg_publication_rel,
 		// pg_range,
 		// pg_replication_origin,
@@ -704,7 +704,7 @@ pub async fn reflect_pg_proc(
 use reflect_gen::{PgPublication, reflect_pg_publication};
 
 // `pg_publication_namespace`: https://www.postgresql.org/docs/17/catalog-pg-publication-namespace.html
-// use reflect_gen::{PgPublicationNamespace, reflect_pg_publication_namespace};
+use reflect_gen::{PgPublicationNamespace, reflect_pg_publication_namespace};
 
 // `pg_publication_rel`: https://www.postgresql.org/docs/17/catalog-pg-publication-rel.html
 // use reflect_gen::{PgPublicationRel, reflect_pg_publication_rel};

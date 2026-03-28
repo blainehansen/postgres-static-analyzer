@@ -2283,6 +2283,29 @@ ref = ""
 desc = "If true, operations on a leaf partition are replicated using the identity and schema of its topmost partitioned ancestor mentioned in the publication instead of its own."
 ty = "bool"
 
+[pg_publication_namespace.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_publication_namespace.columns.pnpubid]
+typ = "oid"
+ref = "(references pg_publication.oid)"
+desc = "Reference to publication"
+sel = "pnpubid_pg_publication.pubname::text"
+ty = "Str"
+exp = "pg_publication_namespace.pnpubid.into()"
+joins = ["join pg_publication as pnpubid_pg_publication on pg_publication_namespace.pnpubid = pnpubid_pg_publication.oid"]
+
+[pg_publication_namespace.columns.pnnspid]
+typ = "oid"
+ref = "(references pg_namespace.oid)"
+desc = "Reference to schema"
+sel = "pg_publication_namespace.pnnspid::regnamespace::text"
+ty = "Str"
+exp = "pg_publication_namespace.pnnspid.into()"
+
 [pg_ts_dict]
 hashCol = true
 

@@ -1503,6 +1503,34 @@ pub async fn reflect_pg_publication(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgPublicationNamespace {
+	// oid oid  Row identifier
+	/// `oid` `(references pg_publication.oid)` Reference to publication
+	pnpubid: Str,
+	/// `oid` `(references pg_namespace.oid)` Reference to schema
+	pnnspid: Str,
+}
+
+pub async fn reflect_pg_publication_namespace(
+	client: &PgClient
+) -> Result<Vec<PgPublicationNamespace>, postgres::Error> {
+	let pg_publication_namespace_coll = reflect_crate::queries::reflect_gen::reflect_pg_publication_namespace().bind(client)
+		.map(|pg_publication_namespace| {
+			PgPublicationNamespace {
+				pnpubid: pg_publication_namespace.pnpubid.into(),
+				pnnspid: pg_publication_namespace.pnnspid.into(),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_publication_namespace_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsDict {
 	/// `oid`  Row identifier
 	oid: Qual,

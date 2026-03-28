@@ -166,15 +166,22 @@ pg_proc = 'manual'
 
 pg_publication = {}
 
-pg_publication_namespace = 'todo'
+pg_publication_namespace = {}
 
 pg_publication_rel = 'todo'
 
 pg_range = 'todo'
 
 pg_replication_origin = 'todo'
+# pg_replication_origin.roident = 'skip'
 
 pg_rewrite = 'todo'
+# # Event type that the rule is for: 1 = SELECT, 2 = UPDATE, 3 = INSERT, 4 = DELETE
+# pg_rewrite.ev_type = { ty="PgRewriteEvType", exp="PgRewriteEvType::pg_from_char(pg_rewrite.ev_type)", pgEnum="'1' => Select, '2' => Update, '3' => Insert, '4' => Delete" }
+# # Controls in which session_replication_role modes the rule fires. O = rule fires in “origin” and “local” modes, D = rule is disabled, R = rule fires in “replica” mode, A = rule fires always.
+# pg_rewrite.ev_enabled = { ty="PgRewriteEvEnabled", exp="PgRewriteEvEnabled::pg_from_char(pg_rewrite.ev_enabled)", pgEnum="'O' => OriginAndLocalMode, 'D' => Disabled, 'R' => ReplicaMode, 'A' => Always" }
+# pg_rewrite.ev_qual = { sel="pg_get_expr(pg_rewrite.ev_qual, pg_rewrite.ev_class)", ty="Option<Str>", exp="pg_rewrite.ev_qual.map(Into::into)" }
+# pg_rewrite.ev_action = { sel="pg_get_expr(pg_rewrite.ev_action, pg_rewrite.ev_class)", ty="Option<Str>", exp="pg_rewrite.ev_action.map(Into::into)" }
 
 # pg_seclabel = 'todo'
 
@@ -185,12 +192,27 @@ pg_shdescription = 'todo'
 # pg_shseclabel = 'todo'
 
 pg_statistic_ext = 'todo'
-# pg_statistic_ext.stxstattarget = { nullable=true }
+# # An array containing codes for the enabled statistics kinds; valid values are: d for n-distinct statistics, f for functional dependency statistics, m for most common values (MCV) list statistics, and e for expression statistics
+# pg_statistic_ext.stxkind = { ty="PgStatisticExtStxkind", exp="pg_statistic_ext.stxkind.map(|items| items.map(PgStatisticExtStxkind::pg_from_char).collect())", pgEnum="'d' => NDistinct, 'f' => FunctionalDependency, 'm' => MostCommonValuesList, 'e' => Expression" }
+# # pg_node_tree  Expression trees (in nodeToString() representation) for statistics object attributes that are not simple column references. This is a list with one element per expression. Null if all statistics object attributes are simple references.
+# pg_statistic_ext.stxexprs = { sel="pg_get_expr(pg_statistic_ext.stxexprs, pg_statistic_ext.stxrelid)", ty="Option<Str>", exp="pg_statistic_ext.stxexprs.map(Into::into)" }
 
 pg_subscription = 'todo'
+# pg_subscription.subdbid = 'skip'
+# pg_subscription.subname = { filters=["pg_subscription.subdbid = (select oid from pg_database where datname = current_database())"] }
+# # where (setdatabase = 0 or setdatabase = (select oid from pg_database where datname = current_database()))
+# pg_subscription.subskiplsn = 'skip'
+# pg_subscription.suborigin = { nullable=true }
+# # Controls how to handle the streaming of in-progress transactions: f = disallow streaming of in-progress transactions, t = spill the changes of in-progress transactions to disk and apply at once after the transaction is committed on the publisher and received by the subscriber, p = apply changes directly using a parallel apply worker if available (same as t if no worker is available)
+# pg_subscription.substream = { ty="PgSubscriptionSubstream", exp="PgSubscriptionSubstream::pg_from_char(pg_subscription.substream)", pgEnum="'f' => DisallowStreamingInProgress, 't' => SpillApplyAfterCommitted, 'p' => ApplyDirectlyParallel" }
+# # State codes for two-phase mode: d = disabled, p = pending enablement, e = enabled
+# pg_subscription.subtwophasestate = { ty="PgSubscriptionSubtwophasestate", exp="PgSubscriptionSubtwophasestate::pg_from_char(pg_subscription.subtwophasestate)", pgEnum="'d' => Disabled, 'p' => PendingEnablement, 'e' => Enabled" }
 
 pg_trigger = 'todo'
 # pg_trigger.tgtype = { ty="i16" }
+# pg_trigger.tgqual = { sel="pg_get_expr(pg_trigger.tgqual, pg_trigger.tgrelid)", ty="Option<Str>", exp="pg_trigger.tgqual.map(Into::into)" }
+# # Controls in which session_replication_role modes the trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always.
+# pg_trigger.tgenabled = { ty="PgTriggerTgenabled", exp="PgTriggerTgenabled::pg_from_char(pg_trigger.tgenabled)", pgEnum="'O' => OriginAndLocalMode, 'D' => Disabled, 'R' => ReplicaMode, 'A' => Always" }
 
 pg_ts_config = 'todo'
 

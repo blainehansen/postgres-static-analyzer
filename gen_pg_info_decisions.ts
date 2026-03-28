@@ -188,7 +188,6 @@ async function decideColumn(
 		const nullable = ovNullable ?? false
 
 		const joinTableName = `${name}_pg_am`
-
 		const sel = `${joinTableName}.amname::text`
 		const [ty, exp] = makeStr(tableName, name, nullable)
 
@@ -196,9 +195,27 @@ async function decideColumn(
 		const joins = [
 			leftPortion + `join pg_am as ${joinTableName} on ${tableName}.${name} = ${joinTableName}.oid`,
 		]
-
 		return [undefined, { typ, ref, desc, ...override, sel, ty, exp, joins }]
 	}
+	// if (typ === "oid" && ref === "(references pg_publication.oid)") {
+	// 	const nullable = ovNullable ?? false
+
+	// 	const joinTableName = `${name}_pg_publication`
+	// 	const sel = `${joinTableName}.pubname::text`
+	// 	const [ty, exp] = makeStr(tableName, name, nullable)
+
+	// 	const leftPortion = nullable ? 'left ' : ''
+	// 	const joins = [
+	// 		leftPortion + `join pg_publication as ${joinTableName} on ${tableName}.${name} = ${joinTableName}.oid`,
+	// 	]
+	// 	return [undefined, { typ, ref, desc, ...override, sel, ty, exp, joins }]
+	// }
+	const noNamespaceTables = new Set([
+		"pg_am",
+		"pg_amop",
+		"pg_publication",
+		"pg_trigger",
+	])
 
 	const genericReferences = ref.match(/\(references (\w+)\.oid\)/)
 	const genericReferencesTable = genericReferences && genericReferences[1]
@@ -223,6 +240,21 @@ async function decideColumn(
 		const ty = "Option<Vec<Qual>>"
 		const exp = `${tableName}.${name}.map(|items| items.map(Qual::parse).collect())`
 		return [undefined, { typ, ref, desc, ...override, sel, ty, exp }]
+	}
+	if (typ === "oid" && genericReferencesTable && (noNamespaceTables.has(genericReferencesTable))) {
+		const nullable = ovNullable ?? false
+
+		const joinTableName = `${name}_${genericReferencesTable}`
+
+		const prefix = getTablePrefix(genericReferencesTable)
+		const sel = `${joinTableName}.${prefix}name::text`
+		const [ty, exp] = makeStr(tableName, name, nullable)
+
+		const leftPortion = nullable ? 'left ' : ''
+		const joins = [
+			leftPortion + `join ${genericReferencesTable} as ${joinTableName} on ${tableName}.${name} = ${joinTableName}.oid`,
+		]
+		return [undefined, { typ, ref, desc, ...override, sel, ty, exp, joins }]
 	}
 	if (typ === "oid" && genericReferencesTable) {
 		const zeroable = ovZero ?? /zero/i.test(desc)
@@ -253,6 +285,14 @@ async function decideColumn(
 		await Deno.writeTextFile("./gen_pg_info_decisions.pre.toml", t, { append: true })
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, pgEnum }]
 	}
+	if (typ === "char[]") {
+		const ty = `${toPascalCase(tableName)}${toPascalCase(name)}`
+		const exp = `${tableName}.${name}.map(|items| items.map(${ty}::pg_from_char).collect())`
+		const pgEnum = 'TODO'
+		const t = `\n# ${desc}\n${tableName}.${name} = { ty="${ty}", exp="${exp}", pgEnum="${pgEnum}" }`
+		await Deno.writeTextFile("./gen_pg_info_decisions.pre.toml", t, { append: true })
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, pgEnum }]
+	}
 
 	if (typ === "bool") {
 		return [undefined, { typ, ref, desc, ...override, /*sel,*/ ty: "bool", /*exp,*/ }]
@@ -272,7 +312,7 @@ async function decideColumn(
 		const ty = nullable ? "Option<Vec<Str>>" : "Vec<Str>"
 		const exp = nullable
 			? `${tableName}.${name}.map(|items| items.map(Into::into).collect())`
-			: `${tableName}.${name}.map(Into::into).collect())`
+			: `${tableName}.${name}.map(Into::into).collect()`
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
 	}
 	if (typ === "aclitem[]") {
@@ -322,6 +362,16 @@ async function decideColumn(
 		const [ty, exp] = makeAssumedU(tableName, name, 32, negativeable)
 		return [undefined, { typ, ref, desc, sel, ty, exp }]
 	}
+	if (typ === "int8" && !ref) {
+		const ty = "i64"
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, /*exp*/ }]
+	}
+	if (typ === "bytea" && !ref) {
+		const ty = "Vec<u8>"
+		const exp = `${tableName}.${name}.collect()`
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
+	}
+
 	if (typ === "float4") {
 		const sel = `${name}::text`
 		const [ty, exp] = makeStr(tableName, name, true)

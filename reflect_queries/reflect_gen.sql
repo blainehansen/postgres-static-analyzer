@@ -550,6 +550,17 @@ from
 ;
 
 
+--! reflect_pg_publication_namespace : ()
+select
+	-- oid oid  Row identifier
+	pnpubid_pg_publication.pubname::text as pnpubid, -- oid (references pg_publication.oid) Reference to publication
+	pg_publication_namespace.pnnspid::regnamespace::text as pnnspid -- oid (references pg_namespace.oid) Reference to schema
+from
+	pg_publication_namespace
+	join pg_publication as pnpubid_pg_publication on pg_publication_namespace.pnpubid = pnpubid_pg_publication.oid
+;
+
+
 --! reflect_pg_ts_dict : (dictinitoption?)
 select
 	pg_ts_dict.oid::regdictionary::text as oid, -- oid  Row identifier
