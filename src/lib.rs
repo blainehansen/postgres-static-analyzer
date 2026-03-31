@@ -4,7 +4,7 @@ pub(crate) use reflect_crate::tokio_postgres::{self as postgres, /*Config as PgC
 
 pub type Set<T> = hashbrown::HashSet<T>;
 pub type Map<T> = hashbrown::HashMap<Str, T>;
-pub(crate) use hashbrown::HashMap;
+// pub(crate) use hashbrown::HashMap;
 
 mod reflect;
 #[cfg(test)]
@@ -22,16 +22,16 @@ pub struct Qual {
 	pub name: Str,
 }
 impl Qual {
-	pub(crate) fn make(schema_name: &str, name: &str) -> Qual {
-		Qual { schema_name: schema_name.into(), name: name.into() }
-	}
+	// pub(crate) fn make(schema_name: &str, name: &str) -> Qual {
+	// 	Qual { schema_name: schema_name.into(), name: name.into() }
+	// }
 
-	pub(crate) fn maybe(schema_name: Option<&str>, name: Option<&str>) -> Option<Qual> {
-		match (schema_name, name) {
-			(Some(schema_name), Some(name)) => Some(Qual::make(schema_name, name)),
-			_ => None,
-		}
-	}
+	// pub(crate) fn maybe(schema_name: Option<&str>, name: Option<&str>) -> Option<Qual> {
+	// 	match (schema_name, name) {
+	// 		(Some(schema_name), Some(name)) => Some(Qual::make(schema_name, name)),
+	// 		_ => None,
+	// 	}
+	// }
 
 	pub(crate) fn parse(qualified: &str) -> Qual {
 		// TODO this needs to be smarter to account for complex quoted identifiers that could contain .

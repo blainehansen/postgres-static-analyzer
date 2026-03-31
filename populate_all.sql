@@ -58,6 +58,7 @@ CREATE COLLATION custom_collation (                                -- pg_collati
 -- ====================================================================
 
 CREATE SEQUENCE table_id_seq START WITH 1 INCREMENT BY 1;          -- pg_sequence
+GRANT USAGE ON SEQUENCE table_id_seq TO catalog_user;
 
 CREATE TABLE parent_table (
 	id            integer      DEFAULT nextval('table_id_seq') PRIMARY KEY, -- pg_attrdef, pg_constraint (PK)

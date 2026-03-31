@@ -43,8 +43,8 @@ macro_rules! pg_acl {
 // DATABASE	CTc	Tc	\l
 pg_acl!(Db { 'C' => Create, 'T' => Temporary, 'c' => Connect });
 
-// DOMAIN  U  U  \dD+
-pg_acl!(Domain { 'U' => Usage });
+// // DOMAIN  U  U  \dD+
+// pg_acl!(Domain { 'U' => Usage });
 
 // FUNCTION or PROCEDURE	X	X	\df+
 pg_acl!(Function { 'X' => Execute });
@@ -64,11 +64,11 @@ pg_acl!(Parameter { 's' => Set, 'A' => AlterSystem });
 // SCHEMA	UC	none	\dn+
 pg_acl!(Schema { 'U' => Usage, 'C' => Create });
 
-// SEQUENCE	rwU	none	\dp
-pg_acl!(Sequence { 'r' => Select, 'w' => Update, 'U' => Usage });
+// // SEQUENCE	rwU	none	\dp
+// pg_acl!(Sequence { 'r' => Select, 'w' => Update, 'U' => Usage });
 
 // TABLE (and table-like objects)	arwdDxtm	none	\dp
-pg_acl!(Table { 'a' => Insert, 'r' => Select, 'w' => Update, 'd' => Delete, 'D' => Truncate, 'x' => References, 't' => Trigger, 'm' => Maintain });
+pg_acl!(Table { 'a' => Insert, 'r' => Select, 'w' => Update, 'd' => Delete, 'D' => Truncate, 'x' => References, 't' => Trigger, 'm' => Maintain, 'U' => Usage });
 
 // Table column	arwx	none	\dp
 pg_acl!(TableColumn { 'a' => Insert, 'r' => Select, 'w' => Update, 'x' => References });
