@@ -2401,6 +2401,118 @@ sel = "case when rngsubdiff = 0 then null else rngsubdiff::regproc::text end"
 ty = "Option<Qual>"
 exp = "Qual::maybe_parse(pg_range.rngsubdiff)"
 
+[pg_rules.columns.schemaname]
+typ = "name"
+ref = "(references pg_namespace.nspname)"
+desc = "Name of schema containing table"
+sel = "pg_rules.schemaname::text"
+ty = "Str"
+exp = "pg_rules.schemaname.into()"
+
+[pg_rules.columns.tablename]
+typ = "name"
+ref = "(references pg_class.relname)"
+desc = "Name of table the rule is for"
+sel = "quote_ident(pg_rules.schemaname) || '.' || quote_ident(pg_rules.tablename)"
+ty = "Qual"
+exp = "Qual::parse(pg_rules.tablename)"
+
+[pg_rules.columns.rulename]
+typ = "name"
+ref = "(references pg_rewrite.rulename)"
+desc = "Name of rule"
+sel = "pg_rules.rulename::text"
+ty = "Str"
+exp = "pg_rules.rulename.into()"
+
+[pg_rules.columns.definition]
+typ = "text"
+ref = ""
+desc = "Rule definition (a reconstructed creation command)"
+ty = "Str"
+exp = "pg_rules.definition.into()"
+
+[pg_views.columns.schemaname]
+typ = "name"
+ref = "(references pg_namespace.nspname)"
+desc = "Name of schema containing view"
+sel = "pg_views.schemaname::text"
+ty = "Str"
+exp = "pg_views.schemaname.into()"
+
+[pg_views.columns.viewname]
+typ = "name"
+ref = "(references pg_class.relname)"
+desc = "Name of view"
+sel = "quote_ident(pg_views.schemaname) || '.' || quote_ident(pg_views.viewname)"
+ty = "Qual"
+exp = "Qual::parse(pg_views.viewname)"
+filters = ["not starts_with(pg_views.schemaname, 'pg_toast')"]
+
+[pg_views.columns.viewowner]
+typ = "name"
+ref = "(references pg_authid.rolname)"
+desc = "Name of view's owner"
+sel = "pg_views.viewowner::text"
+ty = "Str"
+exp = "pg_views.viewowner.into()"
+
+[pg_views.columns.definition]
+typ = "text"
+ref = ""
+desc = "View definition (a reconstructed SELECT query)"
+ty = "Str"
+exp = "pg_views.definition.into()"
+
+[pg_matviews.columns.schemaname]
+typ = "name"
+ref = "(references pg_namespace.nspname)"
+desc = "Name of schema containing materialized view"
+sel = "pg_matviews.schemaname::text"
+ty = "Str"
+exp = "pg_matviews.schemaname.into()"
+
+[pg_matviews.columns.matviewname]
+typ = "name"
+ref = "(references pg_class.relname)"
+desc = "Name of materialized view"
+sel = "quote_ident(pg_matviews.schemaname) || '.' || quote_ident(pg_matviews.matviewname)"
+ty = "Qual"
+exp = "Qual::parse(pg_matviews.matviewname)"
+
+[pg_matviews.columns.matviewowner]
+typ = "name"
+ref = "(references pg_authid.rolname)"
+desc = "Name of materialized view's owner"
+sel = "pg_matviews.matviewowner::text"
+ty = "Str"
+exp = "pg_matviews.matviewowner.into()"
+
+[pg_matviews.columns.tablespace]
+typ = "name"
+ref = "(references pg_tablespace.spcname)"
+desc = "Name of tablespace containing materialized view (null if default for database)"
+skip = true
+
+[pg_matviews.columns.hasindexes]
+typ = "bool"
+ref = ""
+desc = "True if materialized view has (or recently had) any indexes"
+skip = true
+
+[pg_matviews.columns.ispopulated]
+typ = "bool"
+ref = ""
+desc = "True if materialized view is currently populated"
+skip = true
+
+[pg_matviews.columns.definition]
+typ = "text"
+ref = ""
+desc = "Materialized view definition (a reconstructed SELECT query)"
+ty = "Str"
+exp = "pg_matviews.definition.into()"
+
 [pg_sequence.columns.seqrelid]
 typ = "oid"
 ref = "(references pg_class.oid)"

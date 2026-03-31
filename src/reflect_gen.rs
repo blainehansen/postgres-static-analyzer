@@ -1607,6 +1607,108 @@ pub async fn reflect_pg_range(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgRules {
+	/// `name` `(references pg_namespace.nspname)` Name of schema containing table
+	schemaname: Str,
+	/// `name` `(references pg_class.relname)` Name of table the rule is for
+	tablename: Qual,
+	/// `name` `(references pg_rewrite.rulename)` Name of rule
+	rulename: Str,
+	/// `text`  Rule definition (a reconstructed creation command)
+	definition: Str,
+}
+
+pub async fn reflect_pg_rules(
+	client: &PgClient
+) -> Result<Vec<PgRules>, postgres::Error> {
+	let pg_rules_coll = reflect_crate::queries::reflect_gen::reflect_pg_rules().bind(client)
+		.map(|pg_rules| {
+			PgRules {
+				schemaname: pg_rules.schemaname.into(),
+				tablename: Qual::parse(pg_rules.tablename),
+				rulename: pg_rules.rulename.into(),
+				definition: pg_rules.definition.into(),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_rules_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgViews {
+	/// `name` `(references pg_namespace.nspname)` Name of schema containing view
+	schemaname: Str,
+	/// `name` `(references pg_class.relname)` Name of view
+	viewname: Qual,
+	/// `name` `(references pg_authid.rolname)` Name of view's owner
+	viewowner: Str,
+	/// `text`  View definition (a reconstructed SELECT query)
+	definition: Str,
+}
+
+pub async fn reflect_pg_views(
+	client: &PgClient
+) -> Result<Vec<PgViews>, postgres::Error> {
+	let pg_views_coll = reflect_crate::queries::reflect_gen::reflect_pg_views().bind(client)
+		.map(|pg_views| {
+			PgViews {
+				schemaname: pg_views.schemaname.into(),
+				viewname: Qual::parse(pg_views.viewname),
+				viewowner: pg_views.viewowner.into(),
+				definition: pg_views.definition.into(),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_views_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgMatviews {
+	/// `name` `(references pg_namespace.nspname)` Name of schema containing materialized view
+	schemaname: Str,
+	/// `name` `(references pg_class.relname)` Name of materialized view
+	matviewname: Qual,
+	/// `name` `(references pg_authid.rolname)` Name of materialized view's owner
+	matviewowner: Str,
+	// tablespace name (references pg_tablespace.spcname) Name of tablespace containing materialized view (null if default for database)
+	// hasindexes bool  True if materialized view has (or recently had) any indexes
+	// ispopulated bool  True if materialized view is currently populated
+	/// `text`  Materialized view definition (a reconstructed SELECT query)
+	definition: Str,
+}
+
+pub async fn reflect_pg_matviews(
+	client: &PgClient
+) -> Result<Vec<PgMatviews>, postgres::Error> {
+	let pg_matviews_coll = reflect_crate::queries::reflect_gen::reflect_pg_matviews().bind(client)
+		.map(|pg_matviews| {
+			PgMatviews {
+				schemaname: pg_matviews.schemaname.into(),
+				matviewname: Qual::parse(pg_matviews.matviewname),
+				matviewowner: pg_matviews.matviewowner.into(),
+				definition: pg_matviews.definition.into(),
+			}
+		})
+		.iter()
+		.await?
+		.try_collect()
+		.await?;
+
+	Ok(pg_matviews_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgSequence {
 	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for this sequence
 	seqrelid: Qual,

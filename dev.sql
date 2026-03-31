@@ -5,22 +5,30 @@ set search_path = '';
 -- show search_path;
 -- select current_schemas(true);
 
-create function pg_temp.format_pg_opclass_oidvector(oids oidvector) returns text[] as $$
-	begin
-		return array (
-			select quote_ident(pg_namespace.nspname) || '.' || quote_ident(pg_opclass.opcname)
-			from
-				unnest(oids) with ordinality as p(o, ordinality)
-				left join pg_opclass on p.o = pg_opclass.oid
-				left join pg_namespace on pg_opclass.opcnamespace = pg_namespace.oid
-			order by ordinality
-		);
-	end;
-$$ language plpgsql immutable;
 
-select pg_temp.format_pg_opclass_oidvector(pg_index.indclass)
-from pg_index
--- where 0 = any(pg_index.indclass)
+create or replace view public.hey as
+select 1 as yo, 2 as hey;
+
+create materialized view public.yo as
+select 1 as yo, 2 as hey;
+
+
+--! reflect_pg_rewrite : (ev_action?)
+select
+	-- oid oid  Row identifier
+	pg_rewrite.rulename::text as rulename, -- name  Rule name
+	pg_rewrite.ev_class::regclass::text as ev_class, -- oid (references pg_class.oid) The table this rule is for
+	pg_rewrite.ev_type as ev_type, -- char  Event type that the rule is for: 1 = SELECT, 2 = UPDATE, 3 = INSERT, 4 = DELETE
+	pg_rewrite.ev_enabled as ev_enabled, -- char  Controls in which session_replication_role modes the rule fires. O = rule fires in “origin” and “local” modes, D = rule is disabled, R = rule fires in “replica” mode, A = rule fires always.
+	pg_rewrite.is_instead as is_instead, -- bool  True if the rule is an INSTEAD rule
+	-- ev_qual pg_node_tree  Expression tree (in the form of a nodeToString() representation) for the rule's qualifying condition
+	case when pg_rewrite.ev_type = '1' and pg_rewrite.is_instead then pg_get_viewdef(pg_rewrite.ev_class) else pg_get_ruledef(pg_rewrite.oid) end as ev_action -- pg_node_tree  Query tree (in the form of a nodeToString() representation) for the rule's action
+from
+	pg_rewrite
+where
+	-- starts_with(pg_rewrite.ev_class::regclass::text, 'public')
+	-- and
+	(pg_rewrite.ev_type = '1' and pg_rewrite.is_instead)
 ;
 
 

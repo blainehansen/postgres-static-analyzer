@@ -326,6 +326,9 @@ CREATE EVENT TRIGGER log_ddl_events                                 -- pg_event_
 CREATE VIEW parent_view AS                                          -- pg_rewrite (view rule)
 	SELECT id, name, status FROM parent_table;
 
+create materialized view thing AS                                          -- pg_rewrite (view rule)
+	SELECT id, name, status FROM parent_table;
+
 CREATE RULE parent_view_insert AS ON INSERT TO parent_view          -- pg_rewrite (explicit rule)
 	DO INSTEAD
 	INSERT INTO parent_table (id, name) VALUES (NEW.id, NEW.name);

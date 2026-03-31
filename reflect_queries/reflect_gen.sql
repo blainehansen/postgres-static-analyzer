@@ -590,6 +590,44 @@ from
 ;
 
 
+--! reflect_pg_rules : ()
+select
+	pg_rules.schemaname::text as schemaname, -- name (references pg_namespace.nspname) Name of schema containing table
+	quote_ident(pg_rules.schemaname) || '.' || quote_ident(pg_rules.tablename) as tablename, -- name (references pg_class.relname) Name of table the rule is for
+	pg_rules.rulename::text as rulename, -- name (references pg_rewrite.rulename) Name of rule
+	pg_rules.definition as definition -- text  Rule definition (a reconstructed creation command)
+from
+	pg_rules
+;
+
+
+--! reflect_pg_views : ()
+select
+	pg_views.schemaname::text as schemaname, -- name (references pg_namespace.nspname) Name of schema containing view
+	quote_ident(pg_views.schemaname) || '.' || quote_ident(pg_views.viewname) as viewname, -- name (references pg_class.relname) Name of view
+	pg_views.viewowner::text as viewowner, -- name (references pg_authid.rolname) Name of view's owner
+	pg_views.definition as definition -- text  View definition (a reconstructed SELECT query)
+from
+	pg_views
+where 
+	not starts_with(pg_views.schemaname, 'pg_toast')
+;
+
+
+--! reflect_pg_matviews : ()
+select
+	pg_matviews.schemaname::text as schemaname, -- name (references pg_namespace.nspname) Name of schema containing materialized view
+	quote_ident(pg_matviews.schemaname) || '.' || quote_ident(pg_matviews.matviewname) as matviewname, -- name (references pg_class.relname) Name of materialized view
+	pg_matviews.matviewowner::text as matviewowner, -- name (references pg_authid.rolname) Name of materialized view's owner
+	-- tablespace name (references pg_tablespace.spcname) Name of tablespace containing materialized view (null if default for database)
+	-- hasindexes bool  True if materialized view has (or recently had) any indexes
+	-- ispopulated bool  True if materialized view is currently populated
+	pg_matviews.definition as definition -- text  Materialized view definition (a reconstructed SELECT query)
+from
+	pg_matviews
+;
+
+
 --! reflect_pg_sequence : ()
 select
 	pg_sequence.seqrelid::regclass::text as seqrelid, -- oid (references pg_class.oid) The OID of the pg_class entry for this sequence

@@ -46,6 +46,9 @@ pub struct PgState {
 	pub pg_range: Vec<PgRange>,
 	// pub pg_replication_origin: Vec<PgReplicationOrigin>,
 	// pub pg_rewrite: Vec<PgRewrite>,
+	pub pg_rules: Vec<PgRules>,
+	pub pg_views: Vec<PgViews>,
+	pub pg_matviews: Vec<PgMatviews>,
 	// pub pg_seclabel: Vec<PgSeclabel>,
 	pub pg_sequence: Vec<PgSequence>,
 	// pub pg_shdepend: Vec<PgShdepend>,
@@ -112,6 +115,9 @@ pub async fn reflect_pg_state(
 		pg_range,
 		// pg_replication_origin,
 		// pg_rewrite,
+		pg_rules,
+		pg_views,
+		pg_matviews,
 		// pg_seclabel,
 		pg_sequence,
 		// pg_shdepend,
@@ -171,6 +177,9 @@ pub async fn reflect_pg_state(
 		reflect_pg_range(client),
 		// reflect_pg_replication_origin(client),
 		// reflect_pg_rewrite(client),
+		reflect_pg_rules(client),
+		reflect_pg_views(client),
+		reflect_pg_matviews(client),
 		// reflect_pg_seclabel(client),
 		reflect_pg_sequence(client),
 		// reflect_pg_shdepend(client),
@@ -232,6 +241,9 @@ pub async fn reflect_pg_state(
 		pg_range,
 		// pg_replication_origin,
 		// pg_rewrite,
+		pg_rules,
+		pg_views,
+		pg_matviews,
 		// pg_seclabel,
 		pg_sequence,
 		// pg_shdepend,
@@ -717,6 +729,13 @@ use reflect_gen::{PgRange, reflect_pg_range};
 
 // `pg_rewrite`: https://www.postgresql.org/docs/17/catalog-pg-rewrite.html
 // use reflect_gen::{PgRewrite, reflect_pg_rewrite};
+
+// `pg_rules`: https://www.postgresql.org/docs/17/view-pg-rules.html
+use reflect_gen::{PgRules, reflect_pg_rules};
+// `pg_views`: https://www.postgresql.org/docs/17/view-pg-views.html
+use reflect_gen::{PgViews, reflect_pg_views};
+// `pg_matviews`: https://www.postgresql.org/docs/17/view-pg-matviews.html
+use reflect_gen::{PgMatviews, reflect_pg_matviews};
 
 // `pg_seclabel`: https://www.postgresql.org/docs/17/catalog-pg-seclabel.html
 // use reflect_gen::{PgSeclabel, reflect_pg_seclabel};

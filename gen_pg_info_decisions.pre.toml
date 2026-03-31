@@ -176,13 +176,25 @@ pg_range = {}
 # pg_replication_origin = {}
 # pg_replication_origin.roident = 'skip'
 
-pg_rewrite = 'todo'
+# # pg_rewrite = 'todo'
 # # Event type that the rule is for: 1 = SELECT, 2 = UPDATE, 3 = INSERT, 4 = DELETE
 # pg_rewrite.ev_type = { ty="PgRewriteEvType", exp="PgRewriteEvType::pg_from_char(pg_rewrite.ev_type)", pgEnum="'1' => Select, '2' => Update, '3' => Insert, '4' => Delete" }
 # # Controls in which session_replication_role modes the rule fires. O = rule fires in “origin” and “local” modes, D = rule is disabled, R = rule fires in “replica” mode, A = rule fires always.
 # pg_rewrite.ev_enabled = { ty="PgRewriteEvEnabled", exp="PgRewriteEvEnabled::pg_from_char(pg_rewrite.ev_enabled)", pgEnum="'O' => OriginAndLocalMode, 'D' => Disabled, 'R' => ReplicaMode, 'A' => Always" }
-# pg_rewrite.ev_qual = { sel="pg_get_expr(pg_rewrite.ev_qual, pg_rewrite.ev_class)", ty="Option<Str>", exp="pg_rewrite.ev_qual.map(Into::into)" }
+# pg_rewrite.ev_qual = 'skip'
 # pg_rewrite.ev_action = { sel="case when pg_rewrite.ev_type = '1' and pg_rewrite.is_instead then pg_get_viewdef(pg_rewrite.ev_class) else pg_get_ruledef(pg_rewrite.oid) end", ty="Option<Str>", exp="pg_rewrite.ev_action.map(Into::into)" }
+
+pg_rules = {}
+pg_rules.tablename = { sel="quote_ident(pg_rules.schemaname) || '.' || quote_ident(pg_rules.tablename)", ty="Qual", exp="Qual::parse(pg_rules.tablename)" }
+
+pg_views = {}
+pg_views.viewname = { sel="quote_ident(pg_views.schemaname) || '.' || quote_ident(pg_views.viewname)", ty="Qual", exp="Qual::parse(pg_views.viewname)", filters=["not starts_with(pg_views.schemaname, 'pg_toast')"] }
+
+pg_matviews = {}
+pg_matviews.matviewname = { sel="quote_ident(pg_matviews.schemaname) || '.' || quote_ident(pg_matviews.matviewname)", ty="Qual", exp="Qual::parse(pg_matviews.matviewname)" }
+pg_matviews.tablespace = 'skip'
+pg_matviews.hasindexes = 'skip'
+pg_matviews.ispopulated = 'skip'
 
 pg_sequence = {}
 

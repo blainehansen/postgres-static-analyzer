@@ -3,8 +3,8 @@ use super::*;
 #[tokio::test]
 async fn test_reflect_pg_state() -> anyhow::Result<()> {
 	let snapshot_content = tokio::fs::read_to_string("src/snapshots/postgres_static_analyzer__reflect_test__reflect_pg_state.snap").await?;
-	assert!(!snapshot_content.contains("pg_toast"));
-	assert!(!snapshot_content.contains("pg_temp"));
+	assert!(!snapshot_content.contains("schema_name: \"pg_toast"));
+	assert!(!snapshot_content.contains("schema_name: \"pg_temp"));
 
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let populate_all_sql = tokio::fs::read_to_string("./populate_all.sql").await?;
