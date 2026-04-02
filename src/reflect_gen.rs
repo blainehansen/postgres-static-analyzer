@@ -286,6 +286,8 @@ pub struct PgAttribute {
 	/// `text[]`  Attribute-level foreign data wrapper options, as “keyword=value” strings
 	attfdwoptions: Option<Vec<Str>>,
 	// attmissingval anyarray  This column has a one element array containing the value used when the column is entirely missing from the row, as happens when the column is added with a non-volatile DEFAULT value after the row is created. The value is only used when atthasmissing is true. If there is no value the column is null.
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pg_char_enum!(PgAttributeAttcompression { 'p' => PGLZ, 'l'=> LZ4 });
@@ -317,6 +319,7 @@ pub async fn reflect_pg_attribute(
 				attacl: pg_attribute.attacl.map(|attacl| attacl.map(|acl| aclitem(acl, &TableColumnGrantParser)).collect()),
 				attoptions: pg_attribute.attoptions.map(|items| items.map(Into::into).collect()),
 				attfdwoptions: pg_attribute.attfdwoptions.map(|items| items.map(Into::into).collect()),
+				description: pg_attribute.description.map(Into::into),
 			}
 		})
 		.iter()
@@ -354,6 +357,8 @@ pub struct PgRoles {
 	/// `text[]`  Role-specific defaults for run-time configuration variables
 	rolconfig: Option<Vec<Str>>,
 	// oid oid (references pg_authid.oid) ID of role
+	/// `text`  The comment from pg_shdescription
+	description: Option<Str>,
 }
 impl_name_hash_and_equivalent!(PgRoles, rolname);
 
@@ -374,6 +379,7 @@ pub async fn reflect_pg_roles(
 				rolvaliduntil: pg_roles.rolvaliduntil,
 				rolbypassrls: pg_roles.rolbypassrls,
 				rolconfig: pg_roles.rolconfig.map(|items| items.map(Into::into).collect()),
+				description: pg_roles.description.map(Into::into),
 			}
 		})
 		.iter()
@@ -519,6 +525,8 @@ pub struct PgClass {
 	reloptions: Option<Vec<Str>>,
 	/// `pg_node_tree`  If table is a partition (see relispartition), internal representation of the partition bound
 	relpartbound: Option<Str>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 impl_qual_hash_and_equivalent!(PgClass);
 
@@ -551,6 +559,7 @@ pub async fn reflect_pg_class(
 				relacl: pg_class.relacl.map(|relacl| relacl.map(|acl| aclitem(acl, &TableGrantParser)).collect()),
 				reloptions: pg_class.reloptions.map(|items| items.map(Into::into).collect()),
 				relpartbound: pg_class.relpartbound.map(Into::into),
+				description: pg_class.description.map(Into::into),
 			}
 		})
 		.iter()
@@ -1163,6 +1172,8 @@ pub struct PgNamespace {
 	nspowner: Str,
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
 	nspacl: Option<Vec<aclitem::SchemaAclItem>>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 impl_name_hash_and_equivalent!(PgNamespace, nspname);
 
@@ -1175,6 +1186,7 @@ pub async fn reflect_pg_namespace(
 				nspname: pg_namespace.nspname.into(),
 				nspowner: pg_namespace.nspowner.into(),
 				nspacl: pg_namespace.nspacl.map(|nspacl| nspacl.map(|acl| aclitem(acl, &SchemaGrantParser)).collect()),
+				description: pg_namespace.description.map(Into::into),
 			}
 		})
 		.iter()

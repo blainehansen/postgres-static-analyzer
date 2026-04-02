@@ -2,10 +2,6 @@ use super::*;
 
 #[tokio::test]
 async fn test_reflect_pg_state() -> anyhow::Result<()> {
-	let snapshot_content = tokio::fs::read_to_string("src/snapshots/postgres_static_analyzer__reflect_test__reflect_pg_state.snap").await?;
-	assert!(!snapshot_content.contains("schema_name: \"pg_toast"));
-	assert!(!snapshot_content.contains("schema_name: \"pg_temp"));
-
 	temp_container_utils::with_temp_postgres_client(async |_, _, client| {
 		let populate_all_sql = tokio::fs::read_to_string("./populate_all.sql").await?;
 		client.batch_execute(&populate_all_sql).await?;
@@ -21,6 +17,24 @@ async fn test_reflect_pg_state() -> anyhow::Result<()> {
 
 		Ok::<_, anyhow::Error>(())
 	}).await??;
+
+	let snapshot_content = tokio::fs::read_to_string("src/snapshots/postgres_static_analyzer__reflect_test__reflect_pg_state.snap").await?;
+	assert!(!snapshot_content.contains("schema_name: \"pg_toast"));
+	assert!(!snapshot_content.contains("schema_name: \"pg_temp"));
+
+	// assert!(snapshot_content.contains(r#"Some("Database for exhaustive pg catalog population")"#));
+	assert!(snapshot_content.contains(r#"Some("Main schema for catalog population")"#));
+	assert!(snapshot_content.contains(r#"Some("Root table for all catalog tests")"#));
+	// assert!(snapshot_content.contains(r#"Some("Lifecycle status of the record")"#));
+	// assert!(snapshot_content.contains(r#"Some("float8 range for active window")"#));
+	// assert!(snapshot_content.contains(r#"Some("Applies 20% VAT to a price")"#));
+	// assert!(snapshot_content.contains(r#"Some("Primary key sequence for parent_table")"#));
+	// assert!(snapshot_content.contains(r#"Some("Public-facing projection of parent_table")"#));
+	// assert!(snapshot_content.contains(r#"Some("Allowed lifecycle states")"#));
+	// assert!(snapshot_content.contains(r#"Some("User-defined range over float8")"#));
+	// assert!(snapshot_content.contains(r#"Some("BTree index on the name column")"#));
+	// assert!(snapshot_content.contains(r#"Some("English full-text search config")"#));
+	// assert!(snapshot_content.contains(r#"Some("Equality for point_composite")"#));
 
 	Ok(())
 }

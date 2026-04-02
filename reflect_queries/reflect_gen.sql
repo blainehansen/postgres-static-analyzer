@@ -87,7 +87,7 @@ where
 ;
 
 
---! reflect_pg_attribute : (atttypmod?, attcompression?, attidentity?, attgenerated?, attcollation?, attstattarget?, attacl?, attoptions?, attfdwoptions?)
+--! reflect_pg_attribute : (atttypmod?, attcompression?, attidentity?, attgenerated?, attcollation?, attstattarget?, attacl?, attoptions?, attfdwoptions?, description?)
 select
 	pg_attribute.attrelid::regclass::text as attrelid, -- oid (references pg_class.oid) The table this column belongs to
 	pg_attribute.attname::text as attname, -- name  The column name
@@ -113,10 +113,12 @@ select
 	pg_attribute.attstattarget as attstattarget, -- int2  attstattarget controls the level of detail of statistics accumulated for this column by ANALYZE. A zero value indicates that no statistics should be collected. A null value says to use the system default statistics target. The exact meaning of positive values is data type-dependent. For scalar data types, attstattarget is both the target number of “most common values” to collect, and the target number of histogram bins to create.
 	attacl::text[] as attacl, -- aclitem[]  Column-level access privileges, if any have been granted specifically on this column
 	pg_attribute.attoptions as attoptions, -- text[]  Attribute-level options, as “keyword=value” strings
-	pg_attribute.attfdwoptions as attfdwoptions -- text[]  Attribute-level foreign data wrapper options, as “keyword=value” strings
+	pg_attribute.attfdwoptions as attfdwoptions, -- text[]  Attribute-level foreign data wrapper options, as “keyword=value” strings
 	-- attmissingval anyarray  This column has a one element array containing the value used when the column is entirely missing from the row, as happens when the column is added with a non-volatile DEFAULT value after the row is created. The value is only used when atthasmissing is true. If there is no value the column is null.
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_attribute
+	left join pg_description on pg_description.objoid = pg_attribute.attrelid and pg_description.objsubid = pg_attribute.attnum
 where 
 	not starts_with(pg_attribute.attrelid::regclass::text, 'pg_toast')
 	and attnum > 0
@@ -124,7 +126,7 @@ where
 ;
 
 
---! reflect_pg_roles : (rolconnlimit?, rolvaliduntil?, rolconfig?)
+--! reflect_pg_roles : (rolconnlimit?, rolvaliduntil?, rolconfig?, description?)
 select
 	pg_roles.rolname::text as rolname, -- name  Role name
 	pg_roles.rolsuper as rolsuper, -- bool  Role has superuser privileges
@@ -137,10 +139,12 @@ select
 	-- rolpassword text  Not the password (always reads as ********)
 	pg_roles.rolvaliduntil as rolvaliduntil, -- timestamptz  Password expiry time (only used for password authentication); null if no expiration
 	pg_roles.rolbypassrls as rolbypassrls, -- bool  Role bypasses every row-level security policy, see Section 5.9 for more information.
-	pg_roles.rolconfig as rolconfig -- text[]  Role-specific defaults for run-time configuration variables
+	pg_roles.rolconfig as rolconfig, -- text[]  Role-specific defaults for run-time configuration variables
 	-- oid oid (references pg_authid.oid) ID of role
+	pg_shdescription.description as description -- text  The comment from pg_shdescription
 from
 	pg_roles
+	left join pg_shdescription on pg_shdescription.objoid = pg_roles.oid
 ;
 
 
@@ -171,7 +175,7 @@ from
 ;
 
 
---! reflect_pg_class : (reltype?, reloftype?, relam?, relacl?, reloptions?, relpartbound?)
+--! reflect_pg_class : (reltype?, reloftype?, relam?, relacl?, reloptions?, relpartbound?, description?)
 select
 	pg_class.oid::regclass::text as oid, -- oid  Row identifier
 	pg_class.relname::text as relname, -- name  Name of the table, index, view, etc.
@@ -205,10 +209,12 @@ select
 	-- relminmxid xid  All multixact IDs before this one have been replaced by a transaction ID in this table. This is used to track whether the table needs to be vacuumed in order to prevent multixact ID wraparound or to allow pg_multixact to be shrunk. Zero (InvalidMultiXactId) if the relation is not a table.
 	relacl::text[] as relacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_class.reloptions as reloptions, -- text[]  Access-method-specific options, as “keyword=value” strings
-	pg_get_expr(relpartbound, pg_class.oid) as relpartbound -- pg_node_tree  If table is a partition (see relispartition), internal representation of the partition bound
+	pg_get_expr(relpartbound, pg_class.oid) as relpartbound, -- pg_node_tree  If table is a partition (see relispartition), internal representation of the partition bound
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_class
 	left join pg_am as relam_pg_am on pg_class.relam = relam_pg_am.oid
+	left join pg_description on pg_description.objoid = pg_class.oid
 where 
 	relnamespace::regnamespace != 'pg_toast'::regnamespace
 ;
@@ -426,14 +432,16 @@ from
 ;
 
 
---! reflect_pg_namespace : (nspacl?)
+--! reflect_pg_namespace : (nspacl?, description?)
 select
 	-- oid oid  Row identifier
 	pg_namespace.nspname::text as nspname, -- name  Name of the namespace
 	pg_get_userbyid(pg_namespace.nspowner)::text as nspowner, -- oid (references pg_authid.oid) Owner of the namespace
-	nspacl::text[] as nspacl -- aclitem[]  Access privileges; see Section 5.8 for details
+	nspacl::text[] as nspacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_namespace
+	left join pg_description on pg_description.objoid = pg_namespace.oid
 where 
 	not starts_with(nspname, 'pg_temp')
 	and not starts_with(nspname, 'pg_toast')

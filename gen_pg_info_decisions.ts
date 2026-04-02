@@ -89,6 +89,37 @@ async function decideTable({ tableName, columns }: RawTable): Promise<TableDecis
 		foundHashColumn ??= hashColumn
 	}
 
+	// https://www.postgresql.org/docs/17/sql-comment.html
+	const descriptionTables = new Set([
+		"pg_class",
+		"pg_namespace"
+	])
+	if (descriptionTables.has(tableName)) {
+		decidedColumns["description"] = {
+			typ: "text", ref: "", desc: "The comment from pg_description",
+			sel: `pg_description.description`, ty: "Option<Str>", exp: `${tableName}.description.map(Into::into)`,
+			joins: [`left join pg_description on pg_description.objoid = ${tableName}.oid`],
+		}
+	}
+	const shdescriptionTables = new Set([
+		"pg_database",
+		"pg_roles",
+	])
+	if (shdescriptionTables.has(tableName)) {
+		decidedColumns["description"] = {
+			typ: "text", ref: "", desc: "The comment from pg_shdescription",
+			sel: `pg_shdescription.description`, ty: "Option<Str>", exp: `${tableName}.description.map(Into::into)`,
+			joins: [`left join pg_shdescription on pg_shdescription.objoid = ${tableName}.oid`],
+		}
+	}
+	else if (tableName === "pg_attribute") {
+		decidedColumns["description"] = {
+			typ: "text", ref: "", desc: "The comment from pg_description",
+			sel: `pg_description.description`, ty: "Option<Str>", exp: `${tableName}.description.map(Into::into)`,
+			joins: [`left join pg_description on pg_description.objoid = pg_attribute.attrelid and pg_description.objsubid = pg_attribute.attnum`],
+		}
+	}
+
 	return { columns: decidedColumns, hashCol: foundHashColumn }
 }
 
