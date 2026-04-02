@@ -87,7 +87,7 @@ where
 ;
 
 
---! reflect_pg_attribute : (atttypid?, atttypmod?, attcompression?, attidentity?, attgenerated?, attcollation?, attstattarget?, attacl?, attoptions?, attfdwoptions?)
+--! reflect_pg_attribute : (atttypmod?, attcompression?, attidentity?, attgenerated?, attcollation?, attstattarget?, attacl?, attoptions?, attfdwoptions?)
 select
 	pg_attribute.attrelid::regclass::text as attrelid, -- oid (references pg_class.oid) The table this column belongs to
 	pg_attribute.attname::text as attname, -- name  The column name

@@ -367,8 +367,8 @@ typ = "oid"
 ref = "(references pg_type.oid)"
 desc = "The data type of this column (zero for a dropped column)"
 sel = "case when pg_attribute.atttypid = 0 then null else pg_attribute.atttypid::regtype::text end"
-ty = "Option<Qual>"
-exp = "Qual::maybe_parse(pg_attribute.atttypid)"
+ty = "Qual"
+exp = "Qual::parse(pg_attribute.atttypid)"
 
 [pg_attribute.columns.attlen]
 typ = "int2"

@@ -246,7 +246,7 @@ pub struct PgAttribute {
 	/// `name`  The column name
 	attname: Str,
 	/// `oid` `(references pg_type.oid)` The data type of this column (zero for a dropped column)
-	atttypid: Option<Qual>,
+	atttypid: Qual,
 	// attlen int2  A copy of pg_type.typlen of this column's type
 	/// `int2`  The number of the column. Ordinary columns are numbered from 1 up. System columns, such as ctid, have (arbitrary) negative numbers.
 	attnum: u16,
@@ -300,7 +300,7 @@ pub async fn reflect_pg_attribute(
 			PgAttribute {
 				attrelid: Qual::parse(pg_attribute.attrelid),
 				attname: pg_attribute.attname.into(),
-				atttypid: Qual::maybe_parse(pg_attribute.atttypid),
+				atttypid: Qual::parse(pg_attribute.atttypid),
 				attnum: pg_attribute.attnum.unsigned_abs(),
 				atttypmod: pg_attribute.atttypmod.map(i32::unsigned_abs),
 				attndims: pg_attribute.attndims.unsigned_abs(),

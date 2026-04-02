@@ -98,7 +98,7 @@ export type TableDecision = z.infer<typeof TableDecision>
 
 export const ColumnOverride = z.union([z.literal('skip'), z.intersection(
 	RealColumnDecision.partial(),
-	z.strictObject({ zero: z.literal(true), nullable: z.literal(true) }).partial(),
+	z.strictObject({ zero: z.literal(true), nullable: z.boolean() }).partial(),
 )])
 export type ColumnOverride = z.infer<typeof ColumnOverride>
 export const TableOverride = z.union([

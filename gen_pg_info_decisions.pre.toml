@@ -25,6 +25,7 @@ pg_attrdef.adbin = { sel="pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid)", ty
 # pg_attribute = {}
 pg_attribute.attrelid = { filters=["not starts_with(pg_attribute.attrelid::regclass::text, 'pg_toast')"] }
 pg_attribute.attnum = { filters=["pg_attribute.attnum > 0"] }
+pg_attribute.atttypid = { nullable=false }
 pg_attribute.attisdropped = { filters=["not pg_attribute.attisdropped"] }
 pg_attribute.attcacheoff = 'skip'
 pg_attribute.atthasmissing = 'skip'
