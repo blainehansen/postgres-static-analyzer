@@ -22,7 +22,7 @@ async fn test_reflect_pg_state() -> anyhow::Result<()> {
 	assert!(!snapshot_content.contains("schema_name: \"pg_toast"));
 	assert!(!snapshot_content.contains("schema_name: \"pg_temp"));
 
-	// assert!(snapshot_content.contains(r#"Some("Database for exhaustive pg catalog population")"#));
+	assert!(snapshot_content.contains(r#"Some("Database for exhaustive pg catalog population")"#));
 	assert!(snapshot_content.contains(r#"Some("Main schema for catalog population")"#));
 	assert!(snapshot_content.contains(r#"Some("Root table for all catalog tests")"#));
 	// assert!(snapshot_content.contains(r#"Some("Lifecycle status of the record")"#));

@@ -87,6 +87,8 @@ function formatTable(
 		!allPgEnums.length ? ''
 		: '\n\n' + allPgEnums.map(([fieldStructName, members]) => `\t\tpg_char_enum!(${structName}${fieldStructName} { ${members} });`).join("\n")
 	const collection = hashCol ? 'Set' : 'Vec'
+	const returnPortion = tableName === "pg_database" ? "PgDatabase" : `${collection}<${structName}>`
+	const collectPortion = tableName === "pg_database" ? ".one()" : ".iter().await?.try_collect()"
 	const reflect = dedent(`
 		#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 		pub struct ${structName} {
@@ -95,16 +97,14 @@ function formatTable(
 
 		pub async fn reflect_${tableName}(
 			client: &PgClient
-		) -> Result<${collection}<${structName}>, postgres::Error> {
+		) -> Result<${returnPortion}, postgres::Error> {
 			let ${tableName}_coll = reflect_crate::queries::reflect_gen::reflect_${tableName}().bind(client)
 				.map(|${tableName}| {
 					${structName} {
 						${formattedReflectColumns.join("\n\t\t\t\t\t\t")}
 					}
 				})
-				.iter()
-				.await?
-				.try_collect()
+				${collectPortion}
 				.await?;
 
 			Ok(${tableName}_coll)

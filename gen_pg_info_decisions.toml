@@ -1316,6 +1316,144 @@ ref = ""
 desc = "True if this is the default conversion"
 ty = "bool"
 
+[pg_database]
+hashCol = "datname"
+
+[pg_database.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_database.columns.datname]
+typ = "name"
+ref = ""
+desc = "Database name"
+sel = "pg_database.datname::text"
+ty = "Str"
+exp = "pg_database.datname.into()"
+filters = ["pg_database.datname = current_database()"]
+
+[pg_database.columns.datdba]
+typ = "oid"
+ref = "(references pg_authid.oid)"
+desc = "Owner of the database, usually the user who created it"
+sel = "pg_get_userbyid(pg_database.datdba)::text"
+ty = "Str"
+exp = "pg_database.datdba.into()"
+
+[pg_database.columns.encoding]
+typ = "int4"
+ref = ""
+desc = "Character encoding for this database (pg_encoding_to_char() can translate this number to the encoding name)"
+sel = "pg_encoding_to_char(encoding)::text"
+ty = "Str"
+exp = "pg_database.encoding.into()"
+
+[pg_database.columns.datlocprovider]
+typ = "char"
+ref = ""
+desc = "Locale provider for this database: b = builtin, c = libc, i = icu"
+ty = "PgDatabaseDatlocprovider"
+exp = "PgDatabaseDatlocprovider::pg_from_char(pg_database.datlocprovider)"
+pgEnum = "'b' => Builtin, 'c' => Libc, 'i' => Icu"
+
+[pg_database.columns.datistemplate]
+typ = "bool"
+ref = ""
+desc = "If true, then this database can be cloned by any user with CREATEDB privileges; if false, then only superusers or the owner of the database can clone it."
+ty = "bool"
+
+[pg_database.columns.datallowconn]
+typ = "bool"
+ref = ""
+desc = "If false then no one can connect to this database. This is used to protect the template0 database from being altered."
+ty = "bool"
+
+[pg_database.columns.dathasloginevt]
+typ = "bool"
+ref = ""
+desc = "Indicates that there are login event triggers defined for this database. This flag is used to avoid extra lookups on the pg_event_trigger table during each backend startup. This flag is used internally by PostgreSQL and should not be manually altered or read for monitoring purposes."
+skip = true
+
+[pg_database.columns.datconnlimit]
+typ = "int4"
+ref = ""
+desc = "Sets maximum number of concurrent connections that can be made to this database. -1 means no limit, -2 indicates the database is invalid."
+sel = "case when datconnlimit < 0 then null else datconnlimit end"
+ty = "Option<u32>"
+exp = "pg_database.datconnlimit.map(i32::unsigned_abs)"
+
+[pg_database.columns.datfrozenxid]
+typ = "xid"
+ref = ""
+desc = "All transaction IDs before this one have been replaced with a permanent (“frozen”) transaction ID in this database. This is used to track whether the database needs to be vacuumed in order to prevent transaction ID wraparound or to allow pg_xact to be shrunk. It is the minimum of the per-table pg_class.relfrozenxid values."
+skip = true
+
+[pg_database.columns.datminmxid]
+typ = "xid"
+ref = ""
+desc = "All multixact IDs before this one have been replaced with a transaction ID in this database. This is used to track whether the database needs to be vacuumed in order to prevent multixact ID wraparound or to allow pg_multixact to be shrunk. It is the minimum of the per-table pg_class.relminmxid values."
+skip = true
+
+[pg_database.columns.dattablespace]
+typ = "oid"
+ref = "(references pg_tablespace.oid)"
+desc = "The default tablespace for the database. Within this database, all tables for which pg_class.reltablespace is zero will be stored in this tablespace; in particular, all the non-shared system catalogs will be there."
+skip = true
+
+[pg_database.columns.datcollate]
+typ = "text"
+ref = ""
+desc = "LC_COLLATE for this database"
+ty = "Option<Str>"
+exp = "pg_database.datcollate.map(Into::into)"
+
+[pg_database.columns.datctype]
+typ = "text"
+ref = ""
+desc = "LC_CTYPE for this database"
+ty = "Option<Str>"
+exp = "pg_database.datctype.map(Into::into)"
+
+[pg_database.columns.datlocale]
+typ = "text"
+ref = ""
+desc = "Collation provider locale name for this database. If the provider is libc, datlocale is NULL; datcollate and datctype are used instead."
+ty = "Option<Str>"
+exp = "pg_database.datlocale.map(Into::into)"
+
+[pg_database.columns.daticurules]
+typ = "text"
+ref = ""
+desc = "ICU collation rules for this database"
+ty = "Option<Str>"
+exp = "pg_database.daticurules.map(Into::into)"
+
+[pg_database.columns.datcollversion]
+typ = "text"
+ref = ""
+desc = "Provider-specific version of the collation. This is recorded when the database is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption."
+ty = "Option<Str>"
+exp = "pg_database.datcollversion.map(Into::into)"
+
+[pg_database.columns.datacl]
+typ = "aclitem[]"
+ref = ""
+desc = "Access privileges; see Section 5.8 for details"
+sel = "datacl::text[]"
+ty = "Option<Vec<aclitem::DbAclItem>>"
+exp = "pg_database.datacl.map(|datacl| datacl.map(|acl| aclitem(acl, &DbGrantParser)).collect())"
+
+[pg_database.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_shdescription"
+sel = "pg_shdescription.description"
+ty = "Option<Str>"
+exp = "pg_database.description.map(Into::into)"
+joins = ["left join pg_shdescription on pg_shdescription.objoid = pg_database.oid"]
+
 [pg_default_acl.columns.oid]
 typ = "oid"
 ref = ""

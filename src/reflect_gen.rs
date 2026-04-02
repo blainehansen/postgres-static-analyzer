@@ -80,9 +80,7 @@ pub async fn reflect_pg_aggregate(
 				aggminitval: pg_aggregate.aggminitval.map(Into::into),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_aggregate_coll)
@@ -114,9 +112,7 @@ pub async fn reflect_pg_am(
 				amtype: PgAmAmtype::pg_from_char(pg_am.amtype),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_am_coll)
@@ -162,9 +158,7 @@ pub async fn reflect_pg_amop(
 				amopsortfamily: Qual::maybe_parse(pg_amop.amopsortfamily),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_amop_coll)
@@ -199,9 +193,7 @@ pub async fn reflect_pg_amproc(
 				amproc: Qual::parse(pg_amproc.amproc),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_amproc_coll)
@@ -230,9 +222,7 @@ pub async fn reflect_pg_attrdef(
 				adbin: pg_attrdef.adbin.into(),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_attrdef_coll)
@@ -322,9 +312,7 @@ pub async fn reflect_pg_attribute(
 				description: pg_attribute.description.map(Into::into),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_attribute_coll)
@@ -382,9 +370,7 @@ pub async fn reflect_pg_roles(
 				description: pg_roles.description.map(Into::into),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_roles_coll)
@@ -422,9 +408,7 @@ pub async fn reflect_pg_auth_members(
 				set_option: pg_auth_members.set_option,
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_auth_members_coll)
@@ -462,9 +446,7 @@ pub async fn reflect_pg_cast(
 				castmethod: PgCastCastmethod::pg_from_char(pg_cast.castmethod),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_cast_coll)
@@ -562,9 +544,7 @@ pub async fn reflect_pg_class(
 				description: pg_class.description.map(Into::into),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_class_coll)
@@ -621,9 +601,7 @@ pub async fn reflect_pg_collation(
 				collversion: pg_collation.collversion.map(Into::into),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_collation_coll)
@@ -723,9 +701,7 @@ pub async fn reflect_pg_constraint(
 				conbin: pg_constraint.conbin.map(Into::into),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_constraint_coll)
@@ -766,12 +742,79 @@ pub async fn reflect_pg_conversion(
 				condefault: pg_conversion.condefault,
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_conversion_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgDatabase {
+	// oid oid  Row identifier
+	/// `name`  Database name
+	datname: Str,
+	/// `oid` `(references pg_authid.oid)` Owner of the database, usually the user who created it
+	datdba: Str,
+	/// `int4`  Character encoding for this database (pg_encoding_to_char() can translate this number to the encoding name)
+	encoding: Str,
+	/// `char`  Locale provider for this database: b = builtin, c = libc, i = icu
+	datlocprovider: PgDatabaseDatlocprovider,
+	/// `bool`  If true, then this database can be cloned by any user with CREATEDB privileges; if false, then only superusers or the owner of the database can clone it.
+	datistemplate: bool,
+	/// `bool`  If false then no one can connect to this database. This is used to protect the template0 database from being altered.
+	datallowconn: bool,
+	// dathasloginevt bool  Indicates that there are login event triggers defined for this database. This flag is used to avoid extra lookups on the pg_event_trigger table during each backend startup. This flag is used internally by PostgreSQL and should not be manually altered or read for monitoring purposes.
+	/// `int4`  Sets maximum number of concurrent connections that can be made to this database. -1 means no limit, -2 indicates the database is invalid.
+	datconnlimit: Option<u32>,
+	// datfrozenxid xid  All transaction IDs before this one have been replaced with a permanent (“frozen”) transaction ID in this database. This is used to track whether the database needs to be vacuumed in order to prevent transaction ID wraparound or to allow pg_xact to be shrunk. It is the minimum of the per-table pg_class.relfrozenxid values.
+	// datminmxid xid  All multixact IDs before this one have been replaced with a transaction ID in this database. This is used to track whether the database needs to be vacuumed in order to prevent multixact ID wraparound or to allow pg_multixact to be shrunk. It is the minimum of the per-table pg_class.relminmxid values.
+	// dattablespace oid (references pg_tablespace.oid) The default tablespace for the database. Within this database, all tables for which pg_class.reltablespace is zero will be stored in this tablespace; in particular, all the non-shared system catalogs will be there.
+	/// `text`  LC_COLLATE for this database
+	datcollate: Option<Str>,
+	/// `text`  LC_CTYPE for this database
+	datctype: Option<Str>,
+	/// `text`  Collation provider locale name for this database. If the provider is libc, datlocale is NULL; datcollate and datctype are used instead.
+	datlocale: Option<Str>,
+	/// `text`  ICU collation rules for this database
+	daticurules: Option<Str>,
+	/// `text`  Provider-specific version of the collation. This is recorded when the database is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
+	datcollversion: Option<Str>,
+	/// `aclitem[]`  Access privileges; see Section 5.8 for details
+	datacl: Option<Vec<aclitem::DbAclItem>>,
+	/// `text`  The comment from pg_shdescription
+	description: Option<Str>,
+}
+impl_name_hash_and_equivalent!(PgDatabase, datname);
+
+pg_char_enum!(PgDatabaseDatlocprovider { 'b' => Builtin, 'c' => Libc, 'i' => Icu });
+
+pub async fn reflect_pg_database(
+	client: &PgClient
+) -> Result<PgDatabase, postgres::Error> {
+	let pg_database_coll = reflect_crate::queries::reflect_gen::reflect_pg_database().bind(client)
+		.map(|pg_database| {
+			PgDatabase {
+				datname: pg_database.datname.into(),
+				datdba: pg_database.datdba.into(),
+				encoding: pg_database.encoding.into(),
+				datlocprovider: PgDatabaseDatlocprovider::pg_from_char(pg_database.datlocprovider),
+				datistemplate: pg_database.datistemplate,
+				datallowconn: pg_database.datallowconn,
+				datconnlimit: pg_database.datconnlimit.map(i32::unsigned_abs),
+				datcollate: pg_database.datcollate.map(Into::into),
+				datctype: pg_database.datctype.map(Into::into),
+				datlocale: pg_database.datlocale.map(Into::into),
+				daticurules: pg_database.daticurules.map(Into::into),
+				datcollversion: pg_database.datcollversion.map(Into::into),
+				datacl: pg_database.datacl.map(|datacl| datacl.map(|acl| aclitem(acl, &DbGrantParser)).collect()),
+				description: pg_database.description.map(Into::into),
+			}
+		})
+		.one()
+		.await?;
+
+	Ok(pg_database_coll)
 }
 
 
@@ -802,9 +845,7 @@ pub async fn reflect_pg_default_acl(
 				defaclacl: pg_default_acl.defaclacl.map(|defaclacl| defaclacl.map(|acl| aclitem(acl, &AclDefaultGrantParser)).collect()),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_default_acl_coll)
@@ -844,9 +885,7 @@ pub async fn reflect_pg_event_trigger(
 				evttags: pg_event_trigger.evttags.map(|items| items.map(Into::into).collect()),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_event_trigger_coll)
@@ -887,9 +926,7 @@ pub async fn reflect_pg_extension(
 				extcondition: pg_extension.extcondition.map(|items| items.map(Into::into).collect()),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_extension_coll)
@@ -927,9 +964,7 @@ pub async fn reflect_pg_foreign_data_wrapper(
 				fdwoptions: pg_foreign_data_wrapper.fdwoptions.map(|items| items.map(Into::into).collect()),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_foreign_data_wrapper_coll)
@@ -970,9 +1005,7 @@ pub async fn reflect_pg_foreign_server(
 				srvoptions: pg_foreign_server.srvoptions.map(|items| items.map(Into::into).collect()),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_foreign_server_coll)
@@ -1000,9 +1033,7 @@ pub async fn reflect_pg_foreign_table(
 				ftoptions: pg_foreign_table.ftoptions.map(|items| items.map(Into::into).collect()),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_foreign_table_coll)
@@ -1076,9 +1107,7 @@ pub async fn reflect_pg_index(
 				indpred: pg_index.indpred.map(Into::into),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_index_coll)
@@ -1107,9 +1136,7 @@ pub async fn reflect_pg_inherits(
 				inhseqno: pg_inherits.inhseqno.unsigned_abs(),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_inherits_coll)
@@ -1154,9 +1181,7 @@ pub async fn reflect_pg_language(
 				lanacl: pg_language.lanacl.map(|lanacl| lanacl.map(|acl| aclitem(acl, &LanguageGrantParser)).collect()),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_language_coll)
@@ -1189,9 +1214,7 @@ pub async fn reflect_pg_namespace(
 				description: pg_namespace.description.map(Into::into),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_namespace_coll)
@@ -1235,9 +1258,7 @@ pub async fn reflect_pg_opclass(
 				opckeytype: Qual::maybe_parse(pg_opclass.opckeytype),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_opclass_coll)
@@ -1304,9 +1325,7 @@ pub async fn reflect_pg_operator(
 				oprjoin: Qual::maybe_parse(pg_operator.oprjoin),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_operator_coll)
@@ -1338,9 +1357,7 @@ pub async fn reflect_pg_opfamily(
 				opfowner: pg_opfamily.opfowner.into(),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_opfamily_coll)
@@ -1366,9 +1383,7 @@ pub async fn reflect_pg_parameter_acl(
 				paracl: pg_parameter_acl.paracl.map(|paracl| paracl.map(|acl| aclitem(acl, &ParameterGrantParser)).collect()),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_parameter_acl_coll)
@@ -1413,9 +1428,7 @@ pub async fn reflect_pg_partitioned_table(
 				partexprs: pg_partitioned_table.partexprs.map(Into::into),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_partitioned_table_coll)
@@ -1458,9 +1471,7 @@ pub async fn reflect_pg_policy(
 				polwithcheck: pg_policy.polwithcheck.map(Into::into),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_policy_coll)
@@ -1505,9 +1516,7 @@ pub async fn reflect_pg_publication(
 				pubviaroot: pg_publication.pubviaroot,
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_publication_coll)
@@ -1533,9 +1542,7 @@ pub async fn reflect_pg_publication_namespace(
 				pnnspid: pg_publication_namespace.pnnspid.into(),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_publication_namespace_coll)
@@ -1567,9 +1574,7 @@ pub async fn reflect_pg_publication_rel(
 				prattrs: pg_publication_rel.prattrs.map(|items| items.map(i16::unsigned_abs).collect()),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_publication_rel_coll)
@@ -1609,9 +1614,7 @@ pub async fn reflect_pg_range(
 				rngsubdiff: Qual::maybe_parse(pg_range.rngsubdiff),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_range_coll)
@@ -1642,9 +1645,7 @@ pub async fn reflect_pg_rules(
 				definition: pg_rules.definition.into(),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_rules_coll)
@@ -1675,9 +1676,7 @@ pub async fn reflect_pg_views(
 				definition: pg_views.definition.into(),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_views_coll)
@@ -1711,9 +1710,7 @@ pub async fn reflect_pg_matviews(
 				definition: pg_matviews.definition.into(),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_matviews_coll)
@@ -1756,9 +1753,7 @@ pub async fn reflect_pg_sequence(
 				seqcycle: pg_sequence.seqcycle,
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_sequence_coll)
@@ -1804,9 +1799,7 @@ pub async fn reflect_pg_statistic_ext(
 				stxexprs: pg_statistic_ext.stxexprs.map(Into::into),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_statistic_ext_coll)
@@ -1876,9 +1869,7 @@ pub async fn reflect_pg_subscription(
 				suborigin: pg_subscription.suborigin.map(Into::into),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_subscription_coll)
@@ -1954,9 +1945,7 @@ pub async fn reflect_pg_trigger(
 				tgnewtable: pg_trigger.tgnewtable.map(Into::into),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_trigger_coll)
@@ -1989,9 +1978,7 @@ pub async fn reflect_pg_ts_config(
 				cfgowner: pg_ts_config.cfgowner.into(),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_ts_config_coll)
@@ -2022,9 +2009,7 @@ pub async fn reflect_pg_ts_config_map(
 				mapdict: Qual::parse(pg_ts_config_map.mapdict),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_ts_config_map_coll)
@@ -2060,9 +2045,7 @@ pub async fn reflect_pg_ts_dict(
 				dictinitoption: pg_ts_dict.dictinitoption.map(Into::into),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_ts_dict_coll)
@@ -2180,9 +2163,7 @@ pub async fn reflect_pg_type(
 				typacl: pg_type.typacl.map(|typacl| typacl.map(|acl| aclitem(acl, &TypeGrantParser)).collect()),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_type_coll)
@@ -2215,9 +2196,7 @@ pub async fn reflect_pg_user_mappings(
 				umoptions: pg_user_mappings.umoptions.map(|items| items.map(Into::into).collect()),
 			}
 		})
-		.iter()
-		.await?
-		.try_collect()
+		.iter().await?.try_collect()
 		.await?;
 
 	Ok(pg_user_mappings_coll)

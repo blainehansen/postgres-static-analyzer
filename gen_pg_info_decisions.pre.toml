@@ -89,7 +89,17 @@ pg_constraint.confmatchtype = { sel="case when pg_constraint.confmatchtype = ' '
 
 pg_conversion = {}
 
-pg_database = 'manual'
+# pg_database = {}
+pg_database.datname = { filters=["pg_database.datname = current_database()"] }
+# Locale provider for this database: b = builtin, c = libc, i = icu
+pg_database.datlocprovider = { ty="PgDatabaseDatlocprovider", exp="PgDatabaseDatlocprovider::pg_from_char(pg_database.datlocprovider)", pgEnum="'b' => Builtin, 'c' => Libc, 'i' => Icu" }
+pg_database.datconnlimit = { sel="case when datconnlimit < 0 then null else datconnlimit end", ty="Option<u32>", exp="pg_database.datconnlimit.map(i32::unsigned_abs)" }
+pg_database.dathasloginevt = 'skip'
+pg_database.datcollate = { nullable=true }
+pg_database.datctype = { nullable=true }
+pg_database.datlocale = { nullable=true }
+pg_database.daticurules = { nullable=true }
+pg_database.datcollversion = { nullable=true }
 
 pg_db_role_setting = 'manual'
 

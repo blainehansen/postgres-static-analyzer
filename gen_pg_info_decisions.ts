@@ -145,6 +145,7 @@ async function decideColumn(
 		return [undefined, { typ, ref, desc, ...override, ty: override.ty }]
 
 	const nameUniqueTables = new Set([
+		"pg_database",
 		"pg_am",
 		"pg_roles",
 		"pg_publication",
