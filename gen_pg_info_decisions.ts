@@ -141,14 +141,16 @@ async function decideTable({ tableName, columns }: RawTable): Promise<TableDecis
 			joins: [`left join pg_description on pg_description.objoid = pg_attribute.attrelid and pg_description.objsubid = pg_attribute.attnum`],
 		}
 	}
-	// else if (tableName === "pg_rules") {
-	// 	// TODO need to join to pg_rewrite
-	// 	decidedColumns["description"] = {
-	// 		typ: "text", ref: "", desc: "The comment from pg_description",
-	// 		sel: `pg_description.description`, ty: "Option<Str>", exp: `${tableName}.description.map(Into::into)`,
-	// 		joins: [`left join pg_description on pg_description.objoid = pg_attribute.attrelid and pg_description.objsubid = pg_attribute.attnum`],
-	// 	}
-	// }
+	else if (tableName === "pg_rules") {
+		decidedColumns["description"] = {
+			typ: "text", ref: "", desc: "The comment from pg_description",
+			sel: `pg_description.description`, ty: "Option<Str>", exp: `${tableName}.description.map(Into::into)`,
+			joins: [
+				`join pg_rewrite on pg_rewrite.ev_type != '1' and pg_rules.rulename = pg_rewrite.rulename and (quote_ident(pg_rules.schemaname) || '.' || quote_ident(pg_rules.tablename))::regclass::oid = pg_rewrite.ev_class`,
+				`left join pg_description on pg_description.objoid = pg_rewrite.oid and pg_description.objsubid = 0`,
+			],
+		}
+	}
 
 	return { columns: decidedColumns, hashCol: foundHashColumn }
 }

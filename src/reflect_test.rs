@@ -61,6 +61,7 @@ async fn test_reflect_pg_state() -> anyhow::Result<()> {
 	assert!(snapshot_content.contains(r#"Some("COMMENT ON PUBLICATION test_pub")"#));
 	assert!(snapshot_content.contains(r#"Some("COMMENT ON ROLE catalog_admin")"#));
 	assert!(snapshot_content.contains(r#"Some("COMMENT ON ROUTINE add(integer, integer)")"#));
+	assert!(snapshot_content.contains(r#"Some("COMMENT ON RULE parent_view_insert ON parent_view")"#));
 	assert!(snapshot_content.contains(r#"Some("COMMENT ON SERVER ext_server")"#));
 	assert!(snapshot_content.contains(r#"Some("COMMENT ON STATISTICS parent_table_stats")"#));
 	assert!(snapshot_content.contains(r#"Some("COMMENT ON SUBSCRIPTION test_sub")"#));
@@ -68,8 +69,6 @@ async fn test_reflect_pg_state() -> anyhow::Result<()> {
 	assert!(snapshot_content.contains(r#"Some("COMMENT ON TEXT SEARCH DICTIONARY custom_dict")"#));
 	assert!(snapshot_content.contains(r#"Some("COMMENT ON TRIGGER parent_audit_trig ON parent_table")"#));
 	assert!(snapshot_content.contains(r#"Some("COMMENT ON TYPE point_composite")"#));
-
-	// assert!(snapshot_content.contains(r#"Some("COMMENT ON RULE parent_view_insert ON parent_view")"#));
 
 	Ok(())
 }

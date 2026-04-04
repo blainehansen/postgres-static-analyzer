@@ -1676,6 +1676,8 @@ pub struct PgRules {
 	rulename: Str,
 	/// `text`  Rule definition (a reconstructed creation command)
 	definition: Str,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pub async fn reflect_pg_rules(
@@ -1688,6 +1690,7 @@ pub async fn reflect_pg_rules(
 				tablename: Qual::parse(pg_rules.tablename),
 				rulename: pg_rules.rulename.into(),
 				definition: pg_rules.definition.into(),
+				description: pg_rules.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
