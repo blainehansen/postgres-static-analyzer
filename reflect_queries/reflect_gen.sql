@@ -164,16 +164,18 @@ from
 ;
 
 
---! reflect_pg_cast : (castfunc?)
+--! reflect_pg_cast : (castfunc?, description?)
 select
 	-- oid oid  Row identifier
 	pg_cast.castsource::regtype::text as castsource, -- oid (references pg_type.oid) OID of the source data type
 	pg_cast.casttarget::regtype::text as casttarget, -- oid (references pg_type.oid) OID of the target data type
 	case when pg_cast.castfunc = 0 then null else pg_cast.castfunc::regprocedure::text end as castfunc, -- oid (references pg_proc.oid) The OID of the function to use to perform this cast. Zero is stored if the cast method doesn't require a function.
 	pg_cast.castcontext as castcontext, -- char  Indicates what contexts the cast can be invoked in. e means only as an explicit cast (using CAST or :: syntax). a means implicitly in assignment to a target column, as well as explicitly. i means implicitly in expressions, as well as the other cases.
-	pg_cast.castmethod as castmethod -- char  Indicates how the cast is performed. f means that the function specified in the castfunc field is used. i means that the input/output functions are used. b means that the types are binary-coercible, thus no conversion is required.
+	pg_cast.castmethod as castmethod, -- char  Indicates how the cast is performed. f means that the function specified in the castfunc field is used. i means that the input/output functions are used. b means that the types are binary-coercible, thus no conversion is required.
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_cast
+	left join pg_description on pg_description.objoid = pg_cast.oid and pg_description.objsubid = 0
 ;
 
 
@@ -222,7 +224,7 @@ where
 ;
 
 
---! reflect_pg_collation : (collencoding?, collcollate?, collctype?, colllocale?, collicurules?, collversion?)
+--! reflect_pg_collation : (collencoding?, collcollate?, collctype?, colllocale?, collicurules?, collversion?, description?)
 select
 	pg_collation.oid::regcollation::text as oid, -- oid  Row identifier
 	pg_collation.collname::text as collname, -- name  Collation name (unique per namespace and encoding)
@@ -235,13 +237,15 @@ select
 	pg_collation.collctype as collctype, -- text  LC_CTYPE for this collation object. If the provider is not libc, collctype is NULL and colllocale is used instead.
 	pg_collation.colllocale as colllocale, -- text  Collation provider locale name for this collation object. If the provider is libc, colllocale is NULL; collcollate and collctype are used instead.
 	pg_collation.collicurules as collicurules, -- text  ICU collation rules for this collation object
-	pg_collation.collversion as collversion -- text  Provider-specific version of the collation. This is recorded when the collation is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
+	pg_collation.collversion as collversion, -- text  Provider-specific version of the collation. This is recorded when the collation is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_collation
+	left join pg_description on pg_description.objoid = pg_collation.oid and pg_description.objsubid = 0
 ;
 
 
---! reflect_pg_constraint : (conrelid?, contypid?, conindid?, conparentid?, confrelid?, confupdtype?, confdeltype?, confmatchtype?, conkey?, confkey?, conpfeqop?, conppeqop?, conffeqop?, confdelsetcols?, conexclop?, conbin?)
+--! reflect_pg_constraint : (conrelid?, contypid?, conindid?, conparentid?, confrelid?, confupdtype?, confdeltype?, confmatchtype?, conkey?, confkey?, conpfeqop?, conppeqop?, conffeqop?, confdelsetcols?, conexclop?, conbin?, description?)
 select
 	-- oid oid  Row identifier
 	pg_constraint.conname::text as conname, -- name  Constraint name (not necessarily unique!)
@@ -268,11 +272,13 @@ select
 	pg_constraint.conffeqop::regoperator[]::text[] as conffeqop, -- oid[] (references pg_operator.oid) If a foreign key, list of the equality operators for FK = FK comparisons
 	pg_constraint.confdelsetcols as confdelsetcols, -- int2[] (references pg_attribute.attnum) If a foreign key with a SET NULL or SET DEFAULT delete action, the columns that will be updated. If null, all of the referencing columns will be updated.
 	pg_constraint.conexclop::regoperator[]::text[] as conexclop, -- oid[] (references pg_operator.oid) If an exclusion constraint, list of the per-column exclusion operators
-	pg_get_expr(pg_constraint.conbin, pg_constraint.conrelid) as conbin -- pg_node_tree  If a check constraint, an internal representation of the expression. (It's recommended to use pg_get_constraintdef() to extract the definition of a check constraint.)
+	pg_get_expr(pg_constraint.conbin, pg_constraint.conrelid) as conbin, -- pg_node_tree  If a check constraint, an internal representation of the expression. (It's recommended to use pg_get_constraintdef() to extract the definition of a check constraint.)
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_constraint
 	left join pg_constraint as conparentid_pg_constraint on pg_constraint.conparentid = conparentid_pg_constraint.oid
 	left join pg_namespace as conparentid_pg_namespace on conparentid_pg_constraint.connamespace = conparentid_pg_namespace.oid
+	left join pg_description on pg_description.objoid = pg_constraint.oid and pg_description.objsubid = 0
 where 
 	(pg_constraint.conkey is null or not (0 >= any(pg_constraint.conkey)))
 	and (pg_constraint.confkey is null or not (0 >= any(pg_constraint.confkey)))
@@ -280,7 +286,7 @@ where
 ;
 
 
---! reflect_pg_conversion : ()
+--! reflect_pg_conversion : (description?)
 select
 	-- oid oid  Row identifier
 	pg_conversion.conname::text as conname, -- name  Conversion name (unique within a namespace)
@@ -289,9 +295,11 @@ select
 	pg_encoding_to_char(conforencoding)::text as conforencoding, -- int4  Source encoding ID (pg_encoding_to_char() can translate this number to the encoding name)
 	pg_encoding_to_char(contoencoding)::text as contoencoding, -- int4  Destination encoding ID (pg_encoding_to_char() can translate this number to the encoding name)
 	conproc::regproc::text as conproc, -- regproc (references pg_proc.oid) Conversion function
-	pg_conversion.condefault as condefault -- bool  True if this is the default conversion
+	pg_conversion.condefault as condefault, -- bool  True if this is the default conversion
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_conversion
+	left join pg_description on pg_description.objoid = pg_conversion.oid and pg_description.objsubid = 0
 ;
 
 
@@ -336,7 +344,7 @@ from
 ;
 
 
---! reflect_pg_event_trigger : (evttags?)
+--! reflect_pg_event_trigger : (evttags?, description?)
 select
 	-- oid oid  Row identifier
 	pg_event_trigger.evtname::text as evtname, -- name  Trigger name (must be unique)
@@ -344,13 +352,15 @@ select
 	pg_get_userbyid(pg_event_trigger.evtowner)::text as evtowner, -- oid (references pg_authid.oid) Owner of the event trigger
 	pg_event_trigger.evtfoid::regprocedure::text as evtfoid, -- oid (references pg_proc.oid) The function to be called
 	pg_event_trigger.evtenabled as evtenabled, -- char  Controls in which session_replication_role modes the event trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always.
-	pg_event_trigger.evttags as evttags -- text[]  Command tags for which this trigger will fire. If NULL, the firing of this trigger is not restricted on the basis of the command tag.
+	pg_event_trigger.evttags as evttags, -- text[]  Command tags for which this trigger will fire. If NULL, the firing of this trigger is not restricted on the basis of the command tag.
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_event_trigger
+	left join pg_description on pg_description.objoid = pg_event_trigger.oid and pg_description.objsubid = 0
 ;
 
 
---! reflect_pg_extension : (extconfig?, extcondition?)
+--! reflect_pg_extension : (extconfig?, extcondition?, description?)
 select
 	-- oid oid  Row identifier
 	pg_extension.extname::text as extname, -- name  Name of the extension
@@ -359,13 +369,15 @@ select
 	pg_extension.extrelocatable as extrelocatable, -- bool  True if extension can be relocated to another schema
 	pg_extension.extversion as extversion, -- text  Version name for the extension
 	pg_extension.extconfig::regclass[]::text[] as extconfig, -- oid[] (references pg_class.oid) Array of regclass OIDs for the extension's configuration table(s), or NULL if none
-	pg_extension.extcondition as extcondition -- text[]  Array of WHERE-clause filter conditions for the extension's configuration table(s), or NULL if none
+	pg_extension.extcondition as extcondition, -- text[]  Array of WHERE-clause filter conditions for the extension's configuration table(s), or NULL if none
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_extension
+	left join pg_description on pg_description.objoid = pg_extension.oid and pg_description.objsubid = 0
 ;
 
 
---! reflect_pg_foreign_data_wrapper : (fdwhandler?, fdwvalidator?, fdwacl?, fdwoptions?)
+--! reflect_pg_foreign_data_wrapper : (fdwhandler?, fdwvalidator?, fdwacl?, fdwoptions?, description?)
 select
 	-- oid oid  Row identifier
 	pg_foreign_data_wrapper.fdwname::text as fdwname, -- name  Name of the foreign-data wrapper
@@ -373,13 +385,15 @@ select
 	case when pg_foreign_data_wrapper.fdwhandler = 0 then null else pg_foreign_data_wrapper.fdwhandler::regprocedure::text end as fdwhandler, -- oid (references pg_proc.oid) References a handler function that is responsible for supplying execution routines for the foreign-data wrapper. Zero if no handler is provided
 	case when pg_foreign_data_wrapper.fdwvalidator = 0 then null else pg_foreign_data_wrapper.fdwvalidator::regprocedure::text end as fdwvalidator, -- oid (references pg_proc.oid) References a validator function that is responsible for checking the validity of the options given to the foreign-data wrapper, as well as options for foreign servers and user mappings using the foreign-data wrapper. Zero if no validator is provided
 	fdwacl::text[] as fdwacl, -- aclitem[]  Access privileges; see Section 5.8 for details
-	pg_foreign_data_wrapper.fdwoptions as fdwoptions -- text[]  Foreign-data wrapper specific options, as “keyword=value” strings
+	pg_foreign_data_wrapper.fdwoptions as fdwoptions, -- text[]  Foreign-data wrapper specific options, as “keyword=value” strings
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_foreign_data_wrapper
+	left join pg_description on pg_description.objoid = pg_foreign_data_wrapper.oid and pg_description.objsubid = 0
 ;
 
 
---! reflect_pg_foreign_server : (srvtype?, srvversion?, srvacl?, srvoptions?)
+--! reflect_pg_foreign_server : (srvtype?, srvversion?, srvacl?, srvoptions?, description?)
 select
 	-- oid oid  Row identifier
 	pg_foreign_server.srvname::text as srvname, -- name  Name of the foreign server
@@ -388,10 +402,12 @@ select
 	pg_foreign_server.srvtype as srvtype, -- text  Type of the server (optional)
 	pg_foreign_server.srvversion as srvversion, -- text  Version of the server (optional)
 	srvacl::text[] as srvacl, -- aclitem[]  Access privileges; see Section 5.8 for details
-	pg_foreign_server.srvoptions as srvoptions -- text[]  Foreign server specific options, as “keyword=value” strings
+	pg_foreign_server.srvoptions as srvoptions, -- text[]  Foreign server specific options, as “keyword=value” strings
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_foreign_server
 	join pg_foreign_data_wrapper as srvfdw_pg_foreign_data_wrapper on pg_foreign_server.srvfdw = srvfdw_pg_foreign_data_wrapper.oid
+	left join pg_description on pg_description.objoid = pg_foreign_server.oid and pg_description.objsubid = 0
 ;
 
 
@@ -447,7 +463,7 @@ from
 ;
 
 
---! reflect_pg_language : (lanplcallfoid?, laninline?, lanvalidator?, lanacl?)
+--! reflect_pg_language : (lanplcallfoid?, laninline?, lanvalidator?, lanacl?, description?)
 select
 	-- oid oid  Row identifier
 	pg_language.lanname::text as lanname, -- name  Name of the language
@@ -457,9 +473,11 @@ select
 	case when pg_language.lanplcallfoid = 0 then null else pg_language.lanplcallfoid::regprocedure::text end as lanplcallfoid, -- oid (references pg_proc.oid) For noninternal languages this references the language handler, which is a special function that is responsible for executing all functions that are written in the particular language. Zero for internal languages.
 	case when pg_language.laninline = 0 then null else pg_language.laninline::regprocedure::text end as laninline, -- oid (references pg_proc.oid) This references a function that is responsible for executing “inline” anonymous code blocks (DO blocks). Zero if inline blocks are not supported.
 	case when pg_language.lanvalidator = 0 then null else pg_language.lanvalidator::regprocedure::text end as lanvalidator, -- oid (references pg_proc.oid) This references a language validator function that is responsible for checking the syntax and validity of new functions when they are created. Zero if no validator is provided.
-	lanacl::text[] as lanacl -- aclitem[]  Access privileges; see Section 5.8 for details
+	lanacl::text[] as lanacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_language
+	left join pg_description on pg_description.objoid = pg_language.oid and pg_description.objsubid = 0
 ;
 
 
@@ -479,7 +497,7 @@ where
 ;
 
 
---! reflect_pg_opclass : (opckeytype?)
+--! reflect_pg_opclass : (opckeytype?, description?)
 select
 	-- oid oid  Row identifier
 	opcmethod_pg_am.amname::text as opcmethod, -- oid (references pg_am.oid) Index access method operator class is for
@@ -489,16 +507,18 @@ select
 	quote_ident(opcfamily_pg_namespace.nspname) || '.' || quote_ident(opcfamily_pg_opfamily.opfname) as opcfamily, -- oid (references pg_opfamily.oid) Operator family containing the operator class
 	pg_opclass.opcintype::regtype::text as opcintype, -- oid (references pg_type.oid) Data type that the operator class indexes
 	pg_opclass.opcdefault as opcdefault, -- bool  True if this operator class is the default for opcintype
-	case when pg_opclass.opckeytype = 0 then null else pg_opclass.opckeytype::regtype::text end as opckeytype -- oid (references pg_type.oid) Type of data stored in index, or zero if same as opcintype
+	case when pg_opclass.opckeytype = 0 then null else pg_opclass.opckeytype::regtype::text end as opckeytype, -- oid (references pg_type.oid) Type of data stored in index, or zero if same as opcintype
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_opclass
 	join pg_am as opcmethod_pg_am on pg_opclass.opcmethod = opcmethod_pg_am.oid
 	join pg_opfamily as opcfamily_pg_opfamily on pg_opclass.opcfamily = opcfamily_pg_opfamily.oid
 	join pg_namespace as opcfamily_pg_namespace on opcfamily_pg_opfamily.opfnamespace = opcfamily_pg_namespace.oid
+	left join pg_description on pg_description.objoid = pg_opclass.oid and pg_description.objsubid = 0
 ;
 
 
---! reflect_pg_operator : (oprleft?, oprresult?, oprcom?, oprnegate?, oprcode?, oprrest?, oprjoin?)
+--! reflect_pg_operator : (oprleft?, oprresult?, oprcom?, oprnegate?, oprcode?, oprrest?, oprjoin?, description?)
 select
 	pg_operator.oid::regoperator::text as oid, -- oid  Row identifier
 	pg_operator.oprname::text as oprname, -- name  Name of the operator
@@ -514,22 +534,26 @@ select
 	case when pg_operator.oprnegate = 0 then null else pg_operator.oprnegate::regoperator::text end as oprnegate, -- oid (references pg_operator.oid) Negator of this operator (zero if none)
 	case when oprcode = 0 then null else oprcode::regproc::text end as oprcode, -- regproc (references pg_proc.oid) Function that implements this operator (zero for a not-yet-defined “shell” operator)
 	case when oprrest = 0 then null else oprrest::regproc::text end as oprrest, -- regproc (references pg_proc.oid) Restriction selectivity estimation function for this operator (zero if none)
-	case when oprjoin = 0 then null else oprjoin::regproc::text end as oprjoin -- regproc (references pg_proc.oid) Join selectivity estimation function for this operator (zero if none)
+	case when oprjoin = 0 then null else oprjoin::regproc::text end as oprjoin, -- regproc (references pg_proc.oid) Join selectivity estimation function for this operator (zero if none)
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_operator
+	left join pg_description on pg_description.objoid = pg_operator.oid and pg_description.objsubid = 0
 ;
 
 
---! reflect_pg_opfamily : ()
+--! reflect_pg_opfamily : (description?)
 select
 	-- oid oid  Row identifier
 	opfmethod_pg_am.amname::text as opfmethod, -- oid (references pg_am.oid) Index access method operator family is for
 	pg_opfamily.opfname::text as opfname, -- name  Name of this operator family
 	pg_opfamily.opfnamespace::regnamespace::text as opfnamespace, -- oid (references pg_namespace.oid) Namespace of this operator family
-	pg_get_userbyid(pg_opfamily.opfowner)::text as opfowner -- oid (references pg_authid.oid) Owner of the operator family
+	pg_get_userbyid(pg_opfamily.opfowner)::text as opfowner, -- oid (references pg_authid.oid) Owner of the operator family
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_opfamily
 	join pg_am as opfmethod_pg_am on pg_opfamily.opfmethod = opfmethod_pg_am.oid
+	left join pg_description on pg_description.objoid = pg_opfamily.oid and pg_description.objsubid = 0
 ;
 
 
@@ -558,7 +582,7 @@ from
 ;
 
 
---! reflect_pg_policy : (polroles[?], polqual?, polwithcheck?)
+--! reflect_pg_policy : (polroles[?], polqual?, polwithcheck?, description?)
 select
 	-- oid oid  Row identifier
 	pg_policy.polname::text as polname, -- name  The name of the policy
@@ -567,13 +591,15 @@ select
 	pg_policy.polpermissive as polpermissive, -- bool  Is the policy permissive or restrictive?
 	pg_temp.format_role_oid_array(pg_policy.polroles) as polroles, -- oid[] (references pg_authid.oid) The roles to which the policy is applied; zero means PUBLIC (and normally appears alone in the array)
 	pg_get_expr(pg_policy.polqual, pg_policy.polrelid) as polqual, -- pg_node_tree  The expression tree to be added to the security barrier qualifications for queries that use the table
-	pg_get_expr(pg_policy.polwithcheck, pg_policy.polrelid) as polwithcheck -- pg_node_tree  The expression tree to be added to the WITH CHECK qualifications for queries that attempt to add rows to the table
+	pg_get_expr(pg_policy.polwithcheck, pg_policy.polrelid) as polwithcheck, -- pg_node_tree  The expression tree to be added to the WITH CHECK qualifications for queries that attempt to add rows to the table
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_policy
+	left join pg_description on pg_description.objoid = pg_policy.oid and pg_description.objsubid = 0
 ;
 
 
---! reflect_pg_publication : ()
+--! reflect_pg_publication : (description?)
 select
 	-- oid oid  Row identifier
 	pg_publication.pubname::text as pubname, -- name  Name of the publication
@@ -583,9 +609,11 @@ select
 	pg_publication.pubupdate as pubupdate, -- bool  If true, UPDATE operations are replicated for tables in the publication.
 	pg_publication.pubdelete as pubdelete, -- bool  If true, DELETE operations are replicated for tables in the publication.
 	pg_publication.pubtruncate as pubtruncate, -- bool  If true, TRUNCATE operations are replicated for tables in the publication.
-	pg_publication.pubviaroot as pubviaroot -- bool  If true, operations on a leaf partition are replicated using the identity and schema of its topmost partitioned ancestor mentioned in the publication instead of its own.
+	pg_publication.pubviaroot as pubviaroot, -- bool  If true, operations on a leaf partition are replicated using the identity and schema of its topmost partitioned ancestor mentioned in the publication instead of its own.
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_publication
+	left join pg_description on pg_description.objoid = pg_publication.oid and pg_description.objsubid = 0
 ;
 
 
@@ -682,7 +710,7 @@ from
 ;
 
 
---! reflect_pg_statistic_ext : (stxstattarget?, stxexprs?)
+--! reflect_pg_statistic_ext : (stxstattarget?, stxexprs?, description?)
 select
 	-- oid oid  Row identifier
 	pg_statistic_ext.stxrelid::regclass::text as stxrelid, -- oid (references pg_class.oid) Table containing the columns described by this object
@@ -692,13 +720,15 @@ select
 	pg_statistic_ext.stxkeys as stxkeys, -- int2vector (references pg_attribute.attnum) An array of attribute numbers, indicating which table columns are covered by this statistics object; for example a value of 1 3 would mean that the first and the third table columns are covered
 	pg_statistic_ext.stxstattarget as stxstattarget, -- int2  stxstattarget controls the level of detail of statistics accumulated for this statistics object by ANALYZE. A zero value indicates that no statistics should be collected. A null value says to use the maximum of the statistics targets of the referenced columns, if set, or the system default statistics target. Positive values of stxstattarget determine the target number of “most common values” to collect.
 	pg_statistic_ext.stxkind as stxkind, -- char[]  An array containing codes for the enabled statistics kinds; valid values are: d for n-distinct statistics, f for functional dependency statistics, m for most common values (MCV) list statistics, and e for expression statistics
-	pg_get_expr(pg_statistic_ext.stxexprs, pg_statistic_ext.stxrelid) as stxexprs -- pg_node_tree  Expression trees (in nodeToString() representation) for statistics object attributes that are not simple column references. This is a list with one element per expression. Null if all statistics object attributes are simple references.
+	pg_get_expr(pg_statistic_ext.stxexprs, pg_statistic_ext.stxrelid) as stxexprs, -- pg_node_tree  Expression trees (in nodeToString() representation) for statistics object attributes that are not simple column references. This is a list with one element per expression. Null if all statistics object attributes are simple references.
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_statistic_ext
+	left join pg_description on pg_description.objoid = pg_statistic_ext.oid and pg_description.objsubid = 0
 ;
 
 
---! reflect_pg_subscription : (subslotname?, suborigin?)
+--! reflect_pg_subscription : (subslotname?, suborigin?, description?)
 select
 	-- oid oid  Row identifier
 	-- subdbid oid (references pg_database.oid) OID of the database that the subscription resides in
@@ -717,15 +747,17 @@ select
 	pg_subscription.subslotname::text as subslotname, -- name  Name of the replication slot in the upstream database (also used for the local replication origin name); null represents NONE
 	pg_subscription.subsynccommit as subsynccommit, -- text  The synchronous_commit setting for the subscription's workers to use
 	pg_subscription.subpublications as subpublications, -- text[]  Array of subscribed publication names. These reference publications defined in the upstream database. For more on publications see Section 29.1.
-	pg_subscription.suborigin as suborigin -- text  The origin value must be either none or any. The default is any. If none, the subscription will request the publisher to only send changes that don't have an origin. If any, the publisher sends changes regardless of their origin.
+	pg_subscription.suborigin as suborigin, -- text  The origin value must be either none or any. The default is any. If none, the subscription will request the publisher to only send changes that don't have an origin. If any, the publisher sends changes regardless of their origin.
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_subscription
+	left join pg_description on pg_description.objoid = pg_subscription.oid and pg_description.objsubid = 0
 where 
 	pg_subscription.subdbid = (select oid from pg_database where datname = current_database())
 ;
 
 
---! reflect_pg_trigger : (tgparentid?, tgconstrrelid?, tgconstrindid?, tgconstraint?, tgqual?, tgoldtable?, tgnewtable?)
+--! reflect_pg_trigger : (tgparentid?, tgconstrrelid?, tgconstrindid?, tgconstraint?, tgqual?, tgoldtable?, tgnewtable?, description?)
 select
 	-- oid oid  Row identifier
 	pg_trigger.tgrelid::regclass::text as tgrelid, -- oid (references pg_class.oid) The table this trigger is on
@@ -745,24 +777,28 @@ select
 	pg_trigger.tgargs as tgargs, -- bytea  Argument strings to pass to trigger, each NULL-terminated
 	pg_get_expr(pg_trigger.tgqual, pg_trigger.tgrelid) as tgqual, -- pg_node_tree  Expression tree (in nodeToString() representation) for the trigger's WHEN condition, or null if none
 	pg_trigger.tgoldtable::text as tgoldtable, -- name  REFERENCING clause name for OLD TABLE, or null if none
-	pg_trigger.tgnewtable::text as tgnewtable -- name  REFERENCING clause name for NEW TABLE, or null if none
+	pg_trigger.tgnewtable::text as tgnewtable, -- name  REFERENCING clause name for NEW TABLE, or null if none
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_trigger
 	left join pg_trigger as tgparentid_pg_trigger on pg_trigger.tgparentid = tgparentid_pg_trigger.oid
 	left join pg_constraint as tgconstraint_pg_constraint on pg_trigger.tgconstraint = tgconstraint_pg_constraint.oid
 	left join pg_namespace as tgconstraint_pg_namespace on tgconstraint_pg_constraint.connamespace = tgconstraint_pg_namespace.oid
+	left join pg_description on pg_description.objoid = pg_trigger.oid and pg_description.objsubid = 0
 ;
 
 
---! reflect_pg_ts_config : ()
+--! reflect_pg_ts_config : (description?)
 select
 	pg_ts_config.oid::regconfig::text as oid, -- oid  Row identifier
 	pg_ts_config.cfgname::text as cfgname, -- name  Text search configuration name
 	pg_ts_config.cfgnamespace::regnamespace::text as cfgnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this configuration
-	pg_get_userbyid(pg_ts_config.cfgowner)::text as cfgowner -- oid (references pg_authid.oid) Owner of the configuration
+	pg_get_userbyid(pg_ts_config.cfgowner)::text as cfgowner, -- oid (references pg_authid.oid) Owner of the configuration
 	-- cfgparser oid (references pg_ts_parser.oid) The OID of the text search parser for this configuration
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_ts_config
+	left join pg_description on pg_description.objoid = pg_ts_config.oid and pg_description.objsubid = 0
 ;
 
 
@@ -777,20 +813,22 @@ from
 ;
 
 
---! reflect_pg_ts_dict : (dictinitoption?)
+--! reflect_pg_ts_dict : (dictinitoption?, description?)
 select
 	pg_ts_dict.oid::regdictionary::text as oid, -- oid  Row identifier
 	pg_ts_dict.dictname::text as dictname, -- name  Text search dictionary name
 	pg_ts_dict.dictnamespace::regnamespace::text as dictnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this dictionary
 	pg_get_userbyid(pg_ts_dict.dictowner)::text as dictowner, -- oid (references pg_authid.oid) Owner of the dictionary
 	-- dicttemplate oid (references pg_ts_template.oid) The OID of the text search template for this dictionary
-	pg_ts_dict.dictinitoption as dictinitoption -- text  Initialization option string for the template
+	pg_ts_dict.dictinitoption as dictinitoption, -- text  Initialization option string for the template
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_ts_dict
+	left join pg_description on pg_description.objoid = pg_ts_dict.oid and pg_description.objsubid = 0
 ;
 
 
---! reflect_pg_type : (typrelid?, typsubscript?, typelem?, typarray?, typreceive?, typsend?, typmodin?, typmodout?, typanalyze?, typbasetype?, typtypmod?, typcollation?, typdefaultbin?, typdefault?, typacl?)
+--! reflect_pg_type : (typrelid?, typsubscript?, typelem?, typarray?, typreceive?, typsend?, typmodin?, typmodout?, typanalyze?, typbasetype?, typtypmod?, typcollation?, typdefaultbin?, typdefault?, typacl?, description?)
 select
 	pg_type.oid::regtype::text as oid, -- oid  Row identifier
 	pg_type.typname::text as typname, -- name  Data type name
@@ -823,9 +861,11 @@ select
 	case when pg_type.typcollation = 0 then null else pg_type.typcollation::regcollation::text end as typcollation, -- oid (references pg_collation.oid) typcollation specifies the collation of the type. If the type does not support collations, this will be zero. A base type that supports collations will have a nonzero value here, typically DEFAULT_COLLATION_OID. A domain over a collatable type can have a collation OID different from its base type's, if one was specified for the domain.
 	pg_get_expr(typdefaultbin, 0) as typdefaultbin, -- pg_node_tree  If typdefaultbin is not null, it is the nodeToString() representation of a default expression for the type. This is only used for domains.
 	pg_type.typdefault as typdefault, -- text  typdefault is null if the type has no associated default value. If typdefaultbin is not null, typdefault must contain a human-readable version of the default expression represented by typdefaultbin. If typdefaultbin is null and typdefault is not, then typdefault is the external representation of the type's default value, which can be fed to the type's input converter to produce a constant.
-	typacl::text[] as typacl -- aclitem[]  Access privileges; see Section 5.8 for details
+	typacl::text[] as typacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_type
+	left join pg_description on pg_description.objoid = pg_type.oid and pg_description.objsubid = 0
 ;
 
 

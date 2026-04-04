@@ -431,6 +431,8 @@ pub struct PgCast {
 	castcontext: PgCastCastcontext,
 	/// `char`  Indicates how the cast is performed. f means that the function specified in the castfunc field is used. i means that the input/output functions are used. b means that the types are binary-coercible, thus no conversion is required.
 	castmethod: PgCastCastmethod,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pg_char_enum!(PgCastCastcontext { 'e' => Explicit, 'a' => ImplicitAssignment, 'i' => Implicit });
@@ -447,6 +449,7 @@ pub async fn reflect_pg_cast(
 				castfunc: Qual::maybe_parse(pg_cast.castfunc),
 				castcontext: PgCastCastcontext::pg_from_char(pg_cast.castcontext),
 				castmethod: PgCastCastmethod::pg_from_char(pg_cast.castmethod),
+				description: pg_cast.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -580,6 +583,8 @@ pub struct PgCollation {
 	collicurules: Option<Str>,
 	/// `text`  Provider-specific version of the collation. This is recorded when the collation is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
 	collversion: Option<Str>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pg_char_enum!(PgCollationCollprovider { 'd' => DatabaseDefault, 'b' => Builtin, 'c' => Libc, 'i' => Icu });
@@ -602,6 +607,7 @@ pub async fn reflect_pg_collation(
 				colllocale: pg_collation.colllocale.map(Into::into),
 				collicurules: pg_collation.collicurules.map(Into::into),
 				collversion: pg_collation.collversion.map(Into::into),
+				description: pg_collation.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -664,6 +670,8 @@ pub struct PgConstraint {
 	conexclop: Option<Vec<Qual>>,
 	/// `pg_node_tree`  If a check constraint, an internal representation of the expression. (It's recommended to use pg_get_constraintdef() to extract the definition of a check constraint.)
 	conbin: Option<Str>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pg_char_enum!(PgConstraintContype { 'c' => Check, 'f' => ForeignKey, 'n' => DomainNotNull, 'p' => PrimaryKey, 'u' => Unique, 't' => Trigger, 'x' => Exclusion });
@@ -702,6 +710,7 @@ pub async fn reflect_pg_constraint(
 				confdelsetcols: pg_constraint.confdelsetcols.map(|items| items.map(i16::unsigned_abs).collect()),
 				conexclop: pg_constraint.conexclop.map(|items| items.map(Qual::parse).collect()),
 				conbin: pg_constraint.conbin.map(Into::into),
+				description: pg_constraint.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -728,6 +737,8 @@ pub struct PgConversion {
 	conproc: Qual,
 	/// `bool`  True if this is the default conversion
 	condefault: bool,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pub async fn reflect_pg_conversion(
@@ -743,6 +754,7 @@ pub async fn reflect_pg_conversion(
 				contoencoding: pg_conversion.contoencoding.into(),
 				conproc: Qual::parse(pg_conversion.conproc),
 				condefault: pg_conversion.condefault,
+				description: pg_conversion.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -870,6 +882,8 @@ pub struct PgEventTrigger {
 	evtenabled: PgEventTriggerEvtenabled,
 	/// `text[]`  Command tags for which this trigger will fire. If NULL, the firing of this trigger is not restricted on the basis of the command tag.
 	evttags: Option<Vec<Str>>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pg_char_enum!(PgEventTriggerEvtenabled { 'O' => OriginLocal, 'D' => Disabled, 'R' => Replica, 'A' => Always });
@@ -886,6 +900,7 @@ pub async fn reflect_pg_event_trigger(
 				evtfoid: Qual::parse(pg_event_trigger.evtfoid),
 				evtenabled: PgEventTriggerEvtenabled::pg_from_char(pg_event_trigger.evtenabled),
 				evttags: pg_event_trigger.evttags.map(|items| items.map(Into::into).collect()),
+				description: pg_event_trigger.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -912,6 +927,8 @@ pub struct PgExtension {
 	extconfig: Option<Vec<Qual>>,
 	/// `text[]`  Array of WHERE-clause filter conditions for the extension's configuration table(s), or NULL if none
 	extcondition: Option<Vec<Str>>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pub async fn reflect_pg_extension(
@@ -927,6 +944,7 @@ pub async fn reflect_pg_extension(
 				extversion: pg_extension.extversion.into(),
 				extconfig: pg_extension.extconfig.map(|items| items.map(Qual::parse).collect()),
 				extcondition: pg_extension.extcondition.map(|items| items.map(Into::into).collect()),
+				description: pg_extension.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -951,6 +969,8 @@ pub struct PgForeignDataWrapper {
 	fdwacl: Option<Vec<aclitem::ForeignDataWrapperAclItem>>,
 	/// `text[]`  Foreign-data wrapper specific options, as “keyword=value” strings
 	fdwoptions: Option<Vec<Str>>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pub async fn reflect_pg_foreign_data_wrapper(
@@ -965,6 +985,7 @@ pub async fn reflect_pg_foreign_data_wrapper(
 				fdwvalidator: Qual::maybe_parse(pg_foreign_data_wrapper.fdwvalidator),
 				fdwacl: pg_foreign_data_wrapper.fdwacl.map(|fdwacl| fdwacl.map(|acl| aclitem(acl, &ForeignDataWrapperGrantParser)).collect()),
 				fdwoptions: pg_foreign_data_wrapper.fdwoptions.map(|items| items.map(Into::into).collect()),
+				description: pg_foreign_data_wrapper.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -991,6 +1012,8 @@ pub struct PgForeignServer {
 	srvacl: Option<Vec<aclitem::ForeignServerAclItem>>,
 	/// `text[]`  Foreign server specific options, as “keyword=value” strings
 	srvoptions: Option<Vec<Str>>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pub async fn reflect_pg_foreign_server(
@@ -1006,6 +1029,7 @@ pub async fn reflect_pg_foreign_server(
 				srvversion: pg_foreign_server.srvversion.map(Into::into),
 				srvacl: pg_foreign_server.srvacl.map(|srvacl| srvacl.map(|acl| aclitem(acl, &ForeignServerGrantParser)).collect()),
 				srvoptions: pg_foreign_server.srvoptions.map(|items| items.map(Into::into).collect()),
+				description: pg_foreign_server.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1165,6 +1189,8 @@ pub struct PgLanguage {
 	lanvalidator: Option<Qual>,
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
 	lanacl: Option<Vec<aclitem::LanguageAclItem>>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 impl_name_hash_and_equivalent!(PgLanguage, lanname);
 
@@ -1182,6 +1208,7 @@ pub async fn reflect_pg_language(
 				laninline: Qual::maybe_parse(pg_language.laninline),
 				lanvalidator: Qual::maybe_parse(pg_language.lanvalidator),
 				lanacl: pg_language.lanacl.map(|lanacl| lanacl.map(|acl| aclitem(acl, &LanguageGrantParser)).collect()),
+				description: pg_language.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1243,6 +1270,8 @@ pub struct PgOpclass {
 	opcdefault: bool,
 	/// `oid` `(references pg_type.oid)` Type of data stored in index, or zero if same as opcintype
 	opckeytype: Option<Qual>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pub async fn reflect_pg_opclass(
@@ -1259,6 +1288,7 @@ pub async fn reflect_pg_opclass(
 				opcintype: Qual::parse(pg_opclass.opcintype),
 				opcdefault: pg_opclass.opcdefault,
 				opckeytype: Qual::maybe_parse(pg_opclass.opckeytype),
+				description: pg_opclass.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1300,6 +1330,8 @@ pub struct PgOperator {
 	oprrest: Option<Qual>,
 	/// `regproc` `(references pg_proc.oid)` Join selectivity estimation function for this operator (zero if none)
 	oprjoin: Option<Qual>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 impl_qual_hash_and_equivalent!(PgOperator);
 
@@ -1326,6 +1358,7 @@ pub async fn reflect_pg_operator(
 				oprcode: Qual::maybe_parse(pg_operator.oprcode),
 				oprrest: Qual::maybe_parse(pg_operator.oprrest),
 				oprjoin: Qual::maybe_parse(pg_operator.oprjoin),
+				description: pg_operator.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1346,6 +1379,8 @@ pub struct PgOpfamily {
 	opfnamespace: Str,
 	/// `oid` `(references pg_authid.oid)` Owner of the operator family
 	opfowner: Str,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pub async fn reflect_pg_opfamily(
@@ -1358,6 +1393,7 @@ pub async fn reflect_pg_opfamily(
 				opfname: pg_opfamily.opfname.into(),
 				opfnamespace: pg_opfamily.opfnamespace.into(),
 				opfowner: pg_opfamily.opfowner.into(),
+				description: pg_opfamily.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1455,6 +1491,8 @@ pub struct PgPolicy {
 	polqual: Option<Str>,
 	/// `pg_node_tree`  The expression tree to be added to the WITH CHECK qualifications for queries that attempt to add rows to the table
 	polwithcheck: Option<Str>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pg_char_enum!(PgPolicyPolcmd { 'r' => Select, 'a' => Insert, 'w' => Update, 'd' => Delete, '*' => All });
@@ -1472,6 +1510,7 @@ pub async fn reflect_pg_policy(
 				polroles: pg_policy.polroles.map(|item| item.map(Into::into)).collect(),
 				polqual: pg_policy.polqual.map(Into::into),
 				polwithcheck: pg_policy.polwithcheck.map(Into::into),
+				description: pg_policy.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1500,6 +1539,8 @@ pub struct PgPublication {
 	pubtruncate: bool,
 	/// `bool`  If true, operations on a leaf partition are replicated using the identity and schema of its topmost partitioned ancestor mentioned in the publication instead of its own.
 	pubviaroot: bool,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 impl_name_hash_and_equivalent!(PgPublication, pubname);
 
@@ -1517,6 +1558,7 @@ pub async fn reflect_pg_publication(
 				pubdelete: pg_publication.pubdelete,
 				pubtruncate: pg_publication.pubtruncate,
 				pubviaroot: pg_publication.pubviaroot,
+				description: pg_publication.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1782,6 +1824,8 @@ pub struct PgStatisticExt {
 	stxkind: Vec<PgStatisticExtStxkind>,
 	/// `pg_node_tree`  Expression trees (in nodeToString() representation) for statistics object attributes that are not simple column references. This is a list with one element per expression. Null if all statistics object attributes are simple references.
 	stxexprs: Option<Str>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pg_char_enum!(PgStatisticExtStxkind { 'd' => NDistinct, 'f' => FunctionalDependency, 'm' => MostCommonValuesList, 'e' => Expression });
@@ -1800,6 +1844,7 @@ pub async fn reflect_pg_statistic_ext(
 				stxstattarget: pg_statistic_ext.stxstattarget.map(i16::unsigned_abs),
 				stxkind: pg_statistic_ext.stxkind.map(PgStatisticExtStxkind::pg_from_char).collect(),
 				stxexprs: pg_statistic_ext.stxexprs.map(Into::into),
+				description: pg_statistic_ext.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1844,6 +1889,8 @@ pub struct PgSubscription {
 	subpublications: Vec<Str>,
 	/// `text`  The origin value must be either none or any. The default is any. If none, the subscription will request the publisher to only send changes that don't have an origin. If any, the publisher sends changes regardless of their origin.
 	suborigin: Option<Str>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pg_char_enum!(PgSubscriptionSubstream { 'f' => DisallowStreamingInProgress, 't' => SpillApplyAfterCommitted, 'p' => ApplyDirectlyParallel });
@@ -1870,6 +1917,7 @@ pub async fn reflect_pg_subscription(
 				subsynccommit: pg_subscription.subsynccommit.into(),
 				subpublications: pg_subscription.subpublications.map(Into::into).collect(),
 				suborigin: pg_subscription.suborigin.map(Into::into),
+				description: pg_subscription.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1918,6 +1966,8 @@ pub struct PgTrigger {
 	tgoldtable: Option<Str>,
 	/// `name`  REFERENCING clause name for NEW TABLE, or null if none
 	tgnewtable: Option<Str>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 
 pg_char_enum!(PgTriggerTgenabled { 'O' => OriginAndLocalMode, 'D' => Disabled, 'R' => ReplicaMode, 'A' => Always });
@@ -1946,6 +1996,7 @@ pub async fn reflect_pg_trigger(
 				tgqual: pg_trigger.tgqual.map(Into::into),
 				tgoldtable: pg_trigger.tgoldtable.map(Into::into),
 				tgnewtable: pg_trigger.tgnewtable.map(Into::into),
+				description: pg_trigger.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1966,6 +2017,8 @@ pub struct PgTsConfig {
 	/// `oid` `(references pg_authid.oid)` Owner of the configuration
 	cfgowner: Str,
 	// cfgparser oid (references pg_ts_parser.oid) The OID of the text search parser for this configuration
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 impl_qual_hash_and_equivalent!(PgTsConfig);
 
@@ -1979,6 +2032,7 @@ pub async fn reflect_pg_ts_config(
 				cfgname: pg_ts_config.cfgname.into(),
 				cfgnamespace: pg_ts_config.cfgnamespace.into(),
 				cfgowner: pg_ts_config.cfgowner.into(),
+				description: pg_ts_config.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -2032,6 +2086,8 @@ pub struct PgTsDict {
 	// dicttemplate oid (references pg_ts_template.oid) The OID of the text search template for this dictionary
 	/// `text`  Initialization option string for the template
 	dictinitoption: Option<Str>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 impl_qual_hash_and_equivalent!(PgTsDict);
 
@@ -2046,6 +2102,7 @@ pub async fn reflect_pg_ts_dict(
 				dictnamespace: pg_ts_dict.dictnamespace.into(),
 				dictowner: pg_ts_dict.dictowner.into(),
 				dictinitoption: pg_ts_dict.dictinitoption.map(Into::into),
+				description: pg_ts_dict.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -2120,6 +2177,8 @@ pub struct PgType {
 	typdefault: Option<Str>,
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
 	typacl: Option<Vec<aclitem::TypeAclItem>>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 impl_qual_hash_and_equivalent!(PgType);
 
@@ -2164,6 +2223,7 @@ pub async fn reflect_pg_type(
 				typdefaultbin: pg_type.typdefaultbin.map(Into::into),
 				typdefault: pg_type.typdefault.map(Into::into),
 				typacl: pg_type.typacl.map(|typacl| typacl.map(|acl| aclitem(acl, &TypeGrantParser)).collect()),
+				description: pg_type.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()

@@ -738,6 +738,15 @@ ty = "PgCastCastmethod"
 exp = "PgCastCastmethod::pg_from_char(pg_cast.castmethod)"
 pgEnum = "'f' => Castfunc, 'i' => IOFunc, 'b' => BinaryCoercible"
 
+[pg_cast.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_cast.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_cast.oid and pg_description.objsubid = 0"]
+
 [pg_class]
 hashCol = true
 
@@ -1066,6 +1075,15 @@ desc = "Provider-specific version of the collation. This is recorded when the co
 ty = "Option<Str>"
 exp = "pg_collation.collversion.map(Into::into)"
 
+[pg_collation.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_collation.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_collation.oid and pg_description.objsubid = 0"]
+
 [pg_constraint.columns.oid]
 typ = "oid"
 ref = ""
@@ -1265,6 +1283,15 @@ sel = "pg_get_expr(pg_constraint.conbin, pg_constraint.conrelid)"
 ty = "Option<Str>"
 exp = "pg_constraint.conbin.map(Into::into)"
 
+[pg_constraint.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_constraint.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_constraint.oid and pg_description.objsubid = 0"]
+
 [pg_conversion.columns.oid]
 typ = "oid"
 ref = ""
@@ -1324,6 +1351,15 @@ typ = "bool"
 ref = ""
 desc = "True if this is the default conversion"
 ty = "bool"
+
+[pg_conversion.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_conversion.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_conversion.oid and pg_description.objsubid = 0"]
 
 [pg_database]
 hashCol = "datname"
@@ -1554,6 +1590,15 @@ desc = "Command tags for which this trigger will fire. If NULL, the firing of th
 ty = "Option<Vec<Str>>"
 exp = "pg_event_trigger.evttags.map(|items| items.map(Into::into).collect())"
 
+[pg_event_trigger.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_event_trigger.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_event_trigger.oid and pg_description.objsubid = 0"]
+
 [pg_extension.columns.oid]
 typ = "oid"
 ref = ""
@@ -1612,6 +1657,15 @@ desc = "Array of WHERE-clause filter conditions for the extension's configuratio
 ty = "Option<Vec<Str>>"
 exp = "pg_extension.extcondition.map(|items| items.map(Into::into).collect())"
 
+[pg_extension.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_extension.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_extension.oid and pg_description.objsubid = 0"]
+
 [pg_foreign_data_wrapper.columns.oid]
 typ = "oid"
 ref = ""
@@ -1664,6 +1718,15 @@ ref = ""
 desc = "Foreign-data wrapper specific options, as “keyword=value” strings"
 ty = "Option<Vec<Str>>"
 exp = "pg_foreign_data_wrapper.fdwoptions.map(|items| items.map(Into::into).collect())"
+
+[pg_foreign_data_wrapper.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_foreign_data_wrapper.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_foreign_data_wrapper.oid and pg_description.objsubid = 0"]
 
 [pg_foreign_server.columns.oid]
 typ = "oid"
@@ -1724,6 +1787,15 @@ ref = ""
 desc = "Foreign server specific options, as “keyword=value” strings"
 ty = "Option<Vec<Str>>"
 exp = "pg_foreign_server.srvoptions.map(|items| items.map(Into::into).collect())"
+
+[pg_foreign_server.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_foreign_server.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_foreign_server.oid and pg_description.objsubid = 0"]
 
 [pg_foreign_table.columns.ftrelid]
 typ = "oid"
@@ -1991,6 +2063,15 @@ sel = "lanacl::text[]"
 ty = "Option<Vec<aclitem::LanguageAclItem>>"
 exp = "pg_language.lanacl.map(|lanacl| lanacl.map(|acl| aclitem(acl, &LanguageGrantParser)).collect())"
 
+[pg_language.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_language.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_language.oid and pg_description.objsubid = 0"]
+
 [pg_namespace]
 hashCol = "nspname"
 
@@ -2103,6 +2184,15 @@ desc = "Type of data stored in index, or zero if same as opcintype"
 sel = "case when pg_opclass.opckeytype = 0 then null else pg_opclass.opckeytype::regtype::text end"
 ty = "Option<Qual>"
 exp = "Qual::maybe_parse(pg_opclass.opckeytype)"
+
+[pg_opclass.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_opclass.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_opclass.oid and pg_description.objsubid = 0"]
 
 [pg_operator]
 hashCol = true
@@ -2223,6 +2313,15 @@ sel = "case when oprjoin = 0 then null else oprjoin::regproc::text end"
 ty = "Option<Qual>"
 exp = "Qual::maybe_parse(pg_operator.oprjoin)"
 
+[pg_operator.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_operator.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_operator.oid and pg_description.objsubid = 0"]
+
 [pg_opfamily.columns.oid]
 typ = "oid"
 ref = ""
@@ -2261,6 +2360,15 @@ desc = "Owner of the operator family"
 sel = "pg_get_userbyid(pg_opfamily.opfowner)::text"
 ty = "Str"
 exp = "pg_opfamily.opfowner.into()"
+
+[pg_opfamily.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_opfamily.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_opfamily.oid and pg_description.objsubid = 0"]
 
 [pg_parameter_acl.columns.oid]
 typ = "oid"
@@ -2405,6 +2513,15 @@ sel = "pg_get_expr(pg_policy.polwithcheck, pg_policy.polrelid)"
 ty = "Option<Str>"
 exp = "pg_policy.polwithcheck.map(Into::into)"
 
+[pg_policy.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_policy.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_policy.oid and pg_description.objsubid = 0"]
+
 [pg_publication]
 hashCol = "pubname"
 
@@ -2465,6 +2582,15 @@ typ = "bool"
 ref = ""
 desc = "If true, operations on a leaf partition are replicated using the identity and schema of its topmost partitioned ancestor mentioned in the publication instead of its own."
 ty = "bool"
+
+[pg_publication.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_publication.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_publication.oid and pg_description.objsubid = 0"]
 
 [pg_publication_namespace.columns.oid]
 typ = "oid"
@@ -2816,6 +2942,15 @@ sel = "pg_get_expr(pg_statistic_ext.stxexprs, pg_statistic_ext.stxrelid)"
 ty = "Option<Str>"
 exp = "pg_statistic_ext.stxexprs.map(Into::into)"
 
+[pg_statistic_ext.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_statistic_ext.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_statistic_ext.oid and pg_description.objsubid = 0"]
+
 [pg_subscription.columns.oid]
 typ = "oid"
 ref = ""
@@ -2938,6 +3073,15 @@ ref = ""
 desc = "The origin value must be either none or any. The default is any. If none, the subscription will request the publisher to only send changes that don't have an origin. If any, the publisher sends changes regardless of their origin."
 ty = "Option<Str>"
 exp = "pg_subscription.suborigin.map(Into::into)"
+
+[pg_subscription.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_subscription.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_subscription.oid and pg_description.objsubid = 0"]
 
 [pg_trigger.columns.oid]
 typ = "oid"
@@ -3080,6 +3224,15 @@ sel = "pg_trigger.tgnewtable::text"
 ty = "Option<Str>"
 exp = "pg_trigger.tgnewtable.map(Into::into)"
 
+[pg_trigger.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_trigger.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_trigger.oid and pg_description.objsubid = 0"]
+
 [pg_ts_config]
 hashCol = true
 
@@ -3120,6 +3273,15 @@ typ = "oid"
 ref = "(references pg_ts_parser.oid)"
 desc = "The OID of the text search parser for this configuration"
 skip = true
+
+[pg_ts_config.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_ts_config.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_ts_config.oid and pg_description.objsubid = 0"]
 
 [pg_ts_config_map.columns.mapcfg]
 typ = "oid"
@@ -3196,6 +3358,15 @@ ref = ""
 desc = "Initialization option string for the template"
 ty = "Option<Str>"
 exp = "pg_ts_dict.dictinitoption.map(Into::into)"
+
+[pg_ts_dict.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_ts_dict.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_ts_dict.oid and pg_description.objsubid = 0"]
 
 [pg_type]
 hashCol = true
@@ -3439,6 +3610,15 @@ desc = "Access privileges; see Section 5.8 for details"
 sel = "typacl::text[]"
 ty = "Option<Vec<aclitem::TypeAclItem>>"
 exp = "pg_type.typacl.map(|typacl| typacl.map(|acl| aclitem(acl, &TypeGrantParser)).collect())"
+
+[pg_type.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_type.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_type.oid and pg_description.objsubid = 0"]
 
 [pg_user_mappings.columns.umid]
 typ = "oid"
