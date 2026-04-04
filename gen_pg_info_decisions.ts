@@ -297,7 +297,7 @@ async function decideColumn(
 		const exp = `${nullable ? 'Qual::maybe_parse' : 'Qual::parse'}(${tableName}.${name})`
 		return [undefined, { typ, ref, desc, ...override, sel, ty, exp }]
 	}
-	if (typ === "oid[]" && genericReferencesTable && (genericReferencesTable in refToReg)) {
+	if ((typ === "oid[]" || typ === "oidvector") && genericReferencesTable && (genericReferencesTable in refToReg)) {
 		const reg = refToReg[genericReferencesTable as keyof typeof refToReg]
 		if (!reg) throw ''
 		const sel = `${tableName}.${name}::${reg}[]::text[]`
