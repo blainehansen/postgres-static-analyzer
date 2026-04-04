@@ -90,17 +90,6 @@ async function decideTable({ tableName, columns }: RawTable): Promise<TableDecis
 	}
 
 	// https://www.postgresql.org/docs/17/sql-comment.html
-	const descriptionTables = new Set([
-		"pg_class",
-		"pg_namespace"
-	])
-	if (descriptionTables.has(tableName)) {
-		decidedColumns["description"] = {
-			typ: "text", ref: "", desc: "The comment from pg_description",
-			sel: `pg_description.description`, ty: "Option<Str>", exp: `${tableName}.description.map(Into::into)`,
-			joins: [`left join pg_description on pg_description.objoid = ${tableName}.oid`],
-		}
-	}
 	const shdescriptionTables = new Set([
 		"pg_database",
 		"pg_roles",
@@ -112,6 +101,40 @@ async function decideTable({ tableName, columns }: RawTable): Promise<TableDecis
 			joins: [`left join pg_shdescription on pg_shdescription.objoid = ${tableName}.oid`],
 		}
 	}
+	const descriptionTables = new Set([
+		"pg_class",
+		"pg_namespace",
+		"pg_am",
+		// "pg_aggregate",
+		// "pg_cast",
+		// "pg_collation",
+		// "pg_constraint",
+		// "pg_conversion",
+		// "pg_extension",
+		// "pg_event_trigger",
+		"pg_proc",
+		// "pg_operator",
+		// "pg_opclass",
+		// "pg_opfamily",
+		// "pg_policy",
+		// "pg_language",
+		// "pg_publication",
+		// "pg_foreign_data_wrapper",
+		// "pg_foreign_server",
+		// "pg_statistic_ext",
+		// "pg_subscription",
+		// "pg_ts_config",
+		// "pg_ts_dict",
+		// "pg_trigger",
+		// "pg_type",
+	])
+	if (descriptionTables.has(tableName)) {
+		decidedColumns["description"] = {
+			typ: "text", ref: "", desc: "The comment from pg_description",
+			sel: `pg_description.description`, ty: "Option<Str>", exp: `${tableName}.description.map(Into::into)`,
+			joins: [`left join pg_description on pg_description.objoid = ${tableName}.oid and pg_description.objsubid = 0`],
+		}
+	}
 	else if (tableName === "pg_attribute") {
 		decidedColumns["description"] = {
 			typ: "text", ref: "", desc: "The comment from pg_description",
@@ -119,6 +142,14 @@ async function decideTable({ tableName, columns }: RawTable): Promise<TableDecis
 			joins: [`left join pg_description on pg_description.objoid = pg_attribute.attrelid and pg_description.objsubid = pg_attribute.attnum`],
 		}
 	}
+	// else if (tableName === "pg_rules") {
+	// 	// TODO need to join to pg_rewrite
+	// 	decidedColumns["description"] = {
+	// 		typ: "text", ref: "", desc: "The comment from pg_description",
+	// 		sel: `pg_description.description`, ty: "Option<Str>", exp: `${tableName}.description.map(Into::into)`,
+	// 		joins: [`left join pg_description on pg_description.objoid = pg_attribute.attrelid and pg_description.objsubid = pg_attribute.attnum`],
+	// 	}
+	// }
 
 	return { columns: decidedColumns, hashCol: foundHashColumn }
 }

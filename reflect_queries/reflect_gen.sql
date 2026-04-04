@@ -27,14 +27,16 @@ from
 ;
 
 
---! reflect_pg_am : ()
+--! reflect_pg_am : (description?)
 select
 	-- oid oid  Row identifier
 	pg_am.amname::text as amname, -- name  Name of the access method
 	amhandler::regproc::text as amhandler, -- regproc (references pg_proc.oid) OID of a handler function that is responsible for supplying information about the access method
-	pg_am.amtype as amtype -- char  t = table (including materialized views), i = index.
+	pg_am.amtype as amtype, -- char  t = table (including materialized views), i = index.
+	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_am
+	left join pg_description on pg_description.objoid = pg_am.oid and pg_description.objsubid = 0
 ;
 
 
@@ -214,7 +216,7 @@ select
 from
 	pg_class
 	left join pg_am as relam_pg_am on pg_class.relam = relam_pg_am.oid
-	left join pg_description on pg_description.objoid = pg_class.oid
+	left join pg_description on pg_description.objoid = pg_class.oid and pg_description.objsubid = 0
 where 
 	relnamespace::regnamespace != 'pg_toast'::regnamespace
 ;
@@ -470,7 +472,7 @@ select
 	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_namespace
-	left join pg_description on pg_description.objoid = pg_namespace.oid
+	left join pg_description on pg_description.objoid = pg_namespace.oid and pg_description.objsubid = 0
 where 
 	not starts_with(nspname, 'pg_temp')
 	and not starts_with(nspname, 'pg_toast')

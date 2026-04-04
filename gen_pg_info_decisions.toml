@@ -197,6 +197,15 @@ ty = "PgAmAmtype"
 exp = "PgAmAmtype::pg_from_char(pg_am.amtype)"
 pgEnum = "'t' => Table, 'i' => Index"
 
+[pg_am.columns.description]
+typ = "text"
+ref = ""
+desc = "The comment from pg_description"
+sel = "pg_description.description"
+ty = "Option<Str>"
+exp = "pg_am.description.map(Into::into)"
+joins = ["left join pg_description on pg_description.objoid = pg_am.oid and pg_description.objsubid = 0"]
+
 [pg_amop.columns.oid]
 typ = "oid"
 ref = ""
@@ -966,7 +975,7 @@ desc = "The comment from pg_description"
 sel = "pg_description.description"
 ty = "Option<Str>"
 exp = "pg_class.description.map(Into::into)"
-joins = ["left join pg_description on pg_description.objoid = pg_class.oid"]
+joins = ["left join pg_description on pg_description.objoid = pg_class.oid and pg_description.objsubid = 0"]
 
 [pg_collation.columns.oid]
 typ = "oid"
@@ -2023,7 +2032,7 @@ desc = "The comment from pg_description"
 sel = "pg_description.description"
 ty = "Option<Str>"
 exp = "pg_namespace.description.map(Into::into)"
-joins = ["left join pg_description on pg_description.objoid = pg_namespace.oid"]
+joins = ["left join pg_description on pg_description.objoid = pg_namespace.oid and pg_description.objsubid = 0"]
 
 [pg_opclass.columns.oid]
 typ = "oid"

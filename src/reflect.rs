@@ -591,6 +591,8 @@ pub struct PgProc {
 	proconfig: Option<Vec<Str>>,
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
 	proacl: Option<Vec<aclitem::FunctionAclItem>>,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 impl_qual_hash_and_equivalent!(PgProc);
 
@@ -639,6 +641,7 @@ pub async fn reflect_pg_proc(
 		    prosqlbody: pg_proc.prosqlbody.map(Into::into),
 				proconfig: pg_proc.proconfig.map(|items| items.map(Into::into).collect()),
 				proacl: pg_proc.proacl.map(|proacl| proacl.map(|acl| aclitem(acl, &FunctionGrantParser)).collect()),
+				description: pg_proc.description.map(Into::into),
 			}
 		})
 		.iter()

@@ -26,31 +26,6 @@
 -- `pg_conversion`: https://www.postgresql.org/docs/17/catalog-pg-conversion.html
 
 -- `pg_database`: https://www.postgresql.org/docs/17/catalog-pg-database.html
---! reflect_pg_database : (datconnlimit?, datcollate?, datctype?, datlocale?, daticurules?, datcollversion?, datacl?)
-select
-	-- oid oid  Row identifier
-	datname::text as datname, -- name  Database name
-	pg_get_userbyid(datdba)::text as datdba, -- oid (references pg_authid.oid) Owner of the database, usually the user who created it
-	pg_encoding_to_char(encoding)::text as encoding, -- int4  Character encoding for this database (pg_encoding_to_char() can translate this number to the encoding name)
-	datlocprovider, -- char  Locale provider for this database: b = builtin, c = libc, i = icu
-	datistemplate, -- bool  If true, then this database can be cloned by any user with CREATEDB privileges; if false, then only superusers or the owner of the database can clone it.
-	datallowconn, -- bool  If false then no one can connect to this database. This is used to protect the template0 database from being altered.
-	-- dathasloginevt bool  Indicates that there are login event triggers defined for this database. This flag is used to avoid extra lookups on the pg_event_trigger table during each backend startup. This flag is used internally by PostgreSQL and should not be manually altered or read for monitoring purposes.
-	case when datconnlimit < 0 then null else datconnlimit end as datconnlimit, -- int4  Sets maximum number of concurrent connections that can be made to this database. -1 means no limit, -2 indicates the database is invalid.
-	-- datfrozenxid xid  All transaction IDs before this one have been replaced with a permanent (“frozen”) transaction ID in this database. This is used to track whether the database needs to be vacuumed in order to prevent transaction ID wraparound or to allow pg_xact to be shrunk. It is the minimum of the per-table pg_class.relfrozenxid values.
-	-- datminmxid xid  All multixact IDs before this one have been replaced with a transaction ID in this database. This is used to track whether the database needs to be vacuumed in order to prevent multixact ID wraparound or to allow pg_multixact to be shrunk. It is the minimum of the per-table pg_class.relminmxid values.
-	-- dattablespace oid (references pg_tablespace.oid) The default tablespace for the database. Within this database, all tables for which pg_class.reltablespace is zero will be stored in this tablespace; in particular, all the non-shared system catalogs will be there.
-	datcollate, -- text  LC_COLLATE for this database
-	datctype, -- text  LC_CTYPE for this database
-	datlocale, -- text  Collation provider locale name for this database. If the provider is libc, datlocale is NULL; datcollate and datctype are used instead.
-	daticurules, -- text  ICU collation rules for this database
-	datcollversion, -- text  Provider-specific version of the collation. This is recorded when the database is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
-	datacl::text[] as datacl -- aclitem[]  Access privileges; see Section 5.8 for details
-from
-	pg_database
-where
-	datname = current_database()
-;
 
 -- `pg_db_role_setting`: https://www.postgresql.org/docs/17/catalog-pg-db-role-setting.html
 --! reflect_pg_db_role_setting : (setrole?, setconfig?)
@@ -116,7 +91,7 @@ group by enumtypid
 -- `pg_policy`: https://www.postgresql.org/docs/17/catalog-pg-policy.html
 
 -- `pg_proc`: https://www.postgresql.org/docs/17/catalog-pg-proc.html
---! reflect_pg_proc : (procost?, prorows?, provariadic?, prosupport?, proallargtypes?, proargmodes?, proargnames?, proargdefaults?[?], protrftypes?, prosrc?, probin?, prosqlbody?, proconfig?, proacl?)
+--! reflect_pg_proc : (procost?, prorows?, provariadic?, prosupport?, proallargtypes?, proargmodes?, proargnames?, proargdefaults?[?], protrftypes?, prosrc?, probin?, prosqlbody?, proconfig?, proacl?, description?)
 select
 	pg_proc.oid::regprocedure::text as oid, -- oid  Row identifier
 	pg_proc.proname::text as proname, -- name  Name of the function
@@ -147,10 +122,12 @@ select
 	case when pg_proc.probin = '' then null else pg_proc.probin end as probin, -- text  Additional information about how to invoke the function. Again, the interpretation is language-specific.
 	pg_get_function_sqlbody(pg_proc.oid) as prosqlbody, -- pg_node_tree  Pre-parsed SQL function body. This is used for SQL-language functions when the body is given in SQL-standard notation rather than as a string literal. It's null in other cases.
 	pg_proc.proconfig as proconfig, -- text[]  Function's local settings for run-time configuration variables
-	proacl::text[] as proacl -- aclitem[]  Access privileges; see Section 5.8 for details
+	proacl::text[] as proacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_description.description as description -- text   The comment from pg_description
 from
 	pg_proc
 	join pg_language as prolang_pg_language on pg_proc.prolang = prolang_pg_language.oid
+	left join pg_description on pg_description.objoid = pg_proc.oid and pg_description.objsubid = 0
 where not starts_with(pg_proc.pronamespace::regnamespace::text, 'pg_temp')
 ;
 

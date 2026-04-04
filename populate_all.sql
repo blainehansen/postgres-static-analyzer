@@ -1,8 +1,7 @@
 -- ====================================================================
 -- 1. CLUSTER-LEVEL OBJECTS
 -- Populates: pg_database, pg_authid (pg_roles), pg_auth_members,
---            pg_db_role_setting, pg_parameter_acl,
---            pg_shdescription, pg_shdepend
+--            pg_db_role_setting, pg_parameter_acl, pg_shdepend
 -- ====================================================================
 
 CREATE ROLE catalog_admin LOGIN PASSWORD 'super_secret';
@@ -12,8 +11,6 @@ GRANT catalog_user TO catalog_admin;               -- pg_auth_members
 ALTER DATABASE tempdb SET work_mem = '12MB'; -- pg_db_role_setting
 ALTER ROLE catalog_admin SET work_mem = '16MB'; -- pg_db_role_setting
 ALTER ROLE catalog_admin IN DATABASE tempdb SET work_mem = '14MB'; -- pg_db_role_setting
-
-COMMENT ON DATABASE tempdb IS 'Database for exhaustive pg catalog population'; -- pg_shdescription
 
 GRANT SET ON PARAMETER work_mem TO catalog_admin;  -- pg_parameter_acl
 
@@ -28,7 +25,6 @@ REVOKE ALL ON FUNCTION get_raw_page(text, bigint) FROM PUBLIC; -- uses default s
 CREATE EXTENSION IF NOT EXISTS postgres_fdw;         -- needed in section 10
 
 CREATE SCHEMA catalog_schema AUTHORIZATION catalog_admin; -- pg_namespace
-COMMENT ON SCHEMA catalog_schema IS 'Main schema for catalog population'; -- pg_description
 
 SET search_path TO catalog_schema, public;
 
@@ -40,6 +36,8 @@ SET search_path TO catalog_schema, public;
 CREATE TYPE status_enum AS ENUM ('active', 'pending', 'archived'); -- pg_enum
 
 CREATE TYPE point_composite AS (x numeric, y numeric);             -- pg_type (composite)
+CREATE DOMAIN point_composite_safe AS point_composite
+	CONSTRAINT con_point_composite_safe CHECK ((VALUE).x IS NOT NULL AND (VALUE).y IS NOT NULL);
 
 CREATE TYPE float_range AS RANGE (                                 -- pg_range
 	subtype      = float8,
@@ -362,7 +360,7 @@ CREATE SUBSCRIPTION test_sub                                        -- pg_subscr
 SELECT pg_replication_origin_create('custom_origin');               -- pg_replication_origin
 
 -- ====================================================================
--- 14. DEFAULT PRIVILEGES, CONVERSIONS, DESCRIPTIONS, DEPENDENCIES
+-- 14. DEFAULT PRIVILEGES, CONVERSIONS, DESCRIPTIONS, DEPENDENCIES, COMMENTS
 -- Populates: pg_default_acl, pg_conversion, pg_description, pg_depend
 -- ====================================================================
 
@@ -372,18 +370,53 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA catalog_schema                   -- pg_defaul
 CREATE CONVERSION custom_conv FOR 'UTF8' TO 'LATIN1'               -- pg_conversion
 	FROM utf8_to_iso8859_1;
 
--- pg_description (COMMENT populates this catalog)
-COMMENT ON TABLE   parent_table                    IS 'Root table for all catalog tests';
-COMMENT ON COLUMN  parent_table.status             IS 'Lifecycle status of the record';
-COMMENT ON COLUMN  parent_table.active_period      IS 'float8 range for active window';
-COMMENT ON FUNCTION add_tax(numeric)               IS 'Applies 20% VAT to a price';
-COMMENT ON SEQUENCE table_id_seq                   IS 'Primary key sequence for parent_table';
-COMMENT ON VIEW    parent_view                     IS 'Public-facing projection of parent_table';
-COMMENT ON TYPE    status_enum                     IS 'Allowed lifecycle states';
-COMMENT ON TYPE    float_range                     IS 'User-defined range over float8';
-COMMENT ON INDEX   parent_name_btree_idx           IS 'BTree index on the name column';
-COMMENT ON TEXT SEARCH CONFIGURATION custom_ts_conf IS 'English full-text search config';
-COMMENT ON OPERATOR = (point_composite, point_composite) IS 'Equality for point_composite';
+COMMENT ON DATABASE tempdb IS 'COMMENT ON DATABASE tempdb';
+COMMENT ON SCHEMA catalog_schema IS 'COMMENT ON SCHEMA catalog_schema';
+COMMENT ON TABLE parent_table IS 'COMMENT ON TABLE parent_table';
+COMMENT ON COLUMN parent_table.status IS 'COMMENT ON COLUMN parent_table.status';
+COMMENT ON COLUMN parent_table.active_period IS 'COMMENT ON COLUMN parent_table.active_period';
+COMMENT ON FUNCTION add_tax(numeric) IS 'COMMENT ON FUNCTION add_tax(numeric)';
+COMMENT ON SEQUENCE table_id_seq IS 'COMMENT ON SEQUENCE table_id_seq';
+COMMENT ON VIEW parent_view IS 'COMMENT ON VIEW parent_view';
+COMMENT ON TYPE status_enum IS 'COMMENT ON TYPE status_enum';
+COMMENT ON TYPE float_range IS 'COMMENT ON TYPE float_range';
+COMMENT ON INDEX parent_name_btree_idx IS 'COMMENT ON INDEX parent_name_btree_idx';
+COMMENT ON TEXT SEARCH CONFIGURATION custom_ts_conf IS 'COMMENT ON TEXT SEARCH CONFIGURATION custom_ts_conf';
+COMMENT ON OPERATOR = (point_composite, point_composite) IS 'COMMENT ON OPERATOR = (point_composite, point_composite)';
+COMMENT ON ACCESS METHOD custom_index_am IS 'COMMENT ON ACCESS METHOD custom_index_am';
+COMMENT ON AGGREGATE first_value_agg(anycompatible) IS 'COMMENT ON AGGREGATE first_value_agg(anycompatible)';
+COMMENT ON CAST (text AS point_composite) IS 'COMMENT ON CAST (text AS point_composite)';
+COMMENT ON COLLATION custom_collation IS 'COMMENT ON COLLATION custom_collation';
+COMMENT ON COLUMN parent_table.metrics IS 'COMMENT ON COLUMN parent_table.metrics';
+COMMENT ON CONSTRAINT unique_name ON parent_table IS 'COMMENT ON CONSTRAINT unique_name ON parent_table';
+COMMENT ON CONSTRAINT con_point_composite_safe ON DOMAIN point_composite_safe IS 'COMMENT ON CONSTRAINT con_point_composite_safe ON DOMAIN point_composite_safe';
+COMMENT ON CONVERSION custom_conv IS 'COMMENT ON CONVERSION custom_conv';
+COMMENT ON DOMAIN point_composite_safe IS 'COMMENT ON DOMAIN point_composite_safe';
+COMMENT ON EXTENSION pageinspect IS 'COMMENT ON EXTENSION pageinspect';
+COMMENT ON EXTENSION postgres_fdw IS 'COMMENT ON EXTENSION postgres_fdw';
+COMMENT ON EVENT TRIGGER log_ddl_events IS 'COMMENT ON EVENT TRIGGER log_ddl_events';
+COMMENT ON FOREIGN DATA WRAPPER postgres_fdw IS 'COMMENT ON FOREIGN DATA WRAPPER postgres_fdw';
+COMMENT ON FOREIGN TABLE ext_table IS 'COMMENT ON FOREIGN TABLE ext_table';
+COMMENT ON FUNCTION generate_ids(integer) IS 'COMMENT ON FUNCTION generate_ids(integer)';
+COMMENT ON INDEX parent_status_hash_idx IS 'COMMENT ON INDEX parent_status_hash_idx';
+COMMENT ON MATERIALIZED VIEW thing IS 'COMMENT ON MATERIALIZED VIEW thing';
+COMMENT ON OPERATOR < (point_composite, point_composite) IS 'COMMENT ON OPERATOR < (point_composite, point_composite)';
+COMMENT ON OPERATOR CLASS custom_op_class USING btree IS 'COMMENT ON OPERATOR CLASS custom_op_class USING btree';
+COMMENT ON OPERATOR FAMILY custom_op_family USING btree IS 'COMMENT ON OPERATOR FAMILY custom_op_family USING btree';
+COMMENT ON POLICY active_only_policy ON parent_table IS 'COMMENT ON POLICY active_only_policy ON parent_table';
+COMMENT ON LANGUAGE plpgsql IS 'COMMENT ON LANGUAGE plpgsql';
+COMMENT ON PROCEDURE archive_old_records(date) IS 'COMMENT ON PROCEDURE archive_old_records(date)';
+COMMENT ON PUBLICATION test_pub IS 'COMMENT ON PUBLICATION test_pub';
+COMMENT ON ROLE catalog_admin IS 'COMMENT ON ROLE catalog_admin';
+COMMENT ON ROUTINE add(integer, integer) IS 'COMMENT ON ROUTINE add(integer, integer)';
+COMMENT ON RULE parent_view_insert ON parent_view IS 'COMMENT ON RULE parent_view_insert ON parent_view';
+COMMENT ON SERVER ext_server IS 'COMMENT ON SERVER ext_server';
+COMMENT ON STATISTICS parent_table_stats IS 'COMMENT ON STATISTICS parent_table_stats';
+COMMENT ON SUBSCRIPTION test_sub IS 'COMMENT ON SUBSCRIPTION test_sub';
+COMMENT ON TABLE audit_log IS 'COMMENT ON TABLE audit_log';
+COMMENT ON TEXT SEARCH DICTIONARY custom_dict IS 'COMMENT ON TEXT SEARCH DICTIONARY custom_dict';
+COMMENT ON TRIGGER parent_audit_trig ON parent_table IS 'COMMENT ON TRIGGER parent_audit_trig ON parent_table';
+COMMENT ON TYPE point_composite IS 'COMMENT ON TYPE point_composite';
 
 -- pg_depend is populated implicitly throughout this script whenever any object
 -- depends on another (e.g. indexes on tables, columns on types, functions on

@@ -96,6 +96,8 @@ pub struct PgAm {
 	amhandler: Qual,
 	/// `char`  t = table (including materialized views), i = index.
 	amtype: PgAmAmtype,
+	/// `text`  The comment from pg_description
+	description: Option<Str>,
 }
 impl_name_hash_and_equivalent!(PgAm, amname);
 
@@ -110,6 +112,7 @@ pub async fn reflect_pg_am(
 				amname: pg_am.amname.into(),
 				amhandler: Qual::parse(pg_am.amhandler),
 				amtype: PgAmAmtype::pg_from_char(pg_am.amtype),
+				description: pg_am.description.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
