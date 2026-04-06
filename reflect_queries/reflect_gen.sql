@@ -89,7 +89,7 @@ where
 ;
 
 
---! reflect_pg_attribute : (atttypmod?, attcompression?, attidentity?, attgenerated?, attcollation?, attstattarget?, attacl?, attoptions?, attfdwoptions?, description?)
+--! reflect_pg_attribute : (atttypmod?, attcompression?, attidentity?, attgenerated?, attcollation?, attstattarget?, attacl?, attoptions?, attfdwoptions?, description?, seclabel?, seclabel_provider?)
 select
 	pg_attribute.attrelid::regclass::text as attrelid, -- oid (references pg_class.oid) The table this column belongs to
 	pg_attribute.attname::text as attname, -- name  The column name
@@ -117,10 +117,13 @@ select
 	pg_attribute.attoptions as attoptions, -- text[]  Attribute-level options, as “keyword=value” strings
 	pg_attribute.attfdwoptions as attfdwoptions, -- text[]  Attribute-level foreign data wrapper options, as “keyword=value” strings
 	-- attmissingval anyarray  This column has a one element array containing the value used when the column is entirely missing from the row, as happens when the column is added with a non-volatile DEFAULT value after the row is created. The value is only used when atthasmissing is true. If there is no value the column is null.
-	pg_description.description as description -- text  The comment from pg_description
+	pg_description.description as description, -- text  The comment from pg_description
+	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
+	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
 from
 	pg_attribute
 	left join pg_description on pg_description.objoid = pg_attribute.attrelid and pg_description.objsubid = pg_attribute.attnum
+	left join pg_seclabel on pg_seclabel.objoid = pg_attribute.attrelid and pg_seclabel.objsubid = pg_attribute.attnum
 where 
 	not starts_with(pg_attribute.attrelid::regclass::text, 'pg_toast')
 	and attnum > 0
@@ -128,7 +131,7 @@ where
 ;
 
 
---! reflect_pg_roles : (rolconnlimit?, rolvaliduntil?, rolconfig?, description?)
+--! reflect_pg_roles : (rolconnlimit?, rolvaliduntil?, rolconfig?, description?, seclabel?, seclabel_provider?)
 select
 	pg_roles.rolname::text as rolname, -- name  Role name
 	pg_roles.rolsuper as rolsuper, -- bool  Role has superuser privileges
@@ -143,10 +146,13 @@ select
 	pg_roles.rolbypassrls as rolbypassrls, -- bool  Role bypasses every row-level security policy, see Section 5.9 for more information.
 	pg_roles.rolconfig as rolconfig, -- text[]  Role-specific defaults for run-time configuration variables
 	-- oid oid (references pg_authid.oid) ID of role
-	pg_shdescription.description as description -- text  The comment from pg_shdescription
+	pg_shdescription.description as description, -- text  The comment from pg_shdescription
+	pg_shseclabel.label as seclabel, -- text  The seclabel from pg_shseclabel
+	pg_shseclabel.provider as seclabel_provider -- text  The provider from pg_shseclabel
 from
 	pg_roles
 	left join pg_shdescription on pg_shdescription.objoid = pg_roles.oid
+	left join pg_shseclabel on pg_shseclabel.objoid = pg_roles.oid
 ;
 
 
@@ -179,7 +185,7 @@ from
 ;
 
 
---! reflect_pg_class : (reltype?, reloftype?, relam?, relacl?, reloptions?, relpartbound?, description?)
+--! reflect_pg_class : (reltype?, reloftype?, relam?, relacl?, reloptions?, relpartbound?, description?, seclabel?, seclabel_provider?)
 select
 	pg_class.oid::regclass::text as oid, -- oid  Row identifier
 	pg_class.relname::text as relname, -- name  Name of the table, index, view, etc.
@@ -214,11 +220,14 @@ select
 	relacl::text[] as relacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_class.reloptions as reloptions, -- text[]  Access-method-specific options, as “keyword=value” strings
 	pg_get_expr(relpartbound, pg_class.oid) as relpartbound, -- pg_node_tree  If table is a partition (see relispartition), internal representation of the partition bound
-	pg_description.description as description -- text  The comment from pg_description
+	pg_description.description as description, -- text  The comment from pg_description
+	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
+	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
 from
 	pg_class
 	left join pg_am as relam_pg_am on pg_class.relam = relam_pg_am.oid
 	left join pg_description on pg_description.objoid = pg_class.oid and pg_description.objsubid = 0
+	left join pg_seclabel on pg_seclabel.objoid = pg_class.oid and pg_seclabel.objsubid = 0
 where 
 	relnamespace::regnamespace != 'pg_toast'::regnamespace
 ;
@@ -303,7 +312,7 @@ from
 ;
 
 
---! reflect_pg_database : (datconnlimit?, datcollate?, datctype?, datlocale?, daticurules?, datcollversion?, datacl?, description?)
+--! reflect_pg_database : (datconnlimit?, datcollate?, datctype?, datlocale?, daticurules?, datcollversion?, datacl?, description?, seclabel?, seclabel_provider?)
 select
 	-- oid oid  Row identifier
 	pg_database.datname::text as datname, -- name  Database name
@@ -323,10 +332,13 @@ select
 	pg_database.daticurules as daticurules, -- text  ICU collation rules for this database
 	pg_database.datcollversion as datcollversion, -- text  Provider-specific version of the collation. This is recorded when the database is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
 	datacl::text[] as datacl, -- aclitem[]  Access privileges; see Section 5.8 for details
-	pg_shdescription.description as description -- text  The comment from pg_shdescription
+	pg_shdescription.description as description, -- text  The comment from pg_shdescription
+	pg_shseclabel.label as seclabel, -- text  The seclabel from pg_shseclabel
+	pg_shseclabel.provider as seclabel_provider -- text  The provider from pg_shseclabel
 from
 	pg_database
 	left join pg_shdescription on pg_shdescription.objoid = pg_database.oid
+	left join pg_shseclabel on pg_shseclabel.objoid = pg_database.oid
 where 
 	pg_database.datname = current_database()
 ;
@@ -344,7 +356,7 @@ from
 ;
 
 
---! reflect_pg_event_trigger : (evttags?, description?)
+--! reflect_pg_event_trigger : (evttags?, description?, seclabel?, seclabel_provider?)
 select
 	-- oid oid  Row identifier
 	pg_event_trigger.evtname::text as evtname, -- name  Trigger name (must be unique)
@@ -353,10 +365,13 @@ select
 	pg_event_trigger.evtfoid::regprocedure::text as evtfoid, -- oid (references pg_proc.oid) The function to be called
 	pg_event_trigger.evtenabled as evtenabled, -- char  Controls in which session_replication_role modes the event trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always.
 	pg_event_trigger.evttags as evttags, -- text[]  Command tags for which this trigger will fire. If NULL, the firing of this trigger is not restricted on the basis of the command tag.
-	pg_description.description as description -- text  The comment from pg_description
+	pg_description.description as description, -- text  The comment from pg_description
+	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
+	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
 from
 	pg_event_trigger
 	left join pg_description on pg_description.objoid = pg_event_trigger.oid and pg_description.objsubid = 0
+	left join pg_seclabel on pg_seclabel.objoid = pg_event_trigger.oid and pg_seclabel.objsubid = 0
 ;
 
 
@@ -463,7 +478,7 @@ from
 ;
 
 
---! reflect_pg_language : (lanplcallfoid?, laninline?, lanvalidator?, lanacl?, description?)
+--! reflect_pg_language : (lanplcallfoid?, laninline?, lanvalidator?, lanacl?, description?, seclabel?, seclabel_provider?)
 select
 	-- oid oid  Row identifier
 	pg_language.lanname::text as lanname, -- name  Name of the language
@@ -474,23 +489,29 @@ select
 	case when pg_language.laninline = 0 then null else pg_language.laninline::regprocedure::text end as laninline, -- oid (references pg_proc.oid) This references a function that is responsible for executing “inline” anonymous code blocks (DO blocks). Zero if inline blocks are not supported.
 	case when pg_language.lanvalidator = 0 then null else pg_language.lanvalidator::regprocedure::text end as lanvalidator, -- oid (references pg_proc.oid) This references a language validator function that is responsible for checking the syntax and validity of new functions when they are created. Zero if no validator is provided.
 	lanacl::text[] as lanacl, -- aclitem[]  Access privileges; see Section 5.8 for details
-	pg_description.description as description -- text  The comment from pg_description
+	pg_description.description as description, -- text  The comment from pg_description
+	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
+	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
 from
 	pg_language
 	left join pg_description on pg_description.objoid = pg_language.oid and pg_description.objsubid = 0
+	left join pg_seclabel on pg_seclabel.objoid = pg_language.oid and pg_seclabel.objsubid = 0
 ;
 
 
---! reflect_pg_namespace : (nspacl?, description?)
+--! reflect_pg_namespace : (nspacl?, description?, seclabel?, seclabel_provider?)
 select
 	-- oid oid  Row identifier
 	pg_namespace.nspname::text as nspname, -- name  Name of the namespace
 	pg_get_userbyid(pg_namespace.nspowner)::text as nspowner, -- oid (references pg_authid.oid) Owner of the namespace
 	nspacl::text[] as nspacl, -- aclitem[]  Access privileges; see Section 5.8 for details
-	pg_description.description as description -- text  The comment from pg_description
+	pg_description.description as description, -- text  The comment from pg_description
+	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
+	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
 from
 	pg_namespace
 	left join pg_description on pg_description.objoid = pg_namespace.oid and pg_description.objsubid = 0
+	left join pg_seclabel on pg_seclabel.objoid = pg_namespace.oid and pg_seclabel.objsubid = 0
 where 
 	not starts_with(nspname, 'pg_temp')
 	and not starts_with(nspname, 'pg_toast')
@@ -599,7 +620,7 @@ from
 ;
 
 
---! reflect_pg_publication : (description?)
+--! reflect_pg_publication : (description?, seclabel?, seclabel_provider?)
 select
 	-- oid oid  Row identifier
 	pg_publication.pubname::text as pubname, -- name  Name of the publication
@@ -610,10 +631,13 @@ select
 	pg_publication.pubdelete as pubdelete, -- bool  If true, DELETE operations are replicated for tables in the publication.
 	pg_publication.pubtruncate as pubtruncate, -- bool  If true, TRUNCATE operations are replicated for tables in the publication.
 	pg_publication.pubviaroot as pubviaroot, -- bool  If true, operations on a leaf partition are replicated using the identity and schema of its topmost partitioned ancestor mentioned in the publication instead of its own.
-	pg_description.description as description -- text  The comment from pg_description
+	pg_description.description as description, -- text  The comment from pg_description
+	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
+	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
 from
 	pg_publication
 	left join pg_description on pg_description.objoid = pg_publication.oid and pg_description.objsubid = 0
+	left join pg_seclabel on pg_seclabel.objoid = pg_publication.oid and pg_seclabel.objsubid = 0
 ;
 
 
@@ -731,7 +755,7 @@ from
 ;
 
 
---! reflect_pg_subscription : (subslotname?, suborigin?, description?)
+--! reflect_pg_subscription : (subslotname?, suborigin?, description?, seclabel?, seclabel_provider?)
 select
 	-- oid oid  Row identifier
 	-- subdbid oid (references pg_database.oid) OID of the database that the subscription resides in
@@ -751,10 +775,13 @@ select
 	pg_subscription.subsynccommit as subsynccommit, -- text  The synchronous_commit setting for the subscription's workers to use
 	pg_subscription.subpublications as subpublications, -- text[]  Array of subscribed publication names. These reference publications defined in the upstream database. For more on publications see Section 29.1.
 	pg_subscription.suborigin as suborigin, -- text  The origin value must be either none or any. The default is any. If none, the subscription will request the publisher to only send changes that don't have an origin. If any, the publisher sends changes regardless of their origin.
-	pg_description.description as description -- text  The comment from pg_description
+	pg_description.description as description, -- text  The comment from pg_description
+	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
+	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
 from
 	pg_subscription
 	left join pg_description on pg_description.objoid = pg_subscription.oid and pg_description.objsubid = 0
+	left join pg_seclabel on pg_seclabel.objoid = pg_subscription.oid and pg_seclabel.objsubid = 0
 where 
 	pg_subscription.subdbid = (select oid from pg_database where datname = current_database())
 ;
@@ -773,7 +800,7 @@ from
 ;
 
 
---! reflect_pg_trigger : (tgparentid?, tgconstrrelid?, tgconstrindid?, tgconstraint?, tgqual?, tgoldtable?, tgnewtable?, description?)
+--! reflect_pg_trigger : (tgparentid?, tgconstrrelid?, tgconstrindid?, tgconstraint?, tgqual?, tgoldtable?, tgnewtable?, description?, seclabel?, seclabel_provider?)
 select
 	-- oid oid  Row identifier
 	pg_trigger.tgrelid::regclass::text as tgrelid, -- oid (references pg_class.oid) The table this trigger is on
@@ -794,27 +821,33 @@ select
 	pg_get_expr(pg_trigger.tgqual, pg_trigger.tgrelid) as tgqual, -- pg_node_tree  Expression tree (in nodeToString() representation) for the trigger's WHEN condition, or null if none
 	pg_trigger.tgoldtable::text as tgoldtable, -- name  REFERENCING clause name for OLD TABLE, or null if none
 	pg_trigger.tgnewtable::text as tgnewtable, -- name  REFERENCING clause name for NEW TABLE, or null if none
-	pg_description.description as description -- text  The comment from pg_description
+	pg_description.description as description, -- text  The comment from pg_description
+	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
+	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
 from
 	pg_trigger
 	left join pg_trigger as tgparentid_pg_trigger on pg_trigger.tgparentid = tgparentid_pg_trigger.oid
 	left join pg_constraint as tgconstraint_pg_constraint on pg_trigger.tgconstraint = tgconstraint_pg_constraint.oid
 	left join pg_namespace as tgconstraint_pg_namespace on tgconstraint_pg_constraint.connamespace = tgconstraint_pg_namespace.oid
 	left join pg_description on pg_description.objoid = pg_trigger.oid and pg_description.objsubid = 0
+	left join pg_seclabel on pg_seclabel.objoid = pg_trigger.oid and pg_seclabel.objsubid = 0
 ;
 
 
---! reflect_pg_ts_config : (description?)
+--! reflect_pg_ts_config : (description?, seclabel?, seclabel_provider?)
 select
 	pg_ts_config.oid::regconfig::text as oid, -- oid  Row identifier
 	pg_ts_config.cfgname::text as cfgname, -- name  Text search configuration name
 	pg_ts_config.cfgnamespace::regnamespace::text as cfgnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this configuration
 	pg_get_userbyid(pg_ts_config.cfgowner)::text as cfgowner, -- oid (references pg_authid.oid) Owner of the configuration
 	-- cfgparser oid (references pg_ts_parser.oid) The OID of the text search parser for this configuration
-	pg_description.description as description -- text  The comment from pg_description
+	pg_description.description as description, -- text  The comment from pg_description
+	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
+	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
 from
 	pg_ts_config
 	left join pg_description on pg_description.objoid = pg_ts_config.oid and pg_description.objsubid = 0
+	left join pg_seclabel on pg_seclabel.objoid = pg_ts_config.oid and pg_seclabel.objsubid = 0
 ;
 
 
@@ -829,7 +862,7 @@ from
 ;
 
 
---! reflect_pg_ts_dict : (dictinitoption?, description?)
+--! reflect_pg_ts_dict : (dictinitoption?, description?, seclabel?, seclabel_provider?)
 select
 	pg_ts_dict.oid::regdictionary::text as oid, -- oid  Row identifier
 	pg_ts_dict.dictname::text as dictname, -- name  Text search dictionary name
@@ -837,10 +870,13 @@ select
 	pg_get_userbyid(pg_ts_dict.dictowner)::text as dictowner, -- oid (references pg_authid.oid) Owner of the dictionary
 	-- dicttemplate oid (references pg_ts_template.oid) The OID of the text search template for this dictionary
 	pg_ts_dict.dictinitoption as dictinitoption, -- text  Initialization option string for the template
-	pg_description.description as description -- text  The comment from pg_description
+	pg_description.description as description, -- text  The comment from pg_description
+	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
+	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
 from
 	pg_ts_dict
 	left join pg_description on pg_description.objoid = pg_ts_dict.oid and pg_description.objsubid = 0
+	left join pg_seclabel on pg_seclabel.objoid = pg_ts_dict.oid and pg_seclabel.objsubid = 0
 ;
 
 
@@ -871,7 +907,7 @@ from
 ;
 
 
---! reflect_pg_type : (typrelid?, typsubscript?, typelem?, typarray?, typreceive?, typsend?, typmodin?, typmodout?, typanalyze?, typbasetype?, typtypmod?, typcollation?, typdefaultbin?, typdefault?, typacl?, description?)
+--! reflect_pg_type : (typrelid?, typsubscript?, typelem?, typarray?, typreceive?, typsend?, typmodin?, typmodout?, typanalyze?, typbasetype?, typtypmod?, typcollation?, typdefaultbin?, typdefault?, typacl?, description?, seclabel?, seclabel_provider?)
 select
 	pg_type.oid::regtype::text as oid, -- oid  Row identifier
 	pg_type.typname::text as typname, -- name  Data type name
@@ -905,10 +941,13 @@ select
 	pg_get_expr(typdefaultbin, 0) as typdefaultbin, -- pg_node_tree  If typdefaultbin is not null, it is the nodeToString() representation of a default expression for the type. This is only used for domains.
 	pg_type.typdefault as typdefault, -- text  typdefault is null if the type has no associated default value. If typdefaultbin is not null, typdefault must contain a human-readable version of the default expression represented by typdefaultbin. If typdefaultbin is null and typdefault is not, then typdefault is the external representation of the type's default value, which can be fed to the type's input converter to produce a constant.
 	typacl::text[] as typacl, -- aclitem[]  Access privileges; see Section 5.8 for details
-	pg_description.description as description -- text  The comment from pg_description
+	pg_description.description as description, -- text  The comment from pg_description
+	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
+	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
 from
 	pg_type
 	left join pg_description on pg_description.objoid = pg_type.oid and pg_description.objsubid = 0
+	left join pg_seclabel on pg_seclabel.objoid = pg_type.oid and pg_seclabel.objsubid = 0
 ;
 
 

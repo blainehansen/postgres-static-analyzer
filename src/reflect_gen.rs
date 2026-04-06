@@ -281,6 +281,10 @@ pub struct PgAttribute {
 	// attmissingval anyarray  This column has a one element array containing the value used when the column is entirely missing from the row, as happens when the column is added with a non-volatile DEFAULT value after the row is created. The value is only used when atthasmissing is true. If there is no value the column is null.
 	/// `text`  The comment from pg_description
 	description: Option<Str>,
+	/// `text`  The seclabel from pg_seclabel
+	seclabel: Option<Str>,
+	/// `text`  The provider from pg_seclabel
+	seclabel_provider: Option<Str>,
 }
 
 pg_char_enum!(PgAttributeAttcompression { 'p' => PGLZ, 'l'=> LZ4 });
@@ -313,6 +317,8 @@ pub async fn reflect_pg_attribute(
 				attoptions: pg_attribute.attoptions.map(|items| items.map(Into::into).collect()),
 				attfdwoptions: pg_attribute.attfdwoptions.map(|items| items.map(Into::into).collect()),
 				description: pg_attribute.description.map(Into::into),
+				seclabel: pg_attribute.seclabel.map(Into::into),
+				seclabel_provider: pg_attribute.seclabel_provider.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -350,6 +356,10 @@ pub struct PgRoles {
 	// oid oid (references pg_authid.oid) ID of role
 	/// `text`  The comment from pg_shdescription
 	description: Option<Str>,
+	/// `text`  The seclabel from pg_shseclabel
+	seclabel: Option<Str>,
+	/// `text`  The provider from pg_shseclabel
+	seclabel_provider: Option<Str>,
 }
 impl_name_hash_and_equivalent!(PgRoles, rolname);
 
@@ -371,6 +381,8 @@ pub async fn reflect_pg_roles(
 				rolbypassrls: pg_roles.rolbypassrls,
 				rolconfig: pg_roles.rolconfig.map(|items| items.map(Into::into).collect()),
 				description: pg_roles.description.map(Into::into),
+				seclabel: pg_roles.seclabel.map(Into::into),
+				seclabel_provider: pg_roles.seclabel_provider.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -515,6 +527,10 @@ pub struct PgClass {
 	relpartbound: Option<Str>,
 	/// `text`  The comment from pg_description
 	description: Option<Str>,
+	/// `text`  The seclabel from pg_seclabel
+	seclabel: Option<Str>,
+	/// `text`  The provider from pg_seclabel
+	seclabel_provider: Option<Str>,
 }
 impl_qual_hash_and_equivalent!(PgClass);
 
@@ -548,6 +564,8 @@ pub async fn reflect_pg_class(
 				reloptions: pg_class.reloptions.map(|items| items.map(Into::into).collect()),
 				relpartbound: pg_class.relpartbound.map(Into::into),
 				description: pg_class.description.map(Into::into),
+				seclabel: pg_class.seclabel.map(Into::into),
+				seclabel_provider: pg_class.seclabel_provider.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -799,6 +817,10 @@ pub struct PgDatabase {
 	datacl: Option<Vec<aclitem::DbAclItem>>,
 	/// `text`  The comment from pg_shdescription
 	description: Option<Str>,
+	/// `text`  The seclabel from pg_shseclabel
+	seclabel: Option<Str>,
+	/// `text`  The provider from pg_shseclabel
+	seclabel_provider: Option<Str>,
 }
 impl_name_hash_and_equivalent!(PgDatabase, datname);
 
@@ -824,6 +846,8 @@ pub async fn reflect_pg_database(
 				datcollversion: pg_database.datcollversion.map(Into::into),
 				datacl: pg_database.datacl.map(|datacl| datacl.map(|acl| aclitem(acl, &DbGrantParser)).collect()),
 				description: pg_database.description.map(Into::into),
+				seclabel: pg_database.seclabel.map(Into::into),
+				seclabel_provider: pg_database.seclabel_provider.map(Into::into),
 			}
 		})
 		.one()
@@ -884,6 +908,10 @@ pub struct PgEventTrigger {
 	evttags: Option<Vec<Str>>,
 	/// `text`  The comment from pg_description
 	description: Option<Str>,
+	/// `text`  The seclabel from pg_seclabel
+	seclabel: Option<Str>,
+	/// `text`  The provider from pg_seclabel
+	seclabel_provider: Option<Str>,
 }
 
 pg_char_enum!(PgEventTriggerEvtenabled { 'O' => OriginLocal, 'D' => Disabled, 'R' => Replica, 'A' => Always });
@@ -901,6 +929,8 @@ pub async fn reflect_pg_event_trigger(
 				evtenabled: PgEventTriggerEvtenabled::pg_from_char(pg_event_trigger.evtenabled),
 				evttags: pg_event_trigger.evttags.map(|items| items.map(Into::into).collect()),
 				description: pg_event_trigger.description.map(Into::into),
+				seclabel: pg_event_trigger.seclabel.map(Into::into),
+				seclabel_provider: pg_event_trigger.seclabel_provider.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1191,6 +1221,10 @@ pub struct PgLanguage {
 	lanacl: Option<Vec<aclitem::LanguageAclItem>>,
 	/// `text`  The comment from pg_description
 	description: Option<Str>,
+	/// `text`  The seclabel from pg_seclabel
+	seclabel: Option<Str>,
+	/// `text`  The provider from pg_seclabel
+	seclabel_provider: Option<Str>,
 }
 impl_name_hash_and_equivalent!(PgLanguage, lanname);
 
@@ -1209,6 +1243,8 @@ pub async fn reflect_pg_language(
 				lanvalidator: Qual::maybe_parse(pg_language.lanvalidator),
 				lanacl: pg_language.lanacl.map(|lanacl| lanacl.map(|acl| aclitem(acl, &LanguageGrantParser)).collect()),
 				description: pg_language.description.map(Into::into),
+				seclabel: pg_language.seclabel.map(Into::into),
+				seclabel_provider: pg_language.seclabel_provider.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1229,6 +1265,10 @@ pub struct PgNamespace {
 	nspacl: Option<Vec<aclitem::SchemaAclItem>>,
 	/// `text`  The comment from pg_description
 	description: Option<Str>,
+	/// `text`  The seclabel from pg_seclabel
+	seclabel: Option<Str>,
+	/// `text`  The provider from pg_seclabel
+	seclabel_provider: Option<Str>,
 }
 impl_name_hash_and_equivalent!(PgNamespace, nspname);
 
@@ -1242,6 +1282,8 @@ pub async fn reflect_pg_namespace(
 				nspowner: pg_namespace.nspowner.into(),
 				nspacl: pg_namespace.nspacl.map(|nspacl| nspacl.map(|acl| aclitem(acl, &SchemaGrantParser)).collect()),
 				description: pg_namespace.description.map(Into::into),
+				seclabel: pg_namespace.seclabel.map(Into::into),
+				seclabel_provider: pg_namespace.seclabel_provider.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1541,6 +1583,10 @@ pub struct PgPublication {
 	pubviaroot: bool,
 	/// `text`  The comment from pg_description
 	description: Option<Str>,
+	/// `text`  The seclabel from pg_seclabel
+	seclabel: Option<Str>,
+	/// `text`  The provider from pg_seclabel
+	seclabel_provider: Option<Str>,
 }
 impl_name_hash_and_equivalent!(PgPublication, pubname);
 
@@ -1559,6 +1605,8 @@ pub async fn reflect_pg_publication(
 				pubtruncate: pg_publication.pubtruncate,
 				pubviaroot: pg_publication.pubviaroot,
 				description: pg_publication.description.map(Into::into),
+				seclabel: pg_publication.seclabel.map(Into::into),
+				seclabel_provider: pg_publication.seclabel_provider.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1894,6 +1942,10 @@ pub struct PgSubscription {
 	suborigin: Option<Str>,
 	/// `text`  The comment from pg_description
 	description: Option<Str>,
+	/// `text`  The seclabel from pg_seclabel
+	seclabel: Option<Str>,
+	/// `text`  The provider from pg_seclabel
+	seclabel_provider: Option<Str>,
 }
 
 pg_char_enum!(PgSubscriptionSubstream { 'f' => DisallowStreamingInProgress, 't' => SpillApplyAfterCommitted, 'p' => ApplyDirectlyParallel });
@@ -1921,6 +1973,8 @@ pub async fn reflect_pg_subscription(
 				subpublications: pg_subscription.subpublications.map(Into::into).collect(),
 				suborigin: pg_subscription.suborigin.map(Into::into),
 				description: pg_subscription.description.map(Into::into),
+				seclabel: pg_subscription.seclabel.map(Into::into),
+				seclabel_provider: pg_subscription.seclabel_provider.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -2003,6 +2057,10 @@ pub struct PgTrigger {
 	tgnewtable: Option<Str>,
 	/// `text`  The comment from pg_description
 	description: Option<Str>,
+	/// `text`  The seclabel from pg_seclabel
+	seclabel: Option<Str>,
+	/// `text`  The provider from pg_seclabel
+	seclabel_provider: Option<Str>,
 }
 
 pg_char_enum!(PgTriggerTgenabled { 'O' => OriginAndLocalMode, 'D' => Disabled, 'R' => ReplicaMode, 'A' => Always });
@@ -2032,6 +2090,8 @@ pub async fn reflect_pg_trigger(
 				tgoldtable: pg_trigger.tgoldtable.map(Into::into),
 				tgnewtable: pg_trigger.tgnewtable.map(Into::into),
 				description: pg_trigger.description.map(Into::into),
+				seclabel: pg_trigger.seclabel.map(Into::into),
+				seclabel_provider: pg_trigger.seclabel_provider.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -2054,6 +2114,10 @@ pub struct PgTsConfig {
 	// cfgparser oid (references pg_ts_parser.oid) The OID of the text search parser for this configuration
 	/// `text`  The comment from pg_description
 	description: Option<Str>,
+	/// `text`  The seclabel from pg_seclabel
+	seclabel: Option<Str>,
+	/// `text`  The provider from pg_seclabel
+	seclabel_provider: Option<Str>,
 }
 impl_qual_hash_and_equivalent!(PgTsConfig);
 
@@ -2068,6 +2132,8 @@ pub async fn reflect_pg_ts_config(
 				cfgnamespace: pg_ts_config.cfgnamespace.into(),
 				cfgowner: pg_ts_config.cfgowner.into(),
 				description: pg_ts_config.description.map(Into::into),
+				seclabel: pg_ts_config.seclabel.map(Into::into),
+				seclabel_provider: pg_ts_config.seclabel_provider.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -2123,6 +2189,10 @@ pub struct PgTsDict {
 	dictinitoption: Option<Str>,
 	/// `text`  The comment from pg_description
 	description: Option<Str>,
+	/// `text`  The seclabel from pg_seclabel
+	seclabel: Option<Str>,
+	/// `text`  The provider from pg_seclabel
+	seclabel_provider: Option<Str>,
 }
 impl_qual_hash_and_equivalent!(PgTsDict);
 
@@ -2138,6 +2208,8 @@ pub async fn reflect_pg_ts_dict(
 				dictowner: pg_ts_dict.dictowner.into(),
 				dictinitoption: pg_ts_dict.dictinitoption.map(Into::into),
 				description: pg_ts_dict.description.map(Into::into),
+				seclabel: pg_ts_dict.seclabel.map(Into::into),
+				seclabel_provider: pg_ts_dict.seclabel_provider.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -2287,6 +2359,10 @@ pub struct PgType {
 	typacl: Option<Vec<aclitem::TypeAclItem>>,
 	/// `text`  The comment from pg_description
 	description: Option<Str>,
+	/// `text`  The seclabel from pg_seclabel
+	seclabel: Option<Str>,
+	/// `text`  The provider from pg_seclabel
+	seclabel_provider: Option<Str>,
 }
 impl_qual_hash_and_equivalent!(PgType);
 
@@ -2332,6 +2408,8 @@ pub async fn reflect_pg_type(
 				typdefault: pg_type.typdefault.map(Into::into),
 				typacl: pg_type.typacl.map(|typacl| typacl.map(|acl| aclitem(acl, &TypeGrantParser)).collect()),
 				description: pg_type.description.map(Into::into),
+				seclabel: pg_type.seclabel.map(Into::into),
+				seclabel_provider: pg_type.seclabel_provider.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()

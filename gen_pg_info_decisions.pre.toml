@@ -200,9 +200,13 @@ pg_matviews.tablespace = 'skip'
 pg_matviews.hasindexes = 'skip'
 pg_matviews.ispopulated = 'skip'
 
+# pg_seclabel ignored and replaced with joined seclabel and seclabel_provider and all applicable structs
+
 pg_sequence = {}
 
 # pg_shdescription ignored and replaced with joined description field on all applicable structs
+
+# pg_shseclabel ignored and replaced with joined seclabel and seclabel_provider and all applicable structs
 
 # pg_statistic_ext = {}
 # An array containing codes for the enabled statistics kinds; valid values are: d for n-distinct statistics, f for functional dependency statistics, m for most common values (MCV) list statistics, and e for expression statistics

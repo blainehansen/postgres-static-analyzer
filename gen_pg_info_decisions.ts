@@ -152,6 +152,57 @@ async function decideTable({ tableName, columns }: RawTable): Promise<TableDecis
 		}
 	}
 
+	const shseclabelTables = new Set([
+		"pg_database",
+		"pg_roles",
+	])
+	if (shseclabelTables.has(tableName)) {
+		decidedColumns["seclabel"] = {
+			typ: "text", ref: "", desc: "The seclabel from pg_shseclabel",
+			sel: `pg_shseclabel.label`, ty: "Option<Str>", exp: `${tableName}.seclabel.map(Into::into)`,
+			joins: [`left join pg_shseclabel on pg_shseclabel.objoid = ${tableName}.oid`],
+		}
+		decidedColumns["seclabel_provider"] = {
+			typ: "text", ref: "", desc: "The provider from pg_shseclabel",
+			sel: `pg_shseclabel.provider`, ty: "Option<Str>", exp: `${tableName}.seclabel_provider.map(Into::into)`,
+		}
+	}
+	const seclabelTables = new Set([
+		"pg_class",
+		"pg_namespace",
+		"pg_event_trigger",
+		"pg_proc",
+		"pg_language",
+		"pg_publication",
+		"pg_subscription",
+		"pg_ts_config",
+		"pg_ts_dict",
+		"pg_trigger",
+		"pg_type",
+	])
+	if (seclabelTables.has(tableName)) {
+		decidedColumns["seclabel"] = {
+			typ: "text", ref: "", desc: "The seclabel from pg_seclabel",
+			sel: `pg_seclabel.label`, ty: "Option<Str>", exp: `${tableName}.seclabel.map(Into::into)`,
+			joins: [`left join pg_seclabel on pg_seclabel.objoid = ${tableName}.oid and pg_seclabel.objsubid = 0`],
+		}
+		decidedColumns["seclabel_provider"] = {
+			typ: "text", ref: "", desc: "The provider from pg_seclabel",
+			sel: `pg_seclabel.provider`, ty: "Option<Str>", exp: `${tableName}.seclabel_provider.map(Into::into)`,
+		}
+	}
+	else if (tableName === "pg_attribute") {
+		decidedColumns["seclabel"] = {
+			typ: "text", ref: "", desc: "The seclabel from pg_seclabel",
+			sel: `pg_seclabel.label`, ty: "Option<Str>", exp: `${tableName}.seclabel.map(Into::into)`,
+			joins: [`left join pg_seclabel on pg_seclabel.objoid = pg_attribute.attrelid and pg_seclabel.objsubid = pg_attribute.attnum`],
+		}
+		decidedColumns["seclabel_provider"] = {
+			typ: "text", ref: "", desc: "The provider from pg_seclabel",
+			sel: `pg_seclabel.provider`, ty: "Option<Str>", exp: `${tableName}.seclabel_provider.map(Into::into)`,
+		}
+	}
+
 	return { columns: decidedColumns, hashCol: foundHashColumn }
 }
 
