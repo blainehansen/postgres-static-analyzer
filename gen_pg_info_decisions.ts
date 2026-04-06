@@ -342,16 +342,25 @@ async function decideColumn(
 	}
 
 	if (typ === "char") {
-		const ty = `${toPascalCase(tableName)}${toPascalCase(name)}`
-		const exp = `${ty}::pg_from_char(${tableName}.${name})`
+		const structName = `${toPascalCase(tableName)}${toPascalCase(name)}`
+		const ty = structName
+		const exp = `${structName}::pg_from_char(${tableName}.${name})`
 		const pgEnum = 'TODO'
 		const t = `\n# ${desc}\n${tableName}.${name} = { ty="${ty}", exp="${exp}", pgEnum="${pgEnum}" }`
 		await Deno.writeTextFile("./gen_pg_info_decisions.pre.toml", t, { append: true })
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, pgEnum }]
 	}
 	if (typ === "char[]") {
-		const ty = `${toPascalCase(tableName)}${toPascalCase(name)}`
-		const exp = `${tableName}.${name}.map(|items| items.map(${ty}::pg_from_char).collect())`
+		const nullable = ovNullable ?? /null/i.test(desc)
+		const structName = `${toPascalCase(tableName)}${toPascalCase(name)}`
+
+		const ty = nullable
+			? `Option<Vec<${structName}>>`
+			: `Vec<${structName}>`
+
+		const exp = nullable
+			? `${tableName}.${name}.map(|items| items.map(${structName}::pg_from_char).collect())`
+			: `${tableName}.${name}.map(${structName}::pg_from_char).collect()`
 		const pgEnum = 'TODO'
 		const t = `\n# ${desc}\n${tableName}.${name} = { ty="${ty}", exp="${exp}", pgEnum="${pgEnum}" }`
 		await Deno.writeTextFile("./gen_pg_info_decisions.pre.toml", t, { append: true })

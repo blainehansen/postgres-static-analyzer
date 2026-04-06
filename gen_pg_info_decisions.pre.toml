@@ -107,7 +107,7 @@ pg_db_role_setting = 'manual'
 # Type of object this entry is for: r = relation (table, view), S = sequence, f = function, T = type, n = schema
 pg_default_acl.defaclobjtype = { ty="PgDefaultAclDefaclobjtype", exp="PgDefaultAclDefaclobjtype::pg_from_char(pg_default_acl.defaclobjtype)", pgEnum="'r' => Relation, 'S' => Sequence, 'f' => Function, 'T' => Type, 'n' => Schema" }
 
-pg_description = 'todo'
+# pg_description ignored and replaced with joined description field on all applicable structs
 
 pg_enum = 'manual'
 
@@ -187,14 +187,7 @@ pg_range = {}
 # pg_replication_origin = {}
 # pg_replication_origin.roident = 'skip'
 
-# # pg_rewrite = 'todo'
-# # Event type that the rule is for: 1 = SELECT, 2 = UPDATE, 3 = INSERT, 4 = DELETE
-# pg_rewrite.ev_type = { ty="PgRewriteEvType", exp="PgRewriteEvType::pg_from_char(pg_rewrite.ev_type)", pgEnum="'1' => Select, '2' => Update, '3' => Insert, '4' => Delete" }
-# # Controls in which session_replication_role modes the rule fires. O = rule fires in “origin” and “local” modes, D = rule is disabled, R = rule fires in “replica” mode, A = rule fires always.
-# pg_rewrite.ev_enabled = { ty="PgRewriteEvEnabled", exp="PgRewriteEvEnabled::pg_from_char(pg_rewrite.ev_enabled)", pgEnum="'O' => OriginAndLocalMode, 'D' => Disabled, 'R' => ReplicaMode, 'A' => Always" }
-# pg_rewrite.ev_qual = 'skip'
-# pg_rewrite.ev_action = { sel="case when pg_rewrite.ev_type = '1' and pg_rewrite.is_instead then pg_get_viewdef(pg_rewrite.ev_class) else pg_get_ruledef(pg_rewrite.oid) end", ty="Option<Str>", exp="pg_rewrite.ev_action.map(Into::into)" }
-
+# pg_rewrite ignored and and replaced with pg_rules pg_views and pg_matviews
 pg_rules = {}
 pg_rules.tablename = { sel="quote_ident(pg_rules.schemaname) || '.' || quote_ident(pg_rules.tablename)", ty="Qual", exp="Qual::parse(pg_rules.tablename)" }
 
@@ -209,7 +202,7 @@ pg_matviews.ispopulated = 'skip'
 
 pg_sequence = {}
 
-pg_shdescription = 'todo'
+# pg_shdescription ignored and replaced with joined description field on all applicable structs
 
 # pg_statistic_ext = {}
 # An array containing codes for the enabled statistics kinds; valid values are: d for n-distinct statistics, f for functional dependency statistics, m for most common values (MCV) list statistics, and e for expression statistics
