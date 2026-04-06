@@ -221,6 +221,8 @@ pg_subscription.substream = { ty="PgSubscriptionSubstream", exp="PgSubscriptionS
 # State codes for two-phase mode: d = disabled, p = pending enablement, e = enabled
 pg_subscription.subtwophasestate = { ty="PgSubscriptionSubtwophasestate", exp="PgSubscriptionSubtwophasestate::pg_from_char(pg_subscription.subtwophasestate)", pgEnum="'d' => Disabled, 'p' => PendingEnablement, 'e' => Enabled" }
 
+pg_transform = {}
+
 # pg_trigger = {}
 pg_trigger.tgparentid = { nullable=true }
 pg_trigger.tgtype = { ty="i16" }
@@ -236,6 +238,9 @@ pg_ts_config_map.mapseqno = { ty="i32" }
 
 # pg_ts_dict = {}
 pg_ts_dict.dictinitoption = { nullable=true }
+
+pg_ts_parser = {}
+pg_ts_template = {}
 
 # pg_type = {}
 pg_type.typlen = { ty="i16" }

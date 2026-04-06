@@ -1931,6 +1931,38 @@ pub async fn reflect_pg_subscription(
 
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgTransform {
+	// oid oid  Row identifier
+	/// `oid` `(references pg_type.oid)` OID of the data type this transform is for
+	trftype: Qual,
+	/// `oid` `(references pg_language.oid)` OID of the language this transform is for
+	trflang: Str,
+	/// `regproc` `(references pg_proc.oid)` The OID of the function to use when converting the data type for input to the procedural language (e.g., function parameters). Zero is stored if the default behavior should be used.
+	trffromsql: Option<Qual>,
+	/// `regproc` `(references pg_proc.oid)` The OID of the function to use when converting output from the procedural language (e.g., return values) to the data type. Zero is stored if the default behavior should be used.
+	trftosql: Option<Qual>,
+}
+
+pub async fn reflect_pg_transform(
+	client: &PgClient
+) -> Result<Vec<PgTransform>, postgres::Error> {
+	let pg_transform_coll = reflect_crate::queries::reflect_gen::reflect_pg_transform().bind(client)
+		.map(|pg_transform| {
+			PgTransform {
+				trftype: Qual::parse(pg_transform.trftype),
+				trflang: pg_transform.trflang.into(),
+				trffromsql: Qual::maybe_parse(pg_transform.trffromsql),
+				trftosql: Qual::maybe_parse(pg_transform.trftosql),
+			}
+		})
+		.iter().await?.try_collect()
+		.await?;
+
+	Ok(pg_transform_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTrigger {
 	// oid oid  Row identifier
 	/// `oid` `(references pg_class.oid)` The table this trigger is on
@@ -2112,6 +2144,79 @@ pub async fn reflect_pg_ts_dict(
 		.await?;
 
 	Ok(pg_ts_dict_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgTsParser {
+	// oid oid  Row identifier
+	/// `name`  Text search parser name
+	prsname: Str,
+	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this parser
+	prsnamespace: Str,
+	/// `regproc` `(references pg_proc.oid)` OID of the parser's startup function
+	prsstart: Qual,
+	/// `regproc` `(references pg_proc.oid)` OID of the parser's next-token function
+	prstoken: Qual,
+	/// `regproc` `(references pg_proc.oid)` OID of the parser's shutdown function
+	prsend: Qual,
+	/// `regproc` `(references pg_proc.oid)` OID of the parser's headline function (zero if none)
+	prsheadline: Option<Qual>,
+	/// `regproc` `(references pg_proc.oid)` OID of the parser's lextype function
+	prslextype: Qual,
+}
+
+pub async fn reflect_pg_ts_parser(
+	client: &PgClient
+) -> Result<Vec<PgTsParser>, postgres::Error> {
+	let pg_ts_parser_coll = reflect_crate::queries::reflect_gen::reflect_pg_ts_parser().bind(client)
+		.map(|pg_ts_parser| {
+			PgTsParser {
+				prsname: pg_ts_parser.prsname.into(),
+				prsnamespace: pg_ts_parser.prsnamespace.into(),
+				prsstart: Qual::parse(pg_ts_parser.prsstart),
+				prstoken: Qual::parse(pg_ts_parser.prstoken),
+				prsend: Qual::parse(pg_ts_parser.prsend),
+				prsheadline: Qual::maybe_parse(pg_ts_parser.prsheadline),
+				prslextype: Qual::parse(pg_ts_parser.prslextype),
+			}
+		})
+		.iter().await?.try_collect()
+		.await?;
+
+	Ok(pg_ts_parser_coll)
+}
+
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
+pub struct PgTsTemplate {
+	// oid oid  Row identifier
+	/// `name`  Text search template name
+	tmplname: Str,
+	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this template
+	tmplnamespace: Str,
+	/// `regproc` `(references pg_proc.oid)` OID of the template's initialization function (zero if none)
+	tmplinit: Option<Qual>,
+	/// `regproc` `(references pg_proc.oid)` OID of the template's lexize function
+	tmpllexize: Qual,
+}
+
+pub async fn reflect_pg_ts_template(
+	client: &PgClient
+) -> Result<Vec<PgTsTemplate>, postgres::Error> {
+	let pg_ts_template_coll = reflect_crate::queries::reflect_gen::reflect_pg_ts_template().bind(client)
+		.map(|pg_ts_template| {
+			PgTsTemplate {
+				tmplname: pg_ts_template.tmplname.into(),
+				tmplnamespace: pg_ts_template.tmplnamespace.into(),
+				tmplinit: Qual::maybe_parse(pg_ts_template.tmplinit),
+				tmpllexize: Qual::parse(pg_ts_template.tmpllexize),
+			}
+		})
+		.iter().await?.try_collect()
+		.await?;
+
+	Ok(pg_ts_template_coll)
 }
 
 

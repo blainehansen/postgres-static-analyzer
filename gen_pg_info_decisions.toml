@@ -3092,6 +3092,45 @@ ty = "Option<Str>"
 exp = "pg_subscription.description.map(Into::into)"
 joins = ["left join pg_description on pg_description.objoid = pg_subscription.oid and pg_description.objsubid = 0"]
 
+[pg_transform.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_transform.columns.trftype]
+typ = "oid"
+ref = "(references pg_type.oid)"
+desc = "OID of the data type this transform is for"
+sel = "pg_transform.trftype::regtype::text"
+ty = "Qual"
+exp = "Qual::parse(pg_transform.trftype)"
+
+[pg_transform.columns.trflang]
+typ = "oid"
+ref = "(references pg_language.oid)"
+desc = "OID of the language this transform is for"
+sel = "trflang_pg_language.lanname::text"
+ty = "Str"
+exp = "pg_transform.trflang.into()"
+joins = ["join pg_language as trflang_pg_language on pg_transform.trflang = trflang_pg_language.oid"]
+
+[pg_transform.columns.trffromsql]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "The OID of the function to use when converting the data type for input to the procedural language (e.g., function parameters). Zero is stored if the default behavior should be used."
+sel = "case when trffromsql = 0 then null else trffromsql::regproc::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_transform.trffromsql)"
+
+[pg_transform.columns.trftosql]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "The OID of the function to use when converting output from the procedural language (e.g., return values) to the data type. Zero is stored if the default behavior should be used."
+sel = "case when trftosql = 0 then null else trftosql::regproc::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_transform.trftosql)"
+
 [pg_trigger.columns.oid]
 typ = "oid"
 ref = ""
@@ -3376,6 +3415,106 @@ sel = "pg_description.description"
 ty = "Option<Str>"
 exp = "pg_ts_dict.description.map(Into::into)"
 joins = ["left join pg_description on pg_description.objoid = pg_ts_dict.oid and pg_description.objsubid = 0"]
+
+[pg_ts_parser.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_ts_parser.columns.prsname]
+typ = "name"
+ref = ""
+desc = "Text search parser name"
+sel = "pg_ts_parser.prsname::text"
+ty = "Str"
+exp = "pg_ts_parser.prsname.into()"
+
+[pg_ts_parser.columns.prsnamespace]
+typ = "oid"
+ref = "(references pg_namespace.oid)"
+desc = "The OID of the namespace that contains this parser"
+sel = "pg_ts_parser.prsnamespace::regnamespace::text"
+ty = "Str"
+exp = "pg_ts_parser.prsnamespace.into()"
+
+[pg_ts_parser.columns.prsstart]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "OID of the parser's startup function"
+sel = "prsstart::regproc::text"
+ty = "Qual"
+exp = "Qual::parse(pg_ts_parser.prsstart)"
+
+[pg_ts_parser.columns.prstoken]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "OID of the parser's next-token function"
+sel = "prstoken::regproc::text"
+ty = "Qual"
+exp = "Qual::parse(pg_ts_parser.prstoken)"
+
+[pg_ts_parser.columns.prsend]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "OID of the parser's shutdown function"
+sel = "prsend::regproc::text"
+ty = "Qual"
+exp = "Qual::parse(pg_ts_parser.prsend)"
+
+[pg_ts_parser.columns.prsheadline]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "OID of the parser's headline function (zero if none)"
+sel = "case when prsheadline = 0 then null else prsheadline::regproc::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_ts_parser.prsheadline)"
+
+[pg_ts_parser.columns.prslextype]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "OID of the parser's lextype function"
+sel = "prslextype::regproc::text"
+ty = "Qual"
+exp = "Qual::parse(pg_ts_parser.prslextype)"
+
+[pg_ts_template.columns.oid]
+typ = "oid"
+ref = ""
+desc = "Row identifier"
+skip = true
+
+[pg_ts_template.columns.tmplname]
+typ = "name"
+ref = ""
+desc = "Text search template name"
+sel = "pg_ts_template.tmplname::text"
+ty = "Str"
+exp = "pg_ts_template.tmplname.into()"
+
+[pg_ts_template.columns.tmplnamespace]
+typ = "oid"
+ref = "(references pg_namespace.oid)"
+desc = "The OID of the namespace that contains this template"
+sel = "pg_ts_template.tmplnamespace::regnamespace::text"
+ty = "Str"
+exp = "pg_ts_template.tmplnamespace.into()"
+
+[pg_ts_template.columns.tmplinit]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "OID of the template's initialization function (zero if none)"
+sel = "case when tmplinit = 0 then null else tmplinit::regproc::text end"
+ty = "Option<Qual>"
+exp = "Qual::maybe_parse(pg_ts_template.tmplinit)"
+
+[pg_ts_template.columns.tmpllexize]
+typ = "regproc"
+ref = "(references pg_proc.oid)"
+desc = "OID of the template's lexize function"
+sel = "tmpllexize::regproc::text"
+ty = "Qual"
+exp = "Qual::parse(pg_ts_template.tmpllexize)"
 
 [pg_type]
 hashCol = true

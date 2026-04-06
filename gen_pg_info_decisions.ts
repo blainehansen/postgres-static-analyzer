@@ -261,24 +261,12 @@ async function decideColumn(
 		]
 		return [undefined, { typ, ref, desc, ...override, sel, ty, exp, joins }]
 	}
-	// if (typ === "oid" && ref === "(references pg_publication.oid)") {
-	// 	const nullable = ovNullable ?? false
-
-	// 	const joinTableName = `${name}_pg_publication`
-	// 	const sel = `${joinTableName}.pubname::text`
-	// 	const [ty, exp] = makeStr(tableName, name, nullable)
-
-	// 	const leftPortion = nullable ? 'left ' : ''
-	// 	const joins = [
-	// 		leftPortion + `join pg_publication as ${joinTableName} on ${tableName}.${name} = ${joinTableName}.oid`,
-	// 	]
-	// 	return [undefined, { typ, ref, desc, ...override, sel, ty, exp, joins }]
-	// }
 	const noNamespaceTables = new Set([
 		"pg_am",
 		"pg_amop",
 		"pg_publication",
 		"pg_trigger",
+		"pg_language",
 	])
 
 	const genericReferences = ref.match(/\(references (\w+)\.oid\)/)

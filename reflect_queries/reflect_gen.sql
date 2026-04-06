@@ -760,6 +760,19 @@ where
 ;
 
 
+--! reflect_pg_transform : (trffromsql?, trftosql?)
+select
+	-- oid oid  Row identifier
+	pg_transform.trftype::regtype::text as trftype, -- oid (references pg_type.oid) OID of the data type this transform is for
+	trflang_pg_language.lanname::text as trflang, -- oid (references pg_language.oid) OID of the language this transform is for
+	case when trffromsql = 0 then null else trffromsql::regproc::text end as trffromsql, -- regproc (references pg_proc.oid) The OID of the function to use when converting the data type for input to the procedural language (e.g., function parameters). Zero is stored if the default behavior should be used.
+	case when trftosql = 0 then null else trftosql::regproc::text end as trftosql -- regproc (references pg_proc.oid) The OID of the function to use when converting output from the procedural language (e.g., return values) to the data type. Zero is stored if the default behavior should be used.
+from
+	pg_transform
+	join pg_language as trflang_pg_language on pg_transform.trflang = trflang_pg_language.oid
+;
+
+
 --! reflect_pg_trigger : (tgparentid?, tgconstrrelid?, tgconstrindid?, tgconstraint?, tgqual?, tgoldtable?, tgnewtable?, description?)
 select
 	-- oid oid  Row identifier
@@ -828,6 +841,33 @@ select
 from
 	pg_ts_dict
 	left join pg_description on pg_description.objoid = pg_ts_dict.oid and pg_description.objsubid = 0
+;
+
+
+--! reflect_pg_ts_parser : (prsheadline?)
+select
+	-- oid oid  Row identifier
+	pg_ts_parser.prsname::text as prsname, -- name  Text search parser name
+	pg_ts_parser.prsnamespace::regnamespace::text as prsnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this parser
+	prsstart::regproc::text as prsstart, -- regproc (references pg_proc.oid) OID of the parser's startup function
+	prstoken::regproc::text as prstoken, -- regproc (references pg_proc.oid) OID of the parser's next-token function
+	prsend::regproc::text as prsend, -- regproc (references pg_proc.oid) OID of the parser's shutdown function
+	case when prsheadline = 0 then null else prsheadline::regproc::text end as prsheadline, -- regproc (references pg_proc.oid) OID of the parser's headline function (zero if none)
+	prslextype::regproc::text as prslextype -- regproc (references pg_proc.oid) OID of the parser's lextype function
+from
+	pg_ts_parser
+;
+
+
+--! reflect_pg_ts_template : (tmplinit?)
+select
+	-- oid oid  Row identifier
+	pg_ts_template.tmplname::text as tmplname, -- name  Text search template name
+	pg_ts_template.tmplnamespace::regnamespace::text as tmplnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this template
+	case when tmplinit = 0 then null else tmplinit::regproc::text end as tmplinit, -- regproc (references pg_proc.oid) OID of the template's initialization function (zero if none)
+	tmpllexize::regproc::text as tmpllexize -- regproc (references pg_proc.oid) OID of the template's lexize function
+from
+	pg_ts_template
 ;
 
 

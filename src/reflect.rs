@@ -56,13 +56,13 @@ pub struct PgState {
 	// pub pg_shseclabel: Vec<PgShseclabel>,
 	pub pg_statistic_ext: Vec<PgStatisticExt>,
 	pub pg_subscription: Vec<PgSubscription>,
-	// pub pg_transform: Vec<PgTransform>,
+	pub pg_transform: Vec<PgTransform>,
 	pub pg_trigger: Vec<PgTrigger>,
 	pub pg_ts_config: Set<PgTsConfig>,
 	pub pg_ts_config_map: Vec<PgTsConfigMap>,
 	pub pg_ts_dict: Set<PgTsDict>,
-	// pub pg_ts_parser: Vec<PgTsParser>,
-	// pub pg_ts_template: Vec<PgTsTemplate>,
+	pub pg_ts_parser: Vec<PgTsParser>,
+	pub pg_ts_template: Vec<PgTsTemplate>,
 	pub pg_type: Set<PgType>,
 	pub pg_user_mappings: Vec<PgUserMappings>,
 }
@@ -125,13 +125,13 @@ pub async fn reflect_pg_state(
 		// pg_shseclabel,
 		pg_statistic_ext,
 		pg_subscription,
-		// pg_transform,
+		pg_transform,
 		pg_trigger,
 		pg_ts_config,
 		pg_ts_config_map,
 		pg_ts_dict,
-		// pg_ts_parser,
-		// pg_ts_template,
+		pg_ts_parser,
+		pg_ts_template,
 		pg_type,
 		pg_user_mappings,
 	) = tokio::try_join!(
@@ -187,13 +187,13 @@ pub async fn reflect_pg_state(
 		// reflect_pg_shseclabel(client),
 		reflect_pg_statistic_ext(client),
 		reflect_pg_subscription(client),
-		// reflect_pg_transform(client),
+		reflect_pg_transform(client),
 		reflect_pg_trigger(client),
 		reflect_pg_ts_config(client),
 		reflect_pg_ts_config_map(client),
 		reflect_pg_ts_dict(client),
-		// reflect_pg_ts_parser(client),
-		// reflect_pg_ts_template(client),
+		reflect_pg_ts_parser(client),
+		reflect_pg_ts_template(client),
 		reflect_pg_type(client),
 		reflect_pg_user_mappings(client),
 	)?;
@@ -251,13 +251,13 @@ pub async fn reflect_pg_state(
 		// pg_shseclabel,
 		pg_statistic_ext,
 		pg_subscription,
-		// pg_transform,
+		pg_transform,
 		pg_trigger,
 		pg_ts_config,
 		pg_ts_config_map,
 		pg_ts_dict,
-		// pg_ts_parser,
-		// pg_ts_template,
+		pg_ts_parser,
+		pg_ts_template,
 		pg_type,
 		pg_user_mappings,
 	})
@@ -699,7 +699,7 @@ use reflect_gen::{PgStatisticExt, reflect_pg_statistic_ext};
 use reflect_gen::{PgSubscription, reflect_pg_subscription};
 
 // `pg_transform`: https://www.postgresql.org/docs/17/catalog-pg-transform.html
-// use reflect_gen::{PgTransform, reflect_pg_transform};
+use reflect_gen::{PgTransform, reflect_pg_transform};
 
 // `pg_trigger`: https://www.postgresql.org/docs/17/catalog-pg-trigger.html
 use reflect_gen::{PgTrigger, reflect_pg_trigger};
@@ -714,10 +714,10 @@ use reflect_gen::{PgTsConfigMap, reflect_pg_ts_config_map};
 use reflect_gen::{PgTsDict, reflect_pg_ts_dict};
 
 // `pg_ts_parser`: https://www.postgresql.org/docs/17/catalog-pg-ts-parser.html
-// use reflect_gen::{PgTsParser, reflect_pg_ts_parser};
+use reflect_gen::{PgTsParser, reflect_pg_ts_parser};
 
 // `pg_ts_template`: https://www.postgresql.org/docs/17/catalog-pg-ts-template.html
-// use reflect_gen::{PgTsTemplate, reflect_pg_ts_template};
+use reflect_gen::{PgTsTemplate, reflect_pg_ts_template};
 
 // `pg_type`: https://www.postgresql.org/docs/17/catalog-pg-type.html
 use reflect_gen::{PgType, reflect_pg_type};
