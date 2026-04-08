@@ -84,8 +84,7 @@ const pages: [string, string][] = [
 	["pg_foreign_table", "https://www.postgresql.org/docs/17/catalog-pg-foreign-table.html"],
 	["pg_index", "https://www.postgresql.org/docs/17/catalog-pg-index.html"],
 	["pg_inherits", "https://www.postgresql.org/docs/17/catalog-pg-inherits.html"],
-	// this one's complicated, it's for grants to objects created by extensions?
-	["pg_init_privs", "https://www.postgresql.org/docs/17/catalog-pg-init-privs.html"],
+	// ["pg_init_privs", "https://www.postgresql.org/docs/17/catalog-pg-init-privs.html"],
 	["pg_language", "https://www.postgresql.org/docs/17/catalog-pg-language.html"],
 	// ["pg_largeobject", "https://www.postgresql.org/docs/17/catalog-pg-largeobject.html"],
 	// ["pg_largeobject_metadata", "https://www.postgresql.org/docs/17/catalog-pg-largeobject-metadata.html"],

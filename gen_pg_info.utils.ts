@@ -18,7 +18,6 @@ export const refToReg: { [key: string]: string } = {
 // [pg_init_privs.initprivs]
 export const aclitemMapping: { [key: string]: string } = {
 	pg_database: "Db",
-	pg_domain: "Domain",
 	pg_proc: "Function",
 	pg_foreign_data_wrapper: "ForeignDataWrapper",
 	pg_foreign_server: "ForeignServer",
@@ -26,7 +25,6 @@ export const aclitemMapping: { [key: string]: string } = {
 	pg_largeobject_metadata: "LargeObject",
 	pg_parameter_acl: "Parameter",
 	pg_namespace: "Schema",
-	pg_sequence: "Sequence",
 	pg_class: "Table",
 	pg_attribute: "TableColumn",
 	pg_tablespace: "Tablespace",

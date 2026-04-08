@@ -566,6 +566,24 @@ sel = "pg_seclabel.provider"
 ty = "Option<Str>"
 exp = "pg_attribute.seclabel_provider.map(Into::into)"
 
+[pg_attribute.columns.initprivs]
+typ = "aclitem[]"
+ref = ""
+desc = "The initial access privileges from pg_init_privs."
+sel = "pg_init_privs.initprivs::text[]"
+ty = "Option<Vec<aclitem::TableColumnAclItem>>"
+exp = "pg_attribute.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &TableColumnGrantParser)).collect())"
+joins = ["left join pg_init_privs on pg_init_privs.objoid = pg_attribute.attrelid and pg_init_privs.objsubid = pg_attribute.attnum"]
+
+[pg_attribute.columns.initprivs_type]
+typ = "char"
+ref = ""
+desc = "A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION."
+sel = "pg_init_privs.privtype"
+ty = "Option<PgAttributeInitprivsType>"
+exp = "pg_attribute.initprivs_type.map(PgAttributeInitprivsType::pg_from_char)"
+pgEnum = "'i' => InitDb, 'e' => CreateExtension"
+
 [pg_roles]
 hashCol = "rolname"
 
@@ -1036,6 +1054,24 @@ desc = "The provider from pg_seclabel"
 sel = "pg_seclabel.provider"
 ty = "Option<Str>"
 exp = "pg_class.seclabel_provider.map(Into::into)"
+
+[pg_class.columns.initprivs]
+typ = "aclitem[]"
+ref = ""
+desc = "The initial access privileges from pg_init_privs."
+sel = "pg_init_privs.initprivs::text[]"
+ty = "Option<Vec<aclitem::TableAclItem>>"
+exp = "pg_class.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &TableGrantParser)).collect())"
+joins = ["left join pg_init_privs on pg_init_privs.objoid = pg_class.oid and pg_init_privs.objsubid = 0"]
+
+[pg_class.columns.initprivs_type]
+typ = "char"
+ref = ""
+desc = "A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION."
+sel = "pg_init_privs.privtype"
+ty = "Option<PgClassInitprivsType>"
+exp = "pg_class.initprivs_type.map(PgClassInitprivsType::pg_from_char)"
+pgEnum = "'i' => InitDb, 'e' => CreateExtension"
 
 [pg_collation.columns.oid]
 typ = "oid"
@@ -1813,6 +1849,24 @@ ty = "Option<Str>"
 exp = "pg_foreign_data_wrapper.description.map(Into::into)"
 joins = ["left join pg_description on pg_description.objoid = pg_foreign_data_wrapper.oid and pg_description.objsubid = 0"]
 
+[pg_foreign_data_wrapper.columns.initprivs]
+typ = "aclitem[]"
+ref = ""
+desc = "The initial access privileges from pg_init_privs."
+sel = "pg_init_privs.initprivs::text[]"
+ty = "Option<Vec<aclitem::ForeignDataWrapperAclItem>>"
+exp = "pg_foreign_data_wrapper.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &ForeignDataWrapperGrantParser)).collect())"
+joins = ["left join pg_init_privs on pg_init_privs.objoid = pg_foreign_data_wrapper.oid and pg_init_privs.objsubid = 0"]
+
+[pg_foreign_data_wrapper.columns.initprivs_type]
+typ = "char"
+ref = ""
+desc = "A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION."
+sel = "pg_init_privs.privtype"
+ty = "Option<PgForeignDataWrapperInitprivsType>"
+exp = "pg_foreign_data_wrapper.initprivs_type.map(PgForeignDataWrapperInitprivsType::pg_from_char)"
+pgEnum = "'i' => InitDb, 'e' => CreateExtension"
+
 [pg_foreign_server.columns.oid]
 typ = "oid"
 ref = ""
@@ -1881,6 +1935,24 @@ sel = "pg_description.description"
 ty = "Option<Str>"
 exp = "pg_foreign_server.description.map(Into::into)"
 joins = ["left join pg_description on pg_description.objoid = pg_foreign_server.oid and pg_description.objsubid = 0"]
+
+[pg_foreign_server.columns.initprivs]
+typ = "aclitem[]"
+ref = ""
+desc = "The initial access privileges from pg_init_privs."
+sel = "pg_init_privs.initprivs::text[]"
+ty = "Option<Vec<aclitem::ForeignServerAclItem>>"
+exp = "pg_foreign_server.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &ForeignServerGrantParser)).collect())"
+joins = ["left join pg_init_privs on pg_init_privs.objoid = pg_foreign_server.oid and pg_init_privs.objsubid = 0"]
+
+[pg_foreign_server.columns.initprivs_type]
+typ = "char"
+ref = ""
+desc = "A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION."
+sel = "pg_init_privs.privtype"
+ty = "Option<PgForeignServerInitprivsType>"
+exp = "pg_foreign_server.initprivs_type.map(PgForeignServerInitprivsType::pg_from_char)"
+pgEnum = "'i' => InitDb, 'e' => CreateExtension"
 
 [pg_foreign_table.columns.ftrelid]
 typ = "oid"
@@ -2174,6 +2246,24 @@ sel = "pg_seclabel.provider"
 ty = "Option<Str>"
 exp = "pg_language.seclabel_provider.map(Into::into)"
 
+[pg_language.columns.initprivs]
+typ = "aclitem[]"
+ref = ""
+desc = "The initial access privileges from pg_init_privs."
+sel = "pg_init_privs.initprivs::text[]"
+ty = "Option<Vec<aclitem::LanguageAclItem>>"
+exp = "pg_language.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &LanguageGrantParser)).collect())"
+joins = ["left join pg_init_privs on pg_init_privs.objoid = pg_language.oid and pg_init_privs.objsubid = 0"]
+
+[pg_language.columns.initprivs_type]
+typ = "char"
+ref = ""
+desc = "A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION."
+sel = "pg_init_privs.privtype"
+ty = "Option<PgLanguageInitprivsType>"
+exp = "pg_language.initprivs_type.map(PgLanguageInitprivsType::pg_from_char)"
+pgEnum = "'i' => InitDb, 'e' => CreateExtension"
+
 [pg_namespace]
 hashCol = "nspname"
 
@@ -2233,6 +2323,24 @@ desc = "The provider from pg_seclabel"
 sel = "pg_seclabel.provider"
 ty = "Option<Str>"
 exp = "pg_namespace.seclabel_provider.map(Into::into)"
+
+[pg_namespace.columns.initprivs]
+typ = "aclitem[]"
+ref = ""
+desc = "The initial access privileges from pg_init_privs."
+sel = "pg_init_privs.initprivs::text[]"
+ty = "Option<Vec<aclitem::SchemaAclItem>>"
+exp = "pg_namespace.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &SchemaGrantParser)).collect())"
+joins = ["left join pg_init_privs on pg_init_privs.objoid = pg_namespace.oid and pg_init_privs.objsubid = 0"]
+
+[pg_namespace.columns.initprivs_type]
+typ = "char"
+ref = ""
+desc = "A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION."
+sel = "pg_init_privs.privtype"
+ty = "Option<PgNamespaceInitprivsType>"
+exp = "pg_namespace.initprivs_type.map(PgNamespaceInitprivsType::pg_from_char)"
+pgEnum = "'i' => InitDb, 'e' => CreateExtension"
 
 [pg_opclass.columns.oid]
 typ = "oid"
@@ -2509,6 +2617,24 @@ desc = "Access privileges; see Section 5.8 for details"
 sel = "paracl::text[]"
 ty = "Option<Vec<aclitem::ParameterAclItem>>"
 exp = "pg_parameter_acl.paracl.map(|paracl| paracl.map(|acl| aclitem(acl, &ParameterGrantParser)).collect())"
+
+[pg_parameter_acl.columns.initprivs]
+typ = "aclitem[]"
+ref = ""
+desc = "The initial access privileges from pg_init_privs."
+sel = "pg_init_privs.initprivs::text[]"
+ty = "Option<Vec<aclitem::ParameterAclItem>>"
+exp = "pg_parameter_acl.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &ParameterGrantParser)).collect())"
+joins = ["left join pg_init_privs on pg_init_privs.objoid = pg_parameter_acl.oid and pg_init_privs.objsubid = 0"]
+
+[pg_parameter_acl.columns.initprivs_type]
+typ = "char"
+ref = ""
+desc = "A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION."
+sel = "pg_init_privs.privtype"
+ty = "Option<PgParameterAclInitprivsType>"
+exp = "pg_parameter_acl.initprivs_type.map(PgParameterAclInitprivsType::pg_from_char)"
+pgEnum = "'i' => InitDb, 'e' => CreateExtension"
 
 [pg_partitioned_table.columns.partrelid]
 typ = "oid"
@@ -3988,6 +4114,24 @@ desc = "The provider from pg_seclabel"
 sel = "pg_seclabel.provider"
 ty = "Option<Str>"
 exp = "pg_type.seclabel_provider.map(Into::into)"
+
+[pg_type.columns.initprivs]
+typ = "aclitem[]"
+ref = ""
+desc = "The initial access privileges from pg_init_privs."
+sel = "pg_init_privs.initprivs::text[]"
+ty = "Option<Vec<aclitem::TypeAclItem>>"
+exp = "pg_type.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &TypeGrantParser)).collect())"
+joins = ["left join pg_init_privs on pg_init_privs.objoid = pg_type.oid and pg_init_privs.objsubid = 0"]
+
+[pg_type.columns.initprivs_type]
+typ = "char"
+ref = ""
+desc = "A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION."
+sel = "pg_init_privs.privtype"
+ty = "Option<PgTypeInitprivsType>"
+exp = "pg_type.initprivs_type.map(PgTypeInitprivsType::pg_from_char)"
+pgEnum = "'i' => InitDb, 'e' => CreateExtension"
 
 [pg_user_mappings.columns.umid]
 typ = "oid"

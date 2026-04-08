@@ -140,8 +140,7 @@ pg_index.indclass = { sel="pg_temp.format_pg_opclass_oidvector(pg_index.indclass
 # pg_inherits = {}
 pg_inherits.inhdetachpending = 'skip'
 
-# another nightmare anything references anything
-pg_init_privs = 'todo'
+# pg_init_privs ignored and replaced with joined initprivs and initprivs_type and all applicable structs
 
 pg_language = {}
 

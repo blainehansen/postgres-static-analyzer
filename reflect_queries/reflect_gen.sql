@@ -89,7 +89,7 @@ where
 ;
 
 
---! reflect_pg_attribute : (atttypmod?, attcompression?, attidentity?, attgenerated?, attcollation?, attstattarget?, attacl?, attoptions?, attfdwoptions?, description?, seclabel?, seclabel_provider?)
+--! reflect_pg_attribute : (atttypmod?, attcompression?, attidentity?, attgenerated?, attcollation?, attstattarget?, attacl?, attoptions?, attfdwoptions?, description?, seclabel?, seclabel_provider?, initprivs?, initprivs_type?)
 select
 	pg_attribute.attrelid::regclass::text as attrelid, -- oid (references pg_class.oid) The table this column belongs to
 	pg_attribute.attname::text as attname, -- name  The column name
@@ -119,11 +119,14 @@ select
 	-- attmissingval anyarray  This column has a one element array containing the value used when the column is entirely missing from the row, as happens when the column is added with a non-volatile DEFAULT value after the row is created. The value is only used when atthasmissing is true. If there is no value the column is null.
 	pg_description.description as description, -- text  The comment from pg_description
 	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
-	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
+	pg_seclabel.provider as seclabel_provider, -- text  The provider from pg_seclabel
+	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_attribute
 	left join pg_description on pg_description.objoid = pg_attribute.attrelid and pg_description.objsubid = pg_attribute.attnum
 	left join pg_seclabel on pg_seclabel.objoid = pg_attribute.attrelid and pg_seclabel.objsubid = pg_attribute.attnum
+	left join pg_init_privs on pg_init_privs.objoid = pg_attribute.attrelid and pg_init_privs.objsubid = pg_attribute.attnum
 where 
 	not starts_with(pg_attribute.attrelid::regclass::text, 'pg_toast')
 	and attnum > 0
@@ -185,7 +188,7 @@ from
 ;
 
 
---! reflect_pg_class : (reltype?, reloftype?, relam?, relacl?, reloptions?, relpartbound?, description?, seclabel?, seclabel_provider?)
+--! reflect_pg_class : (reltype?, reloftype?, relam?, relacl?, reloptions?, relpartbound?, description?, seclabel?, seclabel_provider?, initprivs?, initprivs_type?)
 select
 	pg_class.oid::regclass::text as oid, -- oid  Row identifier
 	pg_class.relname::text as relname, -- name  Name of the table, index, view, etc.
@@ -222,12 +225,15 @@ select
 	pg_get_expr(relpartbound, pg_class.oid) as relpartbound, -- pg_node_tree  If table is a partition (see relispartition), internal representation of the partition bound
 	pg_description.description as description, -- text  The comment from pg_description
 	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
-	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
+	pg_seclabel.provider as seclabel_provider, -- text  The provider from pg_seclabel
+	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_class
 	left join pg_am as relam_pg_am on pg_class.relam = relam_pg_am.oid
 	left join pg_description on pg_description.objoid = pg_class.oid and pg_description.objsubid = 0
 	left join pg_seclabel on pg_seclabel.objoid = pg_class.oid and pg_seclabel.objsubid = 0
+	left join pg_init_privs on pg_init_privs.objoid = pg_class.oid and pg_init_privs.objsubid = 0
 where 
 	relnamespace::regnamespace != 'pg_toast'::regnamespace
 ;
@@ -392,7 +398,7 @@ from
 ;
 
 
---! reflect_pg_foreign_data_wrapper : (fdwhandler?, fdwvalidator?, fdwacl?, fdwoptions?, description?)
+--! reflect_pg_foreign_data_wrapper : (fdwhandler?, fdwvalidator?, fdwacl?, fdwoptions?, description?, initprivs?, initprivs_type?)
 select
 	-- oid oid  Row identifier
 	pg_foreign_data_wrapper.fdwname::text as fdwname, -- name  Name of the foreign-data wrapper
@@ -401,14 +407,17 @@ select
 	case when pg_foreign_data_wrapper.fdwvalidator = 0 then null else pg_foreign_data_wrapper.fdwvalidator::regprocedure::text end as fdwvalidator, -- oid (references pg_proc.oid) References a validator function that is responsible for checking the validity of the options given to the foreign-data wrapper, as well as options for foreign servers and user mappings using the foreign-data wrapper. Zero if no validator is provided
 	fdwacl::text[] as fdwacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_foreign_data_wrapper.fdwoptions as fdwoptions, -- text[]  Foreign-data wrapper specific options, as “keyword=value” strings
-	pg_description.description as description -- text  The comment from pg_description
+	pg_description.description as description, -- text  The comment from pg_description
+	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_foreign_data_wrapper
 	left join pg_description on pg_description.objoid = pg_foreign_data_wrapper.oid and pg_description.objsubid = 0
+	left join pg_init_privs on pg_init_privs.objoid = pg_foreign_data_wrapper.oid and pg_init_privs.objsubid = 0
 ;
 
 
---! reflect_pg_foreign_server : (srvtype?, srvversion?, srvacl?, srvoptions?, description?)
+--! reflect_pg_foreign_server : (srvtype?, srvversion?, srvacl?, srvoptions?, description?, initprivs?, initprivs_type?)
 select
 	-- oid oid  Row identifier
 	pg_foreign_server.srvname::text as srvname, -- name  Name of the foreign server
@@ -418,11 +427,14 @@ select
 	pg_foreign_server.srvversion as srvversion, -- text  Version of the server (optional)
 	srvacl::text[] as srvacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_foreign_server.srvoptions as srvoptions, -- text[]  Foreign server specific options, as “keyword=value” strings
-	pg_description.description as description -- text  The comment from pg_description
+	pg_description.description as description, -- text  The comment from pg_description
+	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_foreign_server
 	join pg_foreign_data_wrapper as srvfdw_pg_foreign_data_wrapper on pg_foreign_server.srvfdw = srvfdw_pg_foreign_data_wrapper.oid
 	left join pg_description on pg_description.objoid = pg_foreign_server.oid and pg_description.objsubid = 0
+	left join pg_init_privs on pg_init_privs.objoid = pg_foreign_server.oid and pg_init_privs.objsubid = 0
 ;
 
 
@@ -478,7 +490,7 @@ from
 ;
 
 
---! reflect_pg_language : (lanplcallfoid?, laninline?, lanvalidator?, lanacl?, description?, seclabel?, seclabel_provider?)
+--! reflect_pg_language : (lanplcallfoid?, laninline?, lanvalidator?, lanacl?, description?, seclabel?, seclabel_provider?, initprivs?, initprivs_type?)
 select
 	-- oid oid  Row identifier
 	pg_language.lanname::text as lanname, -- name  Name of the language
@@ -491,15 +503,18 @@ select
 	lanacl::text[] as lanacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_description.description as description, -- text  The comment from pg_description
 	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
-	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
+	pg_seclabel.provider as seclabel_provider, -- text  The provider from pg_seclabel
+	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_language
 	left join pg_description on pg_description.objoid = pg_language.oid and pg_description.objsubid = 0
 	left join pg_seclabel on pg_seclabel.objoid = pg_language.oid and pg_seclabel.objsubid = 0
+	left join pg_init_privs on pg_init_privs.objoid = pg_language.oid and pg_init_privs.objsubid = 0
 ;
 
 
---! reflect_pg_namespace : (nspacl?, description?, seclabel?, seclabel_provider?)
+--! reflect_pg_namespace : (nspacl?, description?, seclabel?, seclabel_provider?, initprivs?, initprivs_type?)
 select
 	-- oid oid  Row identifier
 	pg_namespace.nspname::text as nspname, -- name  Name of the namespace
@@ -507,11 +522,14 @@ select
 	nspacl::text[] as nspacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_description.description as description, -- text  The comment from pg_description
 	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
-	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
+	pg_seclabel.provider as seclabel_provider, -- text  The provider from pg_seclabel
+	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_namespace
 	left join pg_description on pg_description.objoid = pg_namespace.oid and pg_description.objsubid = 0
 	left join pg_seclabel on pg_seclabel.objoid = pg_namespace.oid and pg_seclabel.objsubid = 0
+	left join pg_init_privs on pg_init_privs.objoid = pg_namespace.oid and pg_init_privs.objsubid = 0
 where 
 	not starts_with(nspname, 'pg_temp')
 	and not starts_with(nspname, 'pg_toast')
@@ -578,13 +596,16 @@ from
 ;
 
 
---! reflect_pg_parameter_acl : (paracl?)
+--! reflect_pg_parameter_acl : (paracl?, initprivs?, initprivs_type?)
 select
 	-- oid oid  Row identifier
 	pg_parameter_acl.parname as parname, -- text  The name of a configuration parameter for which privileges are granted
-	paracl::text[] as paracl -- aclitem[]  Access privileges; see Section 5.8 for details
+	paracl::text[] as paracl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_parameter_acl
+	left join pg_init_privs on pg_init_privs.objoid = pg_parameter_acl.oid and pg_init_privs.objsubid = 0
 ;
 
 
@@ -907,7 +928,7 @@ from
 ;
 
 
---! reflect_pg_type : (typrelid?, typsubscript?, typelem?, typarray?, typreceive?, typsend?, typmodin?, typmodout?, typanalyze?, typbasetype?, typtypmod?, typcollation?, typdefaultbin?, typdefault?, typacl?, description?, seclabel?, seclabel_provider?)
+--! reflect_pg_type : (typrelid?, typsubscript?, typelem?, typarray?, typreceive?, typsend?, typmodin?, typmodout?, typanalyze?, typbasetype?, typtypmod?, typcollation?, typdefaultbin?, typdefault?, typacl?, description?, seclabel?, seclabel_provider?, initprivs?, initprivs_type?)
 select
 	pg_type.oid::regtype::text as oid, -- oid  Row identifier
 	pg_type.typname::text as typname, -- name  Data type name
@@ -943,11 +964,14 @@ select
 	typacl::text[] as typacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_description.description as description, -- text  The comment from pg_description
 	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
-	pg_seclabel.provider as seclabel_provider -- text  The provider from pg_seclabel
+	pg_seclabel.provider as seclabel_provider, -- text  The provider from pg_seclabel
+	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_type
 	left join pg_description on pg_description.objoid = pg_type.oid and pg_description.objsubid = 0
 	left join pg_seclabel on pg_seclabel.objoid = pg_type.oid and pg_seclabel.objsubid = 0
+	left join pg_init_privs on pg_init_privs.objoid = pg_type.oid and pg_init_privs.objsubid = 0
 ;
 
 

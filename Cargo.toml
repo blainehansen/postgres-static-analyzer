@@ -22,6 +22,7 @@ nom = "8"
 paste = "1"
 insta = { version = "1.46", default-features = false, features = ["colors", "ron", "redactions"] }
 serde = { version = "1", features = ["derive"] }
+ron = "0.8"
 
 [package]
 name = "postgres-static-analyzer"
@@ -45,6 +46,7 @@ serde = { workspace = true, features = ["derive"] }
 [dev-dependencies]
 anyhow.workspace = true
 insta.workspace = true
+ron.workspace = true
 temp_container_utils = { path = "./temp_container_utils" }
 
 [profile.dev.package.insta]

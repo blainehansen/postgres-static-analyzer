@@ -415,11 +415,12 @@ use reflect_gen::{PgDatabase, reflect_pg_database};
 // `pg_db_role_setting`: https://www.postgresql.org/docs/17/catalog-pg-db-role-setting.html
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgDbRoleSetting {
-	setdatabase: Option<()>, // oid (references pg_database.oid) The OID of the database the setting is applicable to, or zero if not database-specific
+	/// `oid` (references pg_database.oid) The OID of the database the setting is applicable to, or zero if not database-specific
+	pub setdatabase: Option<()>,
 	/// `oid` `(references pg_authid.oid)` The OID of the role the setting is applicable to, or zero if not role-specific
-	setrole: Option<Str>,
+	pub setrole: Option<Str>,
 	/// `text[]`  Defaults for run-time configuration variables
-	setconfig: Option<Vec<Str>>,
+	pub setconfig: Option<Vec<Str>>,
 }
 
 pub async fn reflect_pg_db_role_setting(
@@ -455,9 +456,9 @@ use reflect_gen::{PgDefaultAcl, reflect_pg_default_acl};
 pub struct PgEnum {
 	// `oid`  Row identifier
 	/// enumtypid `oid` `(references pg_type.oid)` The OID of the pg_type entry owning this enum value
-	enumtypid: Qual,
+	pub enumtypid: Qual,
 	/// enumlabel `name`  The textual label for this enum value
-	enumlabels: Vec<Str>,
+	pub enumlabels: Vec<Str>,
 	// enumsortorder `float4`  The sort position of this enum value within its enum type
 }
 impl_qual_hash_and_equivalent!(PgEnum, enumtypid);
@@ -532,67 +533,67 @@ use reflect_gen::{PgPolicy, reflect_pg_policy};
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgProc {
 	/// `oid`  Row identifier
-	oid: Qual,
+	pub oid: Qual,
 	/// `name`  Name of the function
-	proname: Str,
+	pub proname: Str,
 	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this function
-	pronamespace: Str,
+	pub pronamespace: Str,
 	/// `oid` `(references pg_authid.oid)` Owner of the function
-	proowner: Str,
+	pub proowner: Str,
 	/// `oid` `(references pg_language.oid)` Implementation language or call interface of this function
-	prolang: Str,
+	pub prolang: Str,
 	/// `float4`  Estimated execution cost (in units of cpu_operator_cost); if proretset, this is cost per row returned
-	procost: Option<Str>,
+	pub procost: Option<Str>,
 	/// `float4`  Estimated number of result rows (zero if not proretset)
-	prorows: Option<Str>,
+	pub prorows: Option<Str>,
 	/// `oid` `(references pg_type.oid)` Data type of the variadic array parameter's elements, or zero if the function does not have a variadic parameter
-	provariadic: Option<Qual>,
+	pub provariadic: Option<Qual>,
 	/// `regproc` `(references pg_proc.oid)` Planner support function for this function (see Section 36.11), or zero if none
-	prosupport: Option<Qual>,
+	pub prosupport: Option<Qual>,
 	/// `char`  f for a normal function, p for a procedure, a for an aggregate function, or w for a window function
-	prokind: PgProcProkind,
+	pub prokind: PgProcProkind,
 	/// `bool`  Function is a security definer (i.e., a “setuid” function)
-	prosecdef: bool,
+	pub prosecdef: bool,
 	/// `bool`  The function has no side effects. No information about the arguments is conveyed except via the return value. Any function that might throw an error depending on the values of its arguments is not leak-proof.
-	proleakproof: bool,
+	pub proleakproof: bool,
 	/// `bool`  Function returns null if any call argument is null. In that case the function won't actually be called at all. Functions that are not “strict” must be prepared to handle null inputs.
-	proisstrict: bool,
+	pub proisstrict: bool,
 	/// `bool`  Function returns a set (i.e., multiple values of the specified data type)
-	proretset: bool,
+	pub proretset: bool,
 	/// `char`  provolatile tells whether the function's result depends only on its input arguments, or is affected by outside factors. It is i for “immutable” functions, which always deliver the same result for the same inputs. It is s for “stable” functions, whose results (for fixed inputs) do not change within a scan. It is v for “volatile” functions, whose results might change at any time. (Use v also for functions with side-effects, so that calls to them cannot get optimized away.)
-	provolatile: PgProcProvolatile,
+	pub provolatile: PgProcProvolatile,
 	/// `char`  proparallel tells whether the function can be safely run in parallel mode. It is s for functions which are safe to run in parallel mode without restriction. It is r for functions which can be run in parallel mode, but their execution is restricted to the parallel group leader; parallel worker processes cannot invoke these functions. It is u for functions which are unsafe in parallel mode; the presence of such a function forces a serial execution plan.
-	proparallel: PgProcProparallel,
+	pub proparallel: PgProcProparallel,
 	/// `int2`  Number of input arguments
-	pronargs: u16,
+	pub pronargs: u16,
 	/// `int2`  Number of arguments that have defaults
-	pronargdefaults: u16,
+	pub pronargdefaults: u16,
 	/// `oid` `(references pg_type.oid)` Data type of the return value
-	prorettype: Qual,
+	pub prorettype: Qual,
 	// `oidvector` `(references pg_type.oid)` An array of the data types of the function arguments. This includes only input arguments (including INOUT and VARIADIC arguments), and thus represents the call signature of the function.
-	proargtypes: Vec<Qual>,
+	pub proargtypes: Vec<Qual>,
 	/// `oid[]` `(references pg_type.oid)` An array of the data types of the function arguments. This includes all arguments (including OUT and INOUT arguments); however, if all the arguments are IN arguments, this field will be null. Note that subscripting is 1-based, whereas for historical reasons proargtypes is subscripted from 0.
-	proallargtypes: Option<Vec<Qual>>,
+	pub proallargtypes: Option<Vec<Qual>>,
 	/// `char[]`  An array of the modes of the function arguments, encoded as i for IN arguments, o for OUT arguments, b for INOUT arguments, v for VARIADIC arguments, t for TABLE arguments. If all the arguments are IN arguments, this field will be null. Note that subscripts correspond to positions of proallargtypes not proargtypes.
-	proargmodes: Option<Vec<PgProcProargmodes>>,
+	pub proargmodes: Option<Vec<PgProcProargmodes>>,
 	/// `text[]`  An array of the names of the function arguments. Arguments without a name are set to empty strings in the array. If none of the arguments have a name, this field will be null. Note that subscripts correspond to positions of proallargtypes not proargtypes.
-	proargnames: Option<Vec<Str>>,
+	pub proargnames: Option<Vec<Str>>,
 	/// `pg_node_tree`  Expression trees (in nodeToString() representation) for default values. This is a list with pronargdefaults elements, corresponding to the last N input arguments (i.e., the last N proargtypes positions). If none of the arguments have defaults, this field will be null.
-	proargdefaults: Option<Vec<Option<Str>>>,
+	pub proargdefaults: Option<Vec<Option<Str>>>,
 	/// `oid[]` `(references pg_type.oid)` An array of the argument/result data type(s) for which to apply transforms (from the function's TRANSFORM clause). Null if none.
-	protrftypes: Option<Vec<Qual>>,
+	pub protrftypes: Option<Vec<Qual>>,
 	/// `text`  This tells the function handler how to invoke the function. It might be the actual source code of the function for interpreted languages, a link symbol, a file name, or just about anything else, depending on the implementation language/call convention.
-	prosrc: Option<Str>,
+	pub prosrc: Option<Str>,
 	/// `text`  Additional information about how to invoke the function. Again, the interpretation is language-specific.
-	probin: Option<Str>,
+	pub probin: Option<Str>,
 	/// pg_node_tree  Pre-parsed SQL function body. This is used for SQL-language functions when the body is given in SQL-standard notation rather than as a string literal. It's null in other cases.
-	prosqlbody: Option<Str>,
+	pub prosqlbody: Option<Str>,
 	/// `text[]`  Function's local settings for run-time configuration variables
-	proconfig: Option<Vec<Str>>,
+	pub proconfig: Option<Vec<Str>>,
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
-	proacl: Option<Vec<aclitem::FunctionAclItem>>,
+	pub proacl: Option<Vec<aclitem::FunctionAclItem>>,
 	/// `text`  The comment from pg_description
-	description: Option<Str>,
+	pub description: Option<Str>,
 }
 impl_qual_hash_and_equivalent!(PgProc);
 

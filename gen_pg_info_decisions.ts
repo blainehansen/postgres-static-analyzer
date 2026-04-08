@@ -203,6 +203,28 @@ async function decideTable({ tableName, columns }: RawTable): Promise<TableDecis
 		}
 	}
 
+	if (tableName !== 'pg_database' && tableName !== 'pg_default_acl' && tableName in aclitemMapping) {
+		const join = tableName === 'pg_attribute'
+			? `left join pg_init_privs on pg_init_privs.objoid = pg_attribute.attrelid and pg_init_privs.objsubid = pg_attribute.attnum`
+			: `left join pg_init_privs on pg_init_privs.objoid = ${tableName}.oid and pg_init_privs.objsubid = 0`
+		const aclPrefix = aclitemMapping[tableName]; if (!aclPrefix) throw `no acl for ${tableName}`
+
+		decidedColumns["initprivs"] = {
+			typ: "aclitem[]", ref: "", desc: "The initial access privileges from pg_init_privs.",
+			sel: `pg_init_privs.initprivs::text[]`,
+			ty: `Option<Vec<aclitem::${aclPrefix}AclItem>>`,
+			exp: `${tableName}.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &${aclPrefix}GrantParser)).collect())`,
+			joins: [join],
+		}
+
+		const structName = `${toPascalCase(tableName)}InitprivsType`
+		decidedColumns["initprivs_type"] = {
+			typ: "char", ref: "", desc: "A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.",
+			sel: `pg_init_privs.privtype`, ty: `Option<${structName}>`, exp: `${tableName}.initprivs_type.map(${structName}::pg_from_char)`,
+			pgEnum: `'i' => InitDb, 'e' => CreateExtension`,
+		}
+	}
+
 	return { columns: decidedColumns, hashCol: foundHashColumn }
 }
 

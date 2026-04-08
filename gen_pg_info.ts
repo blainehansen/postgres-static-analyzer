@@ -50,7 +50,7 @@ function formatTable(
 			nullableQueryColumns.push(`${name}[?]`)
 		formattedQueryColumns.push(`${actualSel} as ${name} -- ${typ} ${ref} ${desc}`)
 		const prettyRef = ref ? `\`${ref}\`` : ref
-		formattedStructColumns.push(`/// \`${typ}\` ${prettyRef} ${desc}\n\t\t\t${name}: ${ty},`)
+		formattedStructColumns.push(`/// \`${typ}\` ${prettyRef} ${desc}\n\t\t\tpub ${name}: ${ty},`)
 		formattedReflectColumns.push(`${name}: ${actualExp},`)
 
 		if (joins && joins.length)
