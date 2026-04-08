@@ -507,9 +507,10 @@ async function decideColumn(
 	}
 
 	if (typ === "float4") {
-		const sel = `${name}::text`
-		const [ty, exp] = makeStr(tableName, name, true)
-		return [undefined, { typ, ref, desc, sel, ty, exp }]
+		// const sel = `${name}::text`
+		// const [ty, exp] = makeStr(tableName, name, true)
+		const ty = "Option<ordered_float::NotNan<f32>>"
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, /*exp*/ }]
 	}
 
 	const { decision } = await ask.select({

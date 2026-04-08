@@ -543,9 +543,9 @@ pub struct PgProc {
 	/// `oid` `(references pg_language.oid)` Implementation language or call interface of this function
 	pub prolang: Str,
 	/// `float4`  Estimated execution cost (in units of cpu_operator_cost); if proretset, this is cost per row returned
-	pub procost: Option<Str>,
+	pub procost: Option<ordered_float::NotNan<f32>>,
 	/// `float4`  Estimated number of result rows (zero if not proretset)
-	pub prorows: Option<Str>,
+	pub prorows: Option<ordered_float::NotNan<f32>>,
 	/// `oid` `(references pg_type.oid)` Data type of the variadic array parameter's elements, or zero if the function does not have a variadic parameter
 	pub provariadic: Option<Qual>,
 	/// `regproc` `(references pg_proc.oid)` Planner support function for this function (see Section 36.11), or zero if none
@@ -617,8 +617,8 @@ pub async fn reflect_pg_proc(
 				pronamespace: pg_proc.pronamespace.into(),
 				proowner: pg_proc.proowner.into(),
 				prolang: pg_proc.prolang.into(),
-				procost: pg_proc.procost.map(Into::into),
-				prorows: pg_proc.prorows.map(Into::into),
+				procost: pg_proc.procost.map(|n| ordered_float::NotNan::new(n).unwrap()),
+				prorows: pg_proc.prorows.map(|n| ordered_float::NotNan::new(n).unwrap()),
 				provariadic: Qual::maybe_parse(pg_proc.provariadic),
 				prosupport: Qual::maybe_parse(pg_proc.prosupport),
 				prokind: PgProcProkind::pg_from_char(pg_proc.prokind),

@@ -98,8 +98,8 @@ select
 	pg_proc.pronamespace::regnamespace::text as pronamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this function
 	pg_get_userbyid(proowner)::text as proowner, -- oid (references pg_authid.oid) Owner of the function
 	prolang_pg_language.lanname::text as prolang, -- oid (references pg_language.oid) Implementation language or call interface of this function
-	pg_proc.procost::text as procost, -- float4  Estimated execution cost (in units of cpu_operator_cost); if proretset, this is cost per row returned
-	pg_proc.prorows::text as prorows, -- float4  Estimated number of result rows (zero if not proretset)
+	pg_proc.procost as procost, -- float4  Estimated execution cost (in units of cpu_operator_cost); if proretset, this is cost per row returned
+	pg_proc.prorows as prorows, -- float4  Estimated number of result rows (zero if not proretset)
 	case when pg_proc.provariadic = 0 then null else pg_proc.provariadic::regtype::text end as provariadic, -- oid (references pg_type.oid) Data type of the variadic array parameter's elements, or zero if the function does not have a variadic parameter
 	case when prosupport = 0 then null else prosupport::regproc::text end as prosupport, -- regproc (references pg_proc.oid) Planner support function for this function (see Section 36.11), or zero if none
 	pg_proc.prokind as prokind, -- char  f for a normal function, p for a procedure, a for an aggregate function, or w for a window function
