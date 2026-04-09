@@ -1,20 +1,20 @@
 # pg_aggregate = {}
 # Aggregate kind: n for “normal” aggregates, o for “ordered-set” aggregates, or h for “hypothetical-set” aggregates
-pg_aggregate.aggkind = { ty="PgAggregateAggkind", exp="PgAggregateAggkind::pg_from_char(pg_aggregate.aggkind)", pgEnum="'n' => Normal, 'o' => OrderedSet, 'h' => HypotheticalSet" }
+pg_aggregate.aggkind = { pgEnum="'n' => Normal, 'o' => OrderedSet, 'h' => HypotheticalSet" }
 # Whether aggfinalfn modifies the transition state value: r if it is read-only, s if the aggtransfn cannot be applied after the aggfinalfn, or w if it writes on the value
-pg_aggregate.aggfinalmodify = { ty="PgAggregateAggfinalmodify", exp="PgAggregateAggfinalmodify::pg_from_char(pg_aggregate.aggfinalmodify)", pgEnum="'r' => ReadOnly, 's' => CannotApply, 'w' => Writes" }
+pg_aggregate.aggfinalmodify = { pgEnum="'r' => ReadOnly, 's' => CannotApply, 'w' => Writes" }
 # Like aggfinalmodify, but for the aggmfinalfn
-pg_aggregate.aggmfinalmodify = { ty="PgAggregateAggmfinalmodify", exp="PgAggregateAggmfinalmodify::pg_from_char(pg_aggregate.aggmfinalmodify)", pgEnum="'r' => ReadOnly, 's' => CannotApply, 'w' => Writes" }
+pg_aggregate.aggmfinalmodify = { pgEnum="'r' => ReadOnly, 's' => CannotApply, 'w' => Writes" }
 pg_aggregate.aggtransspace = 'skip'
 pg_aggregate.aggmtransspace = 'skip'
 
 # pg_am = {}
 # t = table (including materialized views), i = index.
-pg_am.amtype = { ty="PgAmAmtype", exp="PgAmAmtype::pg_from_char(pg_am.amtype)", pgEnum="'t' => Table, 'i' => Index" }
+pg_am.amtype = { pgEnum="'t' => Table, 'i' => Index" }
 
 # pg_amop = {}
 # Operator purpose, either s for search or o for ordering
-pg_amop.amoppurpose = { ty="PgAmopAmoppurpose", exp="PgAmopAmoppurpose::pg_from_char(pg_amop.amoppurpose)", pgEnum="'s' => Search, 'o' => Ordering" }
+pg_amop.amoppurpose = { pgEnum="'s' => Search, 'o' => Ordering" }
 
 pg_amproc = {}
 
@@ -46,9 +46,9 @@ pg_auth_members = {}
 
 # pg_cast = {}
 # Indicates what contexts the cast can be invoked in. e means only as an explicit cast (using CAST or :: syntax). a means implicitly in assignment to a target column, as well as explicitly. i means implicitly in expressions, as well as the other cases.
-pg_cast.castcontext = { ty="PgCastCastcontext", exp="PgCastCastcontext::pg_from_char(pg_cast.castcontext)", pgEnum="'e' => Explicit, 'a' => ImplicitAssignment, 'i' => Implicit" }
+pg_cast.castcontext = { pgEnum="'e' => Explicit, 'a' => ImplicitAssignment, 'i' => Implicit" }
 # Indicates how the cast is performed. f means that the function specified in the castfunc field is used. i means that the input/output functions are used. b means that the types are binary-coercible, thus no conversion is required.
-pg_cast.castmethod = { ty="PgCastCastmethod", exp="PgCastCastmethod::pg_from_char(pg_cast.castmethod)", pgEnum="'f' => Castfunc, 'i' => IOFunc, 'b' => BinaryCoercible" }
+pg_cast.castmethod = { pgEnum="'f' => Castfunc, 'i' => IOFunc, 'b' => BinaryCoercible" }
 
 # pg_class = {}
 pg_class.relnamespace = { filters=["relnamespace::regnamespace != 'pg_toast'::regnamespace"] }
@@ -63,22 +63,22 @@ pg_class.relrewrite = 'skip'
 pg_class.reltoastrelid = 'skip'
 pg_class.reltuples = 'skip'
 # p = permanent table/sequence, u = unlogged table/sequence, t = temporary table/sequence
-pg_class.relpersistence = { ty="PgClassRelpersistence", exp="PgClassRelpersistence::pg_from_char(pg_class.relpersistence)", pgEnum="'p' => Permanent, 'u' => Unlogged, 't' => Temporary" }
+pg_class.relpersistence = { pgEnum="'p' => Permanent, 'u' => Unlogged, 't' => Temporary" }
 # r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table, I = partitioned index
-pg_class.relkind = { ty="PgClassRelkind", exp="PgClassRelkind::pg_from_char(pg_class.relkind)", pgEnum="'r' => Ordinary, 'i' => Index, 'S' => Sequence, 't' => Toast, 'v' => View, 'm' => MaterializedView, 'c' => CompositeType, 'f' => ForeignTable, 'p' => PartitionedTable, 'I' => PartitionedIndex" }
+pg_class.relkind = { pgEnum="'r' => Ordinary, 'i' => Index, 'S' => Sequence, 't' => Toast, 'v' => View, 'm' => MaterializedView, 'c' => CompositeType, 'f' => ForeignTable, 'p' => PartitionedTable, 'I' => PartitionedIndex" }
 # Columns used to form “replica identity” for rows: d = default (primary key, if any), n = nothing, f = all columns, i = index with indisreplident set (same as nothing if the index used has been dropped)
-pg_class.relreplident = { ty="PgClassRelreplident", exp="PgClassRelreplident::pg_from_char(pg_class.relreplident)", pgEnum="'d' => Default, 'n' => Nothing, 'f' => AllColumns, 'i' => Index " }
+pg_class.relreplident = { pgEnum="'d' => Default, 'n' => Nothing, 'f' => AllColumns, 'i' => Index " }
 
 # pg_collation = {}
 # Provider of the collation: d = database default, b = builtin, c = libc, i = icu
-pg_collation.collprovider = { ty="PgCollationCollprovider", exp="PgCollationCollprovider::pg_from_char(pg_collation.collprovider)", pgEnum="'d' => DatabaseDefault, 'b' => Builtin, 'c' => Libc, 'i' => Icu" }
+pg_collation.collprovider = { pgEnum="'d' => DatabaseDefault, 'b' => Builtin, 'c' => Libc, 'i' => Icu" }
 pg_collation.collicurules = { nullable=true }
 pg_collation.collversion = { nullable=true }
 
 # pg_constraint = {}
 pg_constraint.conbin = { sel="pg_get_expr(pg_constraint.conbin, pg_constraint.conrelid)", ty="Option<Str>", exp="pg_constraint.conbin.map(Into::into)" }
 # c = check constraint, f = foreign key constraint, n = not-null constraint (domains only), p = primary key constraint, u = unique constraint, t = constraint trigger, x = exclusion constraint
-pg_constraint.contype = { ty="PgConstraintContype", exp="PgConstraintContype::pg_from_char(pg_constraint.contype)", pgEnum="'c' => Check, 'f' => ForeignKey, 'n' => DomainNotNull, 'p' => PrimaryKey, 'u' => Unique, 't' => Trigger, 'x' => Exclusion" }
+pg_constraint.contype = { pgEnum="'c' => Check, 'f' => ForeignKey, 'n' => DomainNotNull, 'p' => PrimaryKey, 'u' => Unique, 't' => Trigger, 'x' => Exclusion" }
 # Foreign key update action code: a = no action, r = restrict, c = cascade, n = set null, d = set default
 pg_constraint.confupdtype = { sel="case when pg_constraint.confupdtype = ' ' then null else pg_constraint.confupdtype end", ty="Option<PgConstraintConfupdtype>", exp="pg_constraint.confupdtype.map(PgConstraintConfupdtype::pg_from_char)", pgEnum="'a' => NoAction, 'r' => Restrict, 'c' => Cascade, 'n' => SetNull, 'd' => SetDefault" }
 # Foreign key deletion action code: a = no action, r = restrict, c = cascade, n = set null, d = set default
@@ -92,7 +92,7 @@ pg_conversion = {}
 # pg_database = {}
 pg_database.datname = { filters=["pg_database.datname = current_database()"] }
 # Locale provider for this database: b = builtin, c = libc, i = icu
-pg_database.datlocprovider = { ty="PgDatabaseDatlocprovider", exp="PgDatabaseDatlocprovider::pg_from_char(pg_database.datlocprovider)", pgEnum="'b' => Builtin, 'c' => Libc, 'i' => Icu" }
+pg_database.datlocprovider = { pgEnum="'b' => Builtin, 'c' => Libc, 'i' => Icu" }
 pg_database.datconnlimit = { sel="case when datconnlimit < 0 then null else datconnlimit end", ty="Option<u32>", exp="pg_database.datconnlimit.map(i32::unsigned_abs)" }
 pg_database.dathasloginevt = 'skip'
 pg_database.datcollate = { nullable=true }
@@ -105,7 +105,7 @@ pg_db_role_setting = 'manual'
 
 # pg_default_acl = {}
 # Type of object this entry is for: r = relation (table, view), S = sequence, f = function, T = type, n = schema
-pg_default_acl.defaclobjtype = { ty="PgDefaultAclDefaclobjtype", exp="PgDefaultAclDefaclobjtype::pg_from_char(pg_default_acl.defaclobjtype)", pgEnum="'r' => Relation, 'S' => Sequence, 'f' => Function, 'T' => Type, 'n' => Schema" }
+pg_default_acl.defaclobjtype = { pgEnum="'r' => Relation, 'S' => Sequence, 'f' => Function, 'T' => Type, 'n' => Schema" }
 
 # pg_description ignored and replaced with joined description field on all applicable structs
 
@@ -113,7 +113,7 @@ pg_enum = 'manual'
 
 # pg_event_trigger = {}
 # Controls in which session_replication_role modes the event trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always.
-pg_event_trigger.evtenabled = { ty="PgEventTriggerEvtenabled", exp="PgEventTriggerEvtenabled::pg_from_char(pg_event_trigger.evtenabled)", pgEnum="'O' => OriginLocal, 'D' => Disabled, 'R' => Replica, 'A' => Always" }
+pg_event_trigger.evtenabled = { pgEnum="'O' => OriginLocal, 'D' => Disabled, 'R' => Replica, 'A' => Always" }
 
 pg_extension = {}
 
@@ -151,7 +151,7 @@ pg_opclass = {}
 
 # pg_operator = {}
 # b = infix operator (“both”), or l = prefix operator (“left”)
-pg_operator.oprkind = { ty="PgOperatorOprkind", exp="PgOperatorOprkind::pg_from_char(pg_operator.oprkind)", pgEnum="'b' => InfixOperatorBoth, 'l' => PrefixOperatorLeft" }
+pg_operator.oprkind = { pgEnum="'b' => InfixOperatorBoth, 'l' => PrefixOperatorLeft" }
 
 pg_opfamily = {}
 
@@ -162,14 +162,14 @@ pg_partitioned_table.partclass = { sel="pg_temp.format_pg_opclass_oidvector(pg_p
 pg_partitioned_table.partcollation = { sel="pg_temp.format_pg_collation_oidvector(pg_partitioned_table.partcollation)", ty="Vec<Option<Qual>>", exp="pg_partitioned_table.partcollation.map(Qual::maybe_parse).collect()" }
 pg_partitioned_table.partexprs = { sel="pg_get_expr(pg_partitioned_table.partexprs, pg_partitioned_table.partrelid)", ty="Option<Str>", exp="pg_partitioned_table.partexprs.map(Into::into)" }
 # Partitioning strategy; h = hash partitioned table, l = list partitioned table, r = range partitioned table
-pg_partitioned_table.partstrat = { ty="PgPartitionedTablePartstrat", exp="PgPartitionedTablePartstrat::pg_from_char(pg_partitioned_table.partstrat)", pgEnum="'h' => HashPartitionedTable, 'l' => ListPartitionedTable, 'r' => RangePartitionedTable" }
+pg_partitioned_table.partstrat = { pgEnum="'h' => HashPartitionedTable, 'l' => ListPartitionedTable, 'r' => RangePartitionedTable" }
 
 
 # pg_policy = {}
 pg_policy.polqual = { sel="pg_get_expr(pg_policy.polqual, pg_policy.polrelid)", ty="Option<Str>", exp="pg_policy.polqual.map(Into::into)" }
 pg_policy.polwithcheck = { sel="pg_get_expr(pg_policy.polwithcheck, pg_policy.polrelid)", ty="Option<Str>", exp="pg_policy.polwithcheck.map(Into::into)" }
 # The command type to which the policy is applied: r for SELECT, a for INSERT, w for UPDATE, d for DELETE, or * for all
-pg_policy.polcmd = { ty="PgPolicyPolcmd", exp="PgPolicyPolcmd::pg_from_char(pg_policy.polcmd)", pgEnum="'r' => Select, 'a' => Insert, 'w' => Update, 'd' => Delete, '*' => All" }
+pg_policy.polcmd = { pgEnum="'r' => Select, 'a' => Insert, 'w' => Update, 'd' => Delete, '*' => All" }
 
 
 pg_proc = 'manual'
@@ -220,9 +220,9 @@ pg_subscription.subname = { filters=["pg_subscription.subdbid = (select oid from
 pg_subscription.subskiplsn = 'skip'
 pg_subscription.suborigin = { nullable=true }
 # Controls how to handle the streaming of in-progress transactions: f = disallow streaming of in-progress transactions, t = spill the changes of in-progress transactions to disk and apply at once after the transaction is committed on the publisher and received by the subscriber, p = apply changes directly using a parallel apply worker if available (same as t if no worker is available)
-pg_subscription.substream = { ty="PgSubscriptionSubstream", exp="PgSubscriptionSubstream::pg_from_char(pg_subscription.substream)", pgEnum="'f' => DisallowStreamingInProgress, 't' => SpillApplyAfterCommitted, 'p' => ApplyDirectlyParallel" }
+pg_subscription.substream = { pgEnum="'f' => DisallowStreamingInProgress, 't' => SpillApplyAfterCommitted, 'p' => ApplyDirectlyParallel" }
 # State codes for two-phase mode: d = disabled, p = pending enablement, e = enabled
-pg_subscription.subtwophasestate = { ty="PgSubscriptionSubtwophasestate", exp="PgSubscriptionSubtwophasestate::pg_from_char(pg_subscription.subtwophasestate)", pgEnum="'d' => Disabled, 'p' => PendingEnablement, 'e' => Enabled" }
+pg_subscription.subtwophasestate = { pgEnum="'d' => Disabled, 'p' => PendingEnablement, 'e' => Enabled" }
 
 pg_transform = {}
 
@@ -231,7 +231,7 @@ pg_trigger.tgparentid = { nullable=true }
 pg_trigger.tgtype = { ty="i16" }
 pg_trigger.tgqual = { sel="pg_get_expr(pg_trigger.tgqual, pg_trigger.tgrelid)", ty="Option<Str>", exp="pg_trigger.tgqual.map(Into::into)" }
 # Controls in which session_replication_role modes the trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always.
-pg_trigger.tgenabled = { ty="PgTriggerTgenabled", exp="PgTriggerTgenabled::pg_from_char(pg_trigger.tgenabled)", pgEnum="'O' => OriginAndLocalMode, 'D' => Disabled, 'R' => ReplicaMode, 'A' => Always" }
+pg_trigger.tgenabled = { pgEnum="'O' => OriginAndLocalMode, 'D' => Disabled, 'R' => ReplicaMode, 'A' => Always" }
 
 pg_ts_config = {}
 
@@ -249,15 +249,15 @@ pg_ts_template = {}
 pg_type.typlen = { ty="i16" }
 pg_type.typdefaultbin = { sel="pg_get_expr(typdefaultbin, 0)", ty="Option<Str>", exp="pg_type.typdefaultbin.map(Into::into)" }
 # typtype is b for a base type, c for a composite type (e.g., a table's row type), d for a domain, e for an enum type, p for a pseudo-type, r for a range type, or m for a multirange type. See also typrelid and typbasetype.
-pg_type.typtype = { ty="PgTypeTyptype", exp="PgTypeTyptype::pg_from_char(pg_type.typtype)", pgEnum="'b' => Base, 'c' => Composite, 'd' => Domain, 'e' => Enum, 'p' => Pseudo, 'r' => Range, 'm' => Multirange" }
+pg_type.typtype = { pgEnum="'b' => Base, 'c' => Composite, 'd' => Domain, 'e' => Enum, 'p' => Pseudo, 'r' => Range, 'm' => Multirange" }
 # typcategory is an arbitrary classification of data types that is used by the parser to determine which implicit casts should be “preferred”. See Table 51.65.
 pg_type.typcategory = 'skip'
 # Character that separates two values of this type when parsing array input. Note that the delimiter is associated with the array element data type, not the array data type.
 pg_type.typdelim = { ty="i8" }
 # typalign is the alignment required when storing a value of this type. It applies to storage on disk as well as most representations of the value inside PostgreSQL. When multiple values are stored consecutively, such as in the representation of a complete row on disk, padding is inserted before a datum of this type so that it begins on the specified boundary. The alignment reference is the beginning of the first datum in the sequence. Possible values are: c = char alignment, i.e., no alignment needed. s = short alignment (2 bytes on most machines). i = int alignment (4 bytes on most machines). d = double alignment (8 bytes on many machines, but by no means all).
-pg_type.typalign = { ty="PgTypeTypalign", exp="PgTypeTypalign::pg_from_char(pg_type.typalign)", pgEnum="'c' => Char, 's' => Short, 'i' => Int, 'd' => Double" }
+pg_type.typalign = { pgEnum="'c' => Char, 's' => Short, 'i' => Int, 'd' => Double" }
 # typstorage tells for varlena types (those with typlen = -1) if the type is prepared for toasting and what the default strategy for attributes of this type should be. Possible values are: p (plain): Values must always be stored plain (non-varlena types always use this value). e (external): Values can be stored in a secondary “TOAST” relation (if relation has one, see pg_class.reltoastrelid). m (main): Values can be compressed and stored inline. x (extended): Values can be compressed and/or moved to a secondary relation. x is the usual choice for toast-able types. Note that m values can also be moved out to secondary storage, but only as a last resort (e and x values are moved first).
-pg_type.typstorage = { ty="PgTypeTypstorage", exp="PgTypeTypstorage::pg_from_char(pg_type.typstorage)", pgEnum="'p' => Plain, 'e' => External, 'm' => Main, 'x' => Extended" }
+pg_type.typstorage = { pgEnum="'p' => Plain, 'e' => External, 'm' => Main, 'x' => Extended" }
 
 # pg_user_mappings = {}
 pg_user_mappings.umid = 'skip'

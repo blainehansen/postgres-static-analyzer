@@ -403,18 +403,30 @@ async function decideColumn(
 	}
 
 	if (typ === "char") {
+		const pgEnum = override?.pgEnum
+		if (!pgEnum) {
+			const t = `\n# ${desc}\n${tableName}.${name} = { pgEnum="TODO" }`
+			await Deno.writeTextFile("./gen_pg_info_decisions.pre.toml", t, { append: true })
+			console.log(`wrote a TODO pgEnum for ${tableName}.${name}`)
+			Deno.exit(1)
+		}
+
 		const structName = `${toPascalCase(tableName)}${toPascalCase(name)}`
 		const ty = structName
 		const exp = `${structName}::pg_from_char(${tableName}.${name})`
-		const pgEnum = 'TODO'
-		const t = `\n# ${desc}\n${tableName}.${name} = { ty="${ty}", exp="${exp}", pgEnum="${pgEnum}" }`
-		await Deno.writeTextFile("./gen_pg_info_decisions.pre.toml", t, { append: true })
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, pgEnum }]
 	}
 	if (typ === "char[]") {
+		const pgEnum = override?.pgEnum
+		if (!pgEnum) {
+			const t = `\n# ${desc}\n${tableName}.${name} = { pgEnum="TODO" }`
+			await Deno.writeTextFile("./gen_pg_info_decisions.pre.toml", t, { append: true })
+			console.log(`wrote a TODO pgEnum for ${tableName}.${name}`)
+			Deno.exit(1)
+		}
+
 		const nullable = ovNullable ?? /null/i.test(desc)
 		const structName = `${toPascalCase(tableName)}${toPascalCase(name)}`
-
 		const ty = nullable
 			? `Option<Vec<${structName}>>`
 			: `Vec<${structName}>`
@@ -422,9 +434,6 @@ async function decideColumn(
 		const exp = nullable
 			? `${tableName}.${name}.map(|items| items.map(${structName}::pg_from_char).collect())`
 			: `${tableName}.${name}.map(${structName}::pg_from_char).collect()`
-		const pgEnum = 'TODO'
-		const t = `\n# ${desc}\n${tableName}.${name} = { ty="${ty}", exp="${exp}", pgEnum="${pgEnum}" }`
-		await Deno.writeTextFile("./gen_pg_info_decisions.pre.toml", t, { append: true })
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, pgEnum }]
 	}
 
@@ -436,7 +445,7 @@ async function decideColumn(
 		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp, filters: override?.filters }]
 	}
-	if (typ === "text[]" && desc.includes("keyword=value") || desc.includes("configuration variables")) {
+	if (typ === "text[]" && (desc.includes("keyword=value") || desc.includes("configuration variables"))) {
 		const ty = "Option<Vec<Str>>"
 		const exp = `${tableName}.${name}.map(|items| items.map(Into::into).collect())`
 		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
@@ -507,10 +516,9 @@ async function decideColumn(
 	}
 
 	if (typ === "float4") {
-		// const sel = `${name}::text`
-		// const [ty, exp] = makeStr(tableName, name, true)
 		const ty = "Option<ordered_float::NotNan<f32>>"
-		return [undefined, { typ, ref, desc, /*sel,*/ ty, /*exp*/ }]
+		const exp = `${tableName}.${name}.map(|n| ordered_float::NotNan::new(n).unwrap())`
+		return [undefined, { typ, ref, desc, /*sel,*/ ty, exp }]
 	}
 
 	const { decision } = await ask.select({
@@ -530,7 +538,7 @@ async function decideColumn(
 		return [undefined, { typ, ref, desc, skip: true }]
 	}
 	if (decision === "handle") {
-		const t = `# ${typ} ${ref} ${desc}\n${tableName}.columns.${name} = { sel="", ty="", expr="", pgEnum="", joins=[], filters=[], zero=false, nullable=false }`
+		const t = `# ${typ} ${ref} ${desc}\n${tableName}.columns.${name} = { sel="", ty="", expr="", joins=[], filters=[], zero=false, nullable=false }`
 		await Deno.writeTextFile("./gen_pg_info_decisions.pre.toml", t, { append: true })
 		Deno.exit(0)
 	}
@@ -538,29 +546,6 @@ async function decideColumn(
 	Deno.exit(1)
 }
 
-// const toml = resolved.map(({ fields, tableName }) => {
-// 	return `[${tableName}]\n` + fields.map(({ name, typ, ref, desc }) => `[${tableName}.${name}]\n# ${typ} ${ref} ${desc}`).join('\n')
-// }).join('\n\n')
-
-
-
-// | Classification | Conceptual Meaning   | String Patterns / Keywords          | Example from your list                        |
-// | -------------- | -------------------- | ----------------------------------- | --------------------------------------------- |
-// | Cast to Null   | Absence of relation  | zero if none, else zero, zero if no | "Final function (zero if none)"               |
-// | Cast to Null   | Inapplicable context | zero for a, zero if not a           | "zero for a dropped column"                   |
-// | Cast to Null   | Fallback to default  | zero to use, or zero if             | "zero to use a default estimate"              |
-// | Cast to Null   | Unknown state        | zero value means.*unknown           | "zero value means the number... is unknown"   |
-// | Keep as Zero   | Quantity or index    | Number of, counting from            | "Number of dimensions"                        |
-// | Keep as Zero   | Explicit contrast    | zero.*null value                    | "A zero value indicates... A null value says" |
-// | Keep as Zero   | Byte characters      | zero byte                           | "If a zero byte ('')"                         |
-
-// function makeQual(tableName: string, name: string, nullable: boolean): [string, string, string, string] {
-// 	const sel = `${joinNamespaceName}.nspname::text as ${name}_schema_name, ${joinTableName}.relname::text as ${name}_table_name`
-// 	const ty = nullable ? `Option<Qual>` : `Qual`
-// 	const exp = `make_ref(${tableName}.${name})`
-
-// 	return [sel, ty, exp, '']
-// }
 
 function makeStr(tableName: string, name: string, nullable: boolean): [string, string] {
 	return nullable
