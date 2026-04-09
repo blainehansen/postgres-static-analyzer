@@ -1,0 +1,22 @@
+[package]
+name = "postgres-static-analyzer-reflect"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+queries_crate = { path = "./queries_crate" }
+postgres-static-analyzer-catalog-structs = { path = "../catalog_structs" }
+tokio = { workspace = true, features = ["full", "rt"] }
+itertools = { workspace = true }
+futures = { workspace = true }
+
+[dev-dependencies]
+anyhow = { workspace = true }
+insta = { workspace = true }
+ron = { workspace = true }
+temp_container_utils = { path = "../temp_container_utils" }
+
+[profile.dev.package.insta]
+opt-level = 3
+[profile.dev.package.similar]
+opt-level = 3

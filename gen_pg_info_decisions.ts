@@ -62,7 +62,7 @@ async function decideTable({ tableName, columns }: RawTable): Promise<TableDecis
 		if (decision === "manual") {
 			const { blankQuery, blankReflect } = generateBlanks(tableName, columns)
 			await Promise.all([
-				Deno.writeTextFile("./reflect_queries/reflect.sql", blankQuery, { append: true }),
+				Deno.writeTextFile("./queries/reflect.sql", blankQuery, { append: true }),
 				Deno.writeTextFile("./src/reflect.rs", blankReflect, { append: true }),
 			])
 			Deno.exit(0)
@@ -596,7 +596,7 @@ function generateBlanks(tableName: string, columns: RawTable['columns']) {
 		pub async fn reflect_${tableName}(
 			client: &PgClient
 		) -> Result<TODOSetVec<${structName}>, postgres::Error> {
-			let ${tableName}_coll = reflect_crate::queries::reflect_gen::reflect_${tableName}().bind(client)
+			let ${tableName}_coll = queries_crate::queries::reflect_gen::reflect_${tableName}().bind(client)
 				.map(|${tableName}| {
 					${structName} {
 						${formattedReflectColumns.join("\n\t\t\t\t\t\t")}

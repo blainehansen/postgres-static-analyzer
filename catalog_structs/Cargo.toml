@@ -1,0 +1,14 @@
+[package]
+name = "postgres-static-analyzer-catalog-structs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+hashbrown = { workspace = true }
+chrono = { workspace = true, default-features = false, features = ["alloc", "std", "alloc", "clock", "now", "serde"] }
+# thiserror = { workspace = true }
+smol_str = { workspace = true }
+nom = { workspace = true }
+paste = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+ordered-float = { workspace = true }

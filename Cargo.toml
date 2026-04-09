@@ -1,8 +1,9 @@
 [workspace]
+resolver = "3"
 members = [
-	".",
 	"temp_container_utils",
-	"reflect_crate",
+	"catalog_structs",
+	"reflect",
 ]
 
 [workspace.dependencies]
@@ -24,34 +25,3 @@ insta = { version = "1.46", default-features = false, features = ["colors", "ron
 serde = { version = "1", features = ["derive"] }
 ron = "0.8"
 ordered-float = { version = "5.3.0", default-features = false, features = ["serde"] }
-
-[package]
-name = "postgres-static-analyzer"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-reflect_crate = { path = "./reflect_crate" }
-hashbrown = { workspace = true }
-tokio = { workspace = true, features = ["full", "rt"] }
-chrono = { workspace = true, default-features = false, features = ["alloc", "std", "alloc", "clock", "now", "serde"] }
-# thiserror = { workspace = true }
-pg_query = { workspace = true }
-smol_str = { workspace = true }
-itertools = { workspace = true }
-nom = { workspace = true }
-paste = { workspace = true }
-futures = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-ordered-float = { workspace = true }
-
-[dev-dependencies]
-anyhow = { workspace = true }
-insta = { workspace = true }
-ron = { workspace = true }
-temp_container_utils = { path = "./temp_container_utils" }
-
-[profile.dev.package.insta]
-opt-level = 3
-[profile.dev.package.similar]
-opt-level = 3

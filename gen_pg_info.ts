@@ -9,12 +9,17 @@ const decisions = await Deno.readTextFile("./gen_pg_info_decisions.toml")
 
 const formatted = Object.entries(decisions).map(([tableName, tableDecision]) => formatTable(tableName, tableDecision))
 
+const structText = 'use super::*;\n\n'
+	+ formatted.map(({ struct }) => `${struct}\n\n`).join('\n')
+
 const queryText = formatted.map(({ query }) => `${query}\n\n`).join('\n')
-const reflectText = 'use super::*;\nuse futures::TryStreamExt;\nuse crate::aclitem::*;\n\n' + formatted.map(({ reflect }) => `${reflect}\n\n`).join('\n')
+const reflectText = 'use super::*;\nuse futures::TryStreamExt;\nuse crate::aclitem::*;\n\n'
+	+ formatted.map(({ reflect }) => `${reflect}\n\n`).join('\n')
 
 await Promise.all([
-	Deno.writeTextFile("./reflect_queries/reflect_gen.sql", queryText),
-	Deno.writeTextFile("./src/reflect_gen.rs", reflectText),
+	Deno.writeTextFile("./catalog_structs/src/struct_gen.rs", structText),
+	Deno.writeTextFile("./reflect/queries/query_gen.sql", queryText),
+	Deno.writeTextFile("./reflect/src/reflect_gen.rs", reflectText),
 ])
 
 
@@ -89,16 +94,19 @@ function formatTable(
 	const collection = hashCol ? 'Set' : 'Vec'
 	const returnPortion = tableName === "pg_database" ? "PgDatabase" : `${collection}<${structName}>`
 	const collectPortion = tableName === "pg_database" ? ".one()" : ".iter().await?.try_collect()"
-	const reflect = dedent(`
+
+	const struct = dedent(`
 		#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 		pub struct ${structName} {
 			${formattedStructColumns.join("\n\t\t\t")}
 		}${implHashPortion}${pgEnumsPortion}
+	`)
 
+	const reflect = dedent(`
 		pub async fn reflect_${tableName}(
 			client: &PgClient
 		) -> Result<${returnPortion}, postgres::Error> {
-			let ${tableName}_coll = reflect_crate::queries::reflect_gen::reflect_${tableName}().bind(client)
+			let ${tableName}_coll = queries_crate::queries::query_gen::reflect_${tableName}().bind(client)
 				.map(|${tableName}| {
 					${structName} {
 						${formattedReflectColumns.join("\n\t\t\t\t\t\t")}
@@ -111,5 +119,5 @@ function formatTable(
 		}
 	`)
 
-	return { query, reflect }
+	return { query, struct, reflect }
 }
