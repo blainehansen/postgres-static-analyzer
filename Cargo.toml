@@ -32,23 +32,23 @@ edition = "2024"
 
 [dependencies]
 reflect_crate = { path = "./reflect_crate" }
-hashbrown.workspace = true
+hashbrown = { workspace = true }
 tokio = { workspace = true, features = ["full", "rt"] }
 chrono = { workspace = true, default-features = false, features = ["alloc", "std", "alloc", "clock", "now", "serde"] }
-# thiserror.workspace = true
-pg_query.workspace = true
-smol_str.workspace = true
-itertools.workspace = true
-nom.workspace = true
-paste.workspace = true
-futures.workspace = true
+# thiserror = { workspace = true }
+pg_query = { workspace = true }
+smol_str = { workspace = true }
+itertools = { workspace = true }
+nom = { workspace = true }
+paste = { workspace = true }
+futures = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-ordered-float.workspace = true
+ordered-float = { workspace = true }
 
 [dev-dependencies]
-anyhow.workspace = true
-insta.workspace = true
-ron.workspace = true
+anyhow = { workspace = true }
+insta = { workspace = true }
+ron = { workspace = true }
 temp_container_utils = { path = "./temp_container_utils" }
 
 [profile.dev.package.insta]
