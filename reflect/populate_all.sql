@@ -24,9 +24,9 @@ REVOKE ALL ON FUNCTION get_raw_page(text, bigint) FROM PUBLIC; -- uses default s
 
 CREATE EXTENSION IF NOT EXISTS postgres_fdw;         -- needed in section 10
 
-CREATE SCHEMA catalog_schema AUTHORIZATION catalog_admin; -- pg_namespace
+CREATE SCHEMA my_schema AUTHORIZATION catalog_admin; -- pg_namespace
 
-SET search_path TO catalog_schema, public;
+SET search_path TO my_schema, public;
 
 -- ====================================================================
 -- 3. TYPES, ENUMS, RANGES, COLLATIONS
@@ -350,7 +350,7 @@ CREATE POLICY admin_all_policy ON parent_table                      -- pg_policy
 CREATE PUBLICATION test_pub FOR TABLE parent_table where (score > 5);                 -- pg_publication, pg_publication_rel
 
 CREATE PUBLICATION test_schema_pub                                  -- pg_publication_namespace
-	FOR TABLES IN SCHEMA catalog_schema;
+	FOR TABLES IN SCHEMA my_schema;
 
 CREATE SUBSCRIPTION test_sub                                        -- pg_subscription
 	CONNECTION 'host=localhost dbname=other_db'
@@ -364,14 +364,14 @@ SELECT pg_replication_origin_create('custom_origin');               -- pg_replic
 -- Populates: pg_default_acl, pg_conversion, pg_description, pg_depend
 -- ====================================================================
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA catalog_schema                   -- pg_default_acl
+ALTER DEFAULT PRIVILEGES IN SCHEMA my_schema                   -- pg_default_acl
 	GRANT SELECT ON TABLES TO catalog_user;
 
 CREATE CONVERSION custom_conv FOR 'UTF8' TO 'LATIN1'               -- pg_conversion
 	FROM utf8_to_iso8859_1;
 
 COMMENT ON DATABASE tempdb IS 'COMMENT ON DATABASE tempdb';
-COMMENT ON SCHEMA catalog_schema IS 'COMMENT ON SCHEMA catalog_schema';
+COMMENT ON SCHEMA my_schema IS 'COMMENT ON SCHEMA my_schema';
 COMMENT ON TABLE parent_table IS 'COMMENT ON TABLE parent_table';
 COMMENT ON COLUMN parent_table.status IS 'COMMENT ON COLUMN parent_table.status';
 COMMENT ON COLUMN parent_table.active_period IS 'COMMENT ON COLUMN parent_table.active_period';

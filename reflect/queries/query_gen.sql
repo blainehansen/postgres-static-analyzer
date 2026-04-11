@@ -1,16 +1,16 @@
 --! reflect_pg_aggregate : (aggfinalfn?, aggcombinefn?, aggserialfn?, aggdeserialfn?, aggmtransfn?, aggminvtransfn?, aggmfinalfn?, aggsortop?, aggmtranstype?, agginitval?, aggminitval?)
 select
-	aggfnoid::regproc::text as aggfnoid, -- regproc (references pg_proc.oid) pg_proc OID of the aggregate function
+	aggfnoid::regprocedure::text as aggfnoid, -- regproc (references pg_proc.oid) pg_proc OID of the aggregate function
 	pg_aggregate.aggkind as aggkind, -- char  Aggregate kind: n for “normal” aggregates, o for “ordered-set” aggregates, or h for “hypothetical-set” aggregates
 	pg_aggregate.aggnumdirectargs as aggnumdirectargs, -- int2  Number of direct (non-aggregated) arguments of an ordered-set or hypothetical-set aggregate, counting a variadic array as one argument. If equal to pronargs, the aggregate must be variadic and the variadic array describes the aggregated arguments as well as the final direct arguments. Always zero for normal aggregates.
-	aggtransfn::regproc::text as aggtransfn, -- regproc (references pg_proc.oid) Transition function
-	case when aggfinalfn = 0 then null else aggfinalfn::regproc::text end as aggfinalfn, -- regproc (references pg_proc.oid) Final function (zero if none)
-	case when aggcombinefn = 0 then null else aggcombinefn::regproc::text end as aggcombinefn, -- regproc (references pg_proc.oid) Combine function (zero if none)
-	case when aggserialfn = 0 then null else aggserialfn::regproc::text end as aggserialfn, -- regproc (references pg_proc.oid) Serialization function (zero if none)
-	case when aggdeserialfn = 0 then null else aggdeserialfn::regproc::text end as aggdeserialfn, -- regproc (references pg_proc.oid) Deserialization function (zero if none)
-	case when aggmtransfn = 0 then null else aggmtransfn::regproc::text end as aggmtransfn, -- regproc (references pg_proc.oid) Forward transition function for moving-aggregate mode (zero if none)
-	case when aggminvtransfn = 0 then null else aggminvtransfn::regproc::text end as aggminvtransfn, -- regproc (references pg_proc.oid) Inverse transition function for moving-aggregate mode (zero if none)
-	case when aggmfinalfn = 0 then null else aggmfinalfn::regproc::text end as aggmfinalfn, -- regproc (references pg_proc.oid) Final function for moving-aggregate mode (zero if none)
+	aggtransfn::regprocedure::text as aggtransfn, -- regproc (references pg_proc.oid) Transition function
+	case when aggfinalfn = 0 then null else aggfinalfn::regprocedure::text end as aggfinalfn, -- regproc (references pg_proc.oid) Final function (zero if none)
+	case when aggcombinefn = 0 then null else aggcombinefn::regprocedure::text end as aggcombinefn, -- regproc (references pg_proc.oid) Combine function (zero if none)
+	case when aggserialfn = 0 then null else aggserialfn::regprocedure::text end as aggserialfn, -- regproc (references pg_proc.oid) Serialization function (zero if none)
+	case when aggdeserialfn = 0 then null else aggdeserialfn::regprocedure::text end as aggdeserialfn, -- regproc (references pg_proc.oid) Deserialization function (zero if none)
+	case when aggmtransfn = 0 then null else aggmtransfn::regprocedure::text end as aggmtransfn, -- regproc (references pg_proc.oid) Forward transition function for moving-aggregate mode (zero if none)
+	case when aggminvtransfn = 0 then null else aggminvtransfn::regprocedure::text end as aggminvtransfn, -- regproc (references pg_proc.oid) Inverse transition function for moving-aggregate mode (zero if none)
+	case when aggmfinalfn = 0 then null else aggmfinalfn::regprocedure::text end as aggmfinalfn, -- regproc (references pg_proc.oid) Final function for moving-aggregate mode (zero if none)
 	pg_aggregate.aggfinalextra as aggfinalextra, -- bool  True to pass extra dummy arguments to aggfinalfn
 	pg_aggregate.aggmfinalextra as aggmfinalextra, -- bool  True to pass extra dummy arguments to aggmfinalfn
 	pg_aggregate.aggfinalmodify as aggfinalmodify, -- char  Whether aggfinalfn modifies the transition state value: r if it is read-only, s if the aggtransfn cannot be applied after the aggfinalfn, or w if it writes on the value
@@ -31,7 +31,7 @@ from
 select
 	-- oid oid  Row identifier
 	pg_am.amname::text as amname, -- name  Name of the access method
-	amhandler::regproc::text as amhandler, -- regproc (references pg_proc.oid) OID of a handler function that is responsible for supplying information about the access method
+	amhandler::regprocedure::text as amhandler, -- regproc (references pg_proc.oid) OID of a handler function that is responsible for supplying information about the access method
 	pg_am.amtype as amtype, -- char  t = table (including materialized views), i = index.
 	pg_description.description as description -- text  The comment from pg_description
 from
@@ -43,14 +43,14 @@ from
 --! reflect_pg_amop : (amopsortfamily?)
 select
 	-- oid oid  Row identifier
-	quote_ident(amopfamily_pg_namespace.nspname) || '.' || quote_ident(amopfamily_pg_opfamily.opfname) as amopfamily, -- oid (references pg_opfamily.oid) The operator family this entry is for
+	pg_temp.quote_with_namespace(amopfamily_pg_namespace.nspname, amopfamily_pg_opfamily.opfname) as amopfamily, -- oid (references pg_opfamily.oid) The operator family this entry is for
 	pg_amop.amoplefttype::regtype::text as amoplefttype, -- oid (references pg_type.oid) Left-hand input data type of operator
 	pg_amop.amoprighttype::regtype::text as amoprighttype, -- oid (references pg_type.oid) Right-hand input data type of operator
 	pg_amop.amopstrategy as amopstrategy, -- int2  Operator strategy number
 	pg_amop.amoppurpose as amoppurpose, -- char  Operator purpose, either s for search or o for ordering
 	pg_amop.amopopr::regoperator::text as amopopr, -- oid (references pg_operator.oid) OID of the operator
 	amopmethod_pg_am.amname::text as amopmethod, -- oid (references pg_am.oid) Index access method operator family is for
-	quote_ident(amopsortfamily_pg_namespace.nspname) || '.' || quote_ident(amopsortfamily_pg_opfamily.opfname) as amopsortfamily -- oid (references pg_opfamily.oid) The B-tree operator family this entry sorts according to, if an ordering operator; zero if a search operator
+	pg_temp.quote_with_namespace(amopsortfamily_pg_namespace.nspname, amopsortfamily_pg_opfamily.opfname) as amopsortfamily -- oid (references pg_opfamily.oid) The B-tree operator family this entry sorts according to, if an ordering operator; zero if a search operator
 from
 	pg_amop
 	join pg_opfamily as amopfamily_pg_opfamily on pg_amop.amopfamily = amopfamily_pg_opfamily.oid
@@ -64,11 +64,11 @@ from
 --! reflect_pg_amproc : ()
 select
 	-- oid oid  Row identifier
-	quote_ident(amprocfamily_pg_namespace.nspname) || '.' || quote_ident(amprocfamily_pg_opfamily.opfname) as amprocfamily, -- oid (references pg_opfamily.oid) The operator family this entry is for
+	pg_temp.quote_with_namespace(amprocfamily_pg_namespace.nspname, amprocfamily_pg_opfamily.opfname) as amprocfamily, -- oid (references pg_opfamily.oid) The operator family this entry is for
 	pg_amproc.amproclefttype::regtype::text as amproclefttype, -- oid (references pg_type.oid) Left-hand input data type of associated operator
 	pg_amproc.amprocrighttype::regtype::text as amprocrighttype, -- oid (references pg_type.oid) Right-hand input data type of associated operator
 	pg_amproc.amprocnum as amprocnum, -- int2  Support function number
-	amproc::regproc::text as amproc -- regproc (references pg_proc.oid) OID of the function
+	amproc::regprocedure::text as amproc -- regproc (references pg_proc.oid) OID of the function
 from
 	pg_amproc
 	join pg_opfamily as amprocfamily_pg_opfamily on pg_amproc.amprocfamily = amprocfamily_pg_opfamily.oid
@@ -113,14 +113,14 @@ select
 	pg_attribute.attinhcount as attinhcount, -- int2  The number of direct ancestors this column has. A column with a nonzero number of ancestors cannot be dropped nor renamed.
 	case when pg_attribute.attcollation = 0 then null else pg_attribute.attcollation::regcollation::text end as attcollation, -- oid (references pg_collation.oid) The defined collation of the column, or zero if the column is not of a collatable data type
 	pg_attribute.attstattarget as attstattarget, -- int2  attstattarget controls the level of detail of statistics accumulated for this column by ANALYZE. A zero value indicates that no statistics should be collected. A null value says to use the system default statistics target. The exact meaning of positive values is data type-dependent. For scalar data types, attstattarget is both the target number of “most common values” to collect, and the target number of histogram bins to create.
-	attacl::text[] as attacl, -- aclitem[]  Column-level access privileges, if any have been granted specifically on this column
+	pg_temp.format_tablecolumn_aclitems(pg_attribute.attacl) as attacl, -- aclitem[]  Column-level access privileges, if any have been granted specifically on this column
 	pg_attribute.attoptions as attoptions, -- text[]  Attribute-level options, as “keyword=value” strings
 	pg_attribute.attfdwoptions as attfdwoptions, -- text[]  Attribute-level foreign data wrapper options, as “keyword=value” strings
 	-- attmissingval anyarray  This column has a one element array containing the value used when the column is entirely missing from the row, as happens when the column is added with a non-volatile DEFAULT value after the row is created. The value is only used when atthasmissing is true. If there is no value the column is null.
 	pg_description.description as description, -- text  The comment from pg_description
 	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
 	pg_seclabel.provider as seclabel_provider, -- text  The provider from pg_seclabel
-	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_temp.format_tablecolumn_aclitems(pg_init_privs.initprivs) as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
 	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_attribute
@@ -220,13 +220,13 @@ select
 	-- relrewrite oid (references pg_class.oid) For new relations being written during a DDL operation that requires a table rewrite, this contains the OID of the original relation; otherwise zero. That state is only visible internally; this field should never contain anything other than zero for a user-visible relation.
 	-- relfrozenxid xid  All transaction IDs before this one have been replaced with a permanent (“frozen”) transaction ID in this table. This is used to track whether the table needs to be vacuumed in order to prevent transaction ID wraparound or to allow pg_xact to be shrunk. Zero (InvalidTransactionId) if the relation is not a table.
 	-- relminmxid xid  All multixact IDs before this one have been replaced by a transaction ID in this table. This is used to track whether the table needs to be vacuumed in order to prevent multixact ID wraparound or to allow pg_multixact to be shrunk. Zero (InvalidMultiXactId) if the relation is not a table.
-	relacl::text[] as relacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_temp.format_table_aclitems(pg_class.relacl) as relacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_class.reloptions as reloptions, -- text[]  Access-method-specific options, as “keyword=value” strings
 	pg_get_expr(relpartbound, pg_class.oid) as relpartbound, -- pg_node_tree  If table is a partition (see relispartition), internal representation of the partition bound
 	pg_description.description as description, -- text  The comment from pg_description
 	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
 	pg_seclabel.provider as seclabel_provider, -- text  The provider from pg_seclabel
-	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_temp.format_table_aclitems(pg_init_privs.initprivs) as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
 	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_class
@@ -272,7 +272,7 @@ select
 	case when pg_constraint.conrelid = 0 then null else pg_constraint.conrelid::regclass::text end as conrelid, -- oid (references pg_class.oid) The table this constraint is on; zero if not a table constraint
 	case when pg_constraint.contypid = 0 then null else pg_constraint.contypid::regtype::text end as contypid, -- oid (references pg_type.oid) The domain this constraint is on; zero if not a domain constraint
 	case when pg_constraint.conindid = 0 then null else pg_constraint.conindid::regclass::text end as conindid, -- oid (references pg_class.oid) The index supporting this constraint, if it's a unique, primary key, foreign key, or exclusion constraint; else zero
-	quote_ident(conparentid_pg_namespace.nspname) || '.' || quote_ident(conparentid_pg_constraint.conname) as conparentid, -- oid (references pg_constraint.oid) The corresponding constraint of the parent partitioned table, if this is a constraint on a partition; else zero
+	pg_temp.quote_with_namespace(conparentid_pg_namespace.nspname, conparentid_pg_constraint.conname) as conparentid, -- oid (references pg_constraint.oid) The corresponding constraint of the parent partitioned table, if this is a constraint on a partition; else zero
 	case when pg_constraint.confrelid = 0 then null else pg_constraint.confrelid::regclass::text end as confrelid, -- oid (references pg_class.oid) If a foreign key, the referenced table; else zero
 	case when pg_constraint.confupdtype = ' ' then null else pg_constraint.confupdtype end as confupdtype, -- char  Foreign key update action code: a = no action, r = restrict, c = cascade, n = set null, d = set default
 	case when pg_constraint.confdeltype = ' ' then null else pg_constraint.confdeltype end as confdeltype, -- char  Foreign key deletion action code: a = no action, r = restrict, c = cascade, n = set null, d = set default
@@ -309,7 +309,7 @@ select
 	pg_get_userbyid(pg_conversion.conowner)::text as conowner, -- oid (references pg_authid.oid) Owner of the conversion
 	pg_encoding_to_char(conforencoding)::text as conforencoding, -- int4  Source encoding ID (pg_encoding_to_char() can translate this number to the encoding name)
 	pg_encoding_to_char(contoencoding)::text as contoencoding, -- int4  Destination encoding ID (pg_encoding_to_char() can translate this number to the encoding name)
-	conproc::regproc::text as conproc, -- regproc (references pg_proc.oid) Conversion function
+	conproc::regprocedure::text as conproc, -- regproc (references pg_proc.oid) Conversion function
 	pg_conversion.condefault as condefault, -- bool  True if this is the default conversion
 	pg_description.description as description -- text  The comment from pg_description
 from
@@ -337,7 +337,7 @@ select
 	pg_database.datlocale as datlocale, -- text  Collation provider locale name for this database. If the provider is libc, datlocale is NULL; datcollate and datctype are used instead.
 	pg_database.daticurules as daticurules, -- text  ICU collation rules for this database
 	pg_database.datcollversion as datcollversion, -- text  Provider-specific version of the collation. This is recorded when the database is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
-	datacl::text[] as datacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_temp.format_db_aclitems(pg_database.datacl) as datacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_shdescription.description as description, -- text  The comment from pg_shdescription
 	pg_shseclabel.label as seclabel, -- text  The seclabel from pg_shseclabel
 	pg_shseclabel.provider as seclabel_provider -- text  The provider from pg_shseclabel
@@ -356,7 +356,7 @@ select
 	pg_get_userbyid(pg_default_acl.defaclrole)::text as defaclrole, -- oid (references pg_authid.oid) The OID of the role associated with this entry
 	case when pg_default_acl.defaclnamespace = 0 then null else pg_default_acl.defaclnamespace::regnamespace::text end as defaclnamespace, -- oid (references pg_namespace.oid) The OID of the namespace associated with this entry, or zero if none
 	pg_default_acl.defaclobjtype as defaclobjtype, -- char  Type of object this entry is for: r = relation (table, view), S = sequence, f = function, T = type, n = schema
-	defaclacl::text[] as defaclacl -- aclitem[]  Access privileges that this type of object should have on creation
+	pg_temp.format_acldefault_aclitems(pg_default_acl.defaclacl) as defaclacl -- aclitem[]  Access privileges that this type of object should have on creation
 from
 	pg_default_acl
 ;
@@ -405,10 +405,10 @@ select
 	pg_get_userbyid(pg_foreign_data_wrapper.fdwowner)::text as fdwowner, -- oid (references pg_authid.oid) Owner of the foreign-data wrapper
 	case when pg_foreign_data_wrapper.fdwhandler = 0 then null else pg_foreign_data_wrapper.fdwhandler::regprocedure::text end as fdwhandler, -- oid (references pg_proc.oid) References a handler function that is responsible for supplying execution routines for the foreign-data wrapper. Zero if no handler is provided
 	case when pg_foreign_data_wrapper.fdwvalidator = 0 then null else pg_foreign_data_wrapper.fdwvalidator::regprocedure::text end as fdwvalidator, -- oid (references pg_proc.oid) References a validator function that is responsible for checking the validity of the options given to the foreign-data wrapper, as well as options for foreign servers and user mappings using the foreign-data wrapper. Zero if no validator is provided
-	fdwacl::text[] as fdwacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_temp.format_foreigndatawrapper_aclitems(pg_foreign_data_wrapper.fdwacl) as fdwacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_foreign_data_wrapper.fdwoptions as fdwoptions, -- text[]  Foreign-data wrapper specific options, as “keyword=value” strings
 	pg_description.description as description, -- text  The comment from pg_description
-	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_temp.format_foreigndatawrapper_aclitems(pg_init_privs.initprivs) as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
 	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_foreign_data_wrapper
@@ -425,10 +425,10 @@ select
 	srvfdw_pg_foreign_data_wrapper.fdwname::text as srvfdw, -- oid (references pg_foreign_data_wrapper.oid) OID of the foreign-data wrapper of this foreign server
 	pg_foreign_server.srvtype as srvtype, -- text  Type of the server (optional)
 	pg_foreign_server.srvversion as srvversion, -- text  Version of the server (optional)
-	srvacl::text[] as srvacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_temp.format_foreignserver_aclitems(pg_foreign_server.srvacl) as srvacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_foreign_server.srvoptions as srvoptions, -- text[]  Foreign server specific options, as “keyword=value” strings
 	pg_description.description as description, -- text  The comment from pg_description
-	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_temp.format_foreignserver_aclitems(pg_init_privs.initprivs) as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
 	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_foreign_server
@@ -500,11 +500,11 @@ select
 	case when pg_language.lanplcallfoid = 0 then null else pg_language.lanplcallfoid::regprocedure::text end as lanplcallfoid, -- oid (references pg_proc.oid) For noninternal languages this references the language handler, which is a special function that is responsible for executing all functions that are written in the particular language. Zero for internal languages.
 	case when pg_language.laninline = 0 then null else pg_language.laninline::regprocedure::text end as laninline, -- oid (references pg_proc.oid) This references a function that is responsible for executing “inline” anonymous code blocks (DO blocks). Zero if inline blocks are not supported.
 	case when pg_language.lanvalidator = 0 then null else pg_language.lanvalidator::regprocedure::text end as lanvalidator, -- oid (references pg_proc.oid) This references a language validator function that is responsible for checking the syntax and validity of new functions when they are created. Zero if no validator is provided.
-	lanacl::text[] as lanacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_temp.format_language_aclitems(pg_language.lanacl) as lanacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_description.description as description, -- text  The comment from pg_description
 	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
 	pg_seclabel.provider as seclabel_provider, -- text  The provider from pg_seclabel
-	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_temp.format_language_aclitems(pg_init_privs.initprivs) as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
 	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_language
@@ -519,11 +519,11 @@ select
 	-- oid oid  Row identifier
 	pg_namespace.nspname::text as nspname, -- name  Name of the namespace
 	pg_get_userbyid(pg_namespace.nspowner)::text as nspowner, -- oid (references pg_authid.oid) Owner of the namespace
-	nspacl::text[] as nspacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_temp.format_schema_aclitems(pg_namespace.nspacl) as nspacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_description.description as description, -- text  The comment from pg_description
 	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
 	pg_seclabel.provider as seclabel_provider, -- text  The provider from pg_seclabel
-	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_temp.format_schema_aclitems(pg_init_privs.initprivs) as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
 	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_namespace
@@ -543,7 +543,7 @@ select
 	pg_opclass.opcname::text as opcname, -- name  Name of this operator class
 	pg_opclass.opcnamespace::regnamespace::text as opcnamespace, -- oid (references pg_namespace.oid) Namespace of this operator class
 	pg_get_userbyid(pg_opclass.opcowner)::text as opcowner, -- oid (references pg_authid.oid) Owner of the operator class
-	quote_ident(opcfamily_pg_namespace.nspname) || '.' || quote_ident(opcfamily_pg_opfamily.opfname) as opcfamily, -- oid (references pg_opfamily.oid) Operator family containing the operator class
+	pg_temp.quote_with_namespace(opcfamily_pg_namespace.nspname, opcfamily_pg_opfamily.opfname) as opcfamily, -- oid (references pg_opfamily.oid) Operator family containing the operator class
 	pg_opclass.opcintype::regtype::text as opcintype, -- oid (references pg_type.oid) Data type that the operator class indexes
 	pg_opclass.opcdefault as opcdefault, -- bool  True if this operator class is the default for opcintype
 	case when pg_opclass.opckeytype = 0 then null else pg_opclass.opckeytype::regtype::text end as opckeytype, -- oid (references pg_type.oid) Type of data stored in index, or zero if same as opcintype
@@ -571,9 +571,9 @@ select
 	case when pg_operator.oprresult = 0 then null else pg_operator.oprresult::regtype::text end as oprresult, -- oid (references pg_type.oid) Type of the result (zero for a not-yet-defined “shell” operator)
 	case when pg_operator.oprcom = 0 then null else pg_operator.oprcom::regoperator::text end as oprcom, -- oid (references pg_operator.oid) Commutator of this operator (zero if none)
 	case when pg_operator.oprnegate = 0 then null else pg_operator.oprnegate::regoperator::text end as oprnegate, -- oid (references pg_operator.oid) Negator of this operator (zero if none)
-	case when oprcode = 0 then null else oprcode::regproc::text end as oprcode, -- regproc (references pg_proc.oid) Function that implements this operator (zero for a not-yet-defined “shell” operator)
-	case when oprrest = 0 then null else oprrest::regproc::text end as oprrest, -- regproc (references pg_proc.oid) Restriction selectivity estimation function for this operator (zero if none)
-	case when oprjoin = 0 then null else oprjoin::regproc::text end as oprjoin, -- regproc (references pg_proc.oid) Join selectivity estimation function for this operator (zero if none)
+	case when oprcode = 0 then null else oprcode::regprocedure::text end as oprcode, -- regproc (references pg_proc.oid) Function that implements this operator (zero for a not-yet-defined “shell” operator)
+	case when oprrest = 0 then null else oprrest::regprocedure::text end as oprrest, -- regproc (references pg_proc.oid) Restriction selectivity estimation function for this operator (zero if none)
+	case when oprjoin = 0 then null else oprjoin::regprocedure::text end as oprjoin, -- regproc (references pg_proc.oid) Join selectivity estimation function for this operator (zero if none)
 	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_operator
@@ -600,8 +600,8 @@ from
 select
 	-- oid oid  Row identifier
 	pg_parameter_acl.parname as parname, -- text  The name of a configuration parameter for which privileges are granted
-	paracl::text[] as paracl, -- aclitem[]  Access privileges; see Section 5.8 for details
-	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_temp.format_parameter_aclitems(pg_parameter_acl.paracl) as paracl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_temp.format_parameter_aclitems(pg_init_privs.initprivs) as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
 	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_parameter_acl
@@ -692,9 +692,9 @@ select
 	pg_range.rngsubtype::regtype::text as rngsubtype, -- oid (references pg_type.oid) OID of the element type (subtype) of this range type
 	pg_range.rngmultitypid::regtype::text as rngmultitypid, -- oid (references pg_type.oid) OID of the multirange type for this range type
 	case when pg_range.rngcollation = 0 then null else pg_range.rngcollation::regcollation::text end as rngcollation, -- oid (references pg_collation.oid) OID of the collation used for range comparisons, or zero if none
-	quote_ident(rngsubopc_pg_namespace.nspname) || '.' || quote_ident(rngsubopc_pg_opclass.opcname) as rngsubopc, -- oid (references pg_opclass.oid) OID of the subtype's operator class used for range comparisons
-	case when rngcanonical = 0 then null else rngcanonical::regproc::text end as rngcanonical, -- regproc (references pg_proc.oid) OID of the function to convert a range value into canonical form, or zero if none
-	case when rngsubdiff = 0 then null else rngsubdiff::regproc::text end as rngsubdiff -- regproc (references pg_proc.oid) OID of the function to return the difference between two element values as double precision, or zero if none
+	pg_temp.quote_with_namespace(rngsubopc_pg_namespace.nspname, rngsubopc_pg_opclass.opcname) as rngsubopc, -- oid (references pg_opclass.oid) OID of the subtype's operator class used for range comparisons
+	case when rngcanonical = 0 then null else rngcanonical::regprocedure::text end as rngcanonical, -- regproc (references pg_proc.oid) OID of the function to convert a range value into canonical form, or zero if none
+	case when rngsubdiff = 0 then null else rngsubdiff::regprocedure::text end as rngsubdiff -- regproc (references pg_proc.oid) OID of the function to return the difference between two element values as double precision, or zero if none
 from
 	pg_range
 	join pg_opclass as rngsubopc_pg_opclass on pg_range.rngsubopc = rngsubopc_pg_opclass.oid
@@ -705,7 +705,7 @@ from
 --! reflect_pg_rules : (description?)
 select
 	pg_rules.schemaname::text as schemaname, -- name (references pg_namespace.nspname) Name of schema containing table
-	quote_ident(pg_rules.schemaname) || '.' || quote_ident(pg_rules.tablename) as tablename, -- name (references pg_class.relname) Name of table the rule is for
+	pg_temp.quote_with_namespace(pg_rules.schemaname, pg_rules.tablename) as tablename, -- name (references pg_class.relname) Name of table the rule is for
 	pg_rules.rulename::text as rulename, -- name (references pg_rewrite.rulename) Name of rule
 	pg_rules.definition as definition, -- text  Rule definition (a reconstructed creation command)
 	pg_description.description as description -- text  The comment from pg_description
@@ -719,7 +719,7 @@ from
 --! reflect_pg_views : ()
 select
 	pg_views.schemaname::text as schemaname, -- name (references pg_namespace.nspname) Name of schema containing view
-	quote_ident(pg_views.schemaname) || '.' || quote_ident(pg_views.viewname) as viewname, -- name (references pg_class.relname) Name of view
+	pg_temp.quote_with_namespace(pg_views.schemaname, pg_views.viewname) as viewname, -- name (references pg_class.relname) Name of view
 	pg_views.viewowner::text as viewowner, -- name (references pg_authid.rolname) Name of view's owner
 	pg_views.definition as definition -- text  View definition (a reconstructed SELECT query)
 from
@@ -732,7 +732,7 @@ where
 --! reflect_pg_matviews : ()
 select
 	pg_matviews.schemaname::text as schemaname, -- name (references pg_namespace.nspname) Name of schema containing materialized view
-	quote_ident(pg_matviews.schemaname) || '.' || quote_ident(pg_matviews.matviewname) as matviewname, -- name (references pg_class.relname) Name of materialized view
+	pg_temp.quote_with_namespace(pg_matviews.schemaname, pg_matviews.matviewname) as matviewname, -- name (references pg_class.relname) Name of materialized view
 	pg_matviews.matviewowner::text as matviewowner, -- name (references pg_authid.rolname) Name of materialized view's owner
 	-- tablespace name (references pg_tablespace.spcname) Name of tablespace containing materialized view (null if default for database)
 	-- hasindexes bool  True if materialized view has (or recently had) any indexes
@@ -813,8 +813,8 @@ select
 	-- oid oid  Row identifier
 	pg_transform.trftype::regtype::text as trftype, -- oid (references pg_type.oid) OID of the data type this transform is for
 	trflang_pg_language.lanname::text as trflang, -- oid (references pg_language.oid) OID of the language this transform is for
-	case when trffromsql = 0 then null else trffromsql::regproc::text end as trffromsql, -- regproc (references pg_proc.oid) The OID of the function to use when converting the data type for input to the procedural language (e.g., function parameters). Zero is stored if the default behavior should be used.
-	case when trftosql = 0 then null else trftosql::regproc::text end as trftosql -- regproc (references pg_proc.oid) The OID of the function to use when converting output from the procedural language (e.g., return values) to the data type. Zero is stored if the default behavior should be used.
+	case when trffromsql = 0 then null else trffromsql::regprocedure::text end as trffromsql, -- regproc (references pg_proc.oid) The OID of the function to use when converting the data type for input to the procedural language (e.g., function parameters). Zero is stored if the default behavior should be used.
+	case when trftosql = 0 then null else trftosql::regprocedure::text end as trftosql -- regproc (references pg_proc.oid) The OID of the function to use when converting output from the procedural language (e.g., return values) to the data type. Zero is stored if the default behavior should be used.
 from
 	pg_transform
 	join pg_language as trflang_pg_language on pg_transform.trflang = trflang_pg_language.oid
@@ -833,7 +833,7 @@ select
 	pg_trigger.tgisinternal as tgisinternal, -- bool  True if trigger is internally generated (usually, to enforce the constraint identified by tgconstraint)
 	case when pg_trigger.tgconstrrelid = 0 then null else pg_trigger.tgconstrrelid::regclass::text end as tgconstrrelid, -- oid (references pg_class.oid) The table referenced by a referential integrity constraint (zero if trigger is not for a referential integrity constraint)
 	case when pg_trigger.tgconstrindid = 0 then null else pg_trigger.tgconstrindid::regclass::text end as tgconstrindid, -- oid (references pg_class.oid) The index supporting a unique, primary key, referential integrity, or exclusion constraint (zero if trigger is not for one of these types of constraint)
-	quote_ident(tgconstraint_pg_namespace.nspname) || '.' || quote_ident(tgconstraint_pg_constraint.conname) as tgconstraint, -- oid (references pg_constraint.oid) The pg_constraint entry associated with the trigger (zero if trigger is not for a constraint)
+	pg_temp.quote_with_namespace(tgconstraint_pg_namespace.nspname, tgconstraint_pg_constraint.conname) as tgconstraint, -- oid (references pg_constraint.oid) The pg_constraint entry associated with the trigger (zero if trigger is not for a constraint)
 	pg_trigger.tgdeferrable as tgdeferrable, -- bool  True if constraint trigger is deferrable
 	pg_trigger.tginitdeferred as tginitdeferred, -- bool  True if constraint trigger is initially deferred
 	pg_trigger.tgnargs as tgnargs, -- int2  Number of argument strings passed to trigger function
@@ -906,11 +906,11 @@ select
 	-- oid oid  Row identifier
 	pg_ts_parser.prsname::text as prsname, -- name  Text search parser name
 	pg_ts_parser.prsnamespace::regnamespace::text as prsnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this parser
-	prsstart::regproc::text as prsstart, -- regproc (references pg_proc.oid) OID of the parser's startup function
-	prstoken::regproc::text as prstoken, -- regproc (references pg_proc.oid) OID of the parser's next-token function
-	prsend::regproc::text as prsend, -- regproc (references pg_proc.oid) OID of the parser's shutdown function
-	case when prsheadline = 0 then null else prsheadline::regproc::text end as prsheadline, -- regproc (references pg_proc.oid) OID of the parser's headline function (zero if none)
-	prslextype::regproc::text as prslextype -- regproc (references pg_proc.oid) OID of the parser's lextype function
+	prsstart::regprocedure::text as prsstart, -- regproc (references pg_proc.oid) OID of the parser's startup function
+	prstoken::regprocedure::text as prstoken, -- regproc (references pg_proc.oid) OID of the parser's next-token function
+	prsend::regprocedure::text as prsend, -- regproc (references pg_proc.oid) OID of the parser's shutdown function
+	case when prsheadline = 0 then null else prsheadline::regprocedure::text end as prsheadline, -- regproc (references pg_proc.oid) OID of the parser's headline function (zero if none)
+	prslextype::regprocedure::text as prslextype -- regproc (references pg_proc.oid) OID of the parser's lextype function
 from
 	pg_ts_parser
 ;
@@ -921,8 +921,8 @@ select
 	-- oid oid  Row identifier
 	pg_ts_template.tmplname::text as tmplname, -- name  Text search template name
 	pg_ts_template.tmplnamespace::regnamespace::text as tmplnamespace, -- oid (references pg_namespace.oid) The OID of the namespace that contains this template
-	case when tmplinit = 0 then null else tmplinit::regproc::text end as tmplinit, -- regproc (references pg_proc.oid) OID of the template's initialization function (zero if none)
-	tmpllexize::regproc::text as tmpllexize -- regproc (references pg_proc.oid) OID of the template's lexize function
+	case when tmplinit = 0 then null else tmplinit::regprocedure::text end as tmplinit, -- regproc (references pg_proc.oid) OID of the template's initialization function (zero if none)
+	tmpllexize::regprocedure::text as tmpllexize -- regproc (references pg_proc.oid) OID of the template's lexize function
 from
 	pg_ts_template
 ;
@@ -942,16 +942,16 @@ select
 	pg_type.typisdefined as typisdefined, -- bool  True if the type is defined, false if this is a placeholder entry for a not-yet-defined type. When typisdefined is false, nothing except the type name, namespace, and OID can be relied on.
 	pg_type.typdelim as typdelim, -- char  Character that separates two values of this type when parsing array input. Note that the delimiter is associated with the array element data type, not the array data type.
 	case when pg_type.typrelid = 0 then null else pg_type.typrelid::regclass::text end as typrelid, -- oid (references pg_class.oid) If this is a composite type (see typtype), then this column points to the pg_class entry that defines the corresponding table. (For a free-standing composite type, the pg_class entry doesn't really represent a table, but it is needed anyway for the type's pg_attribute entries to link to.) Zero for non-composite types.
-	case when typsubscript = 0 then null else typsubscript::regproc::text end as typsubscript, -- regproc (references pg_proc.oid) Subscripting handler function's OID, or zero if this type doesn't support subscripting. Types that are “true” array types have typsubscript = array_subscript_handler, but other types may have other handler functions to implement specialized subscripting behavior.
+	case when typsubscript = 0 then null else typsubscript::regprocedure::text end as typsubscript, -- regproc (references pg_proc.oid) Subscripting handler function's OID, or zero if this type doesn't support subscripting. Types that are “true” array types have typsubscript = array_subscript_handler, but other types may have other handler functions to implement specialized subscripting behavior.
 	case when pg_type.typelem = 0 then null else pg_type.typelem::regtype::text end as typelem, -- oid (references pg_type.oid) If typelem is not zero then it identifies another row in pg_type, defining the type yielded by subscripting. This should be zero if typsubscript is zero. However, it can be zero when typsubscript isn't zero, if the handler doesn't need typelem to determine the subscripting result type. Note that a typelem dependency is considered to imply physical containment of the element type in this type; so DDL changes on the element type might be restricted by the presence of this type.
 	case when pg_type.typarray = 0 then null else pg_type.typarray::regtype::text end as typarray, -- oid (references pg_type.oid) If typarray is not zero then it identifies another row in pg_type, which is the “true” array type having this type as element
-	typinput::regproc::text as typinput, -- regproc (references pg_proc.oid) Input conversion function (text format)
-	typoutput::regproc::text as typoutput, -- regproc (references pg_proc.oid) Output conversion function (text format)
-	case when typreceive = 0 then null else typreceive::regproc::text end as typreceive, -- regproc (references pg_proc.oid) Input conversion function (binary format), or zero if none
-	case when typsend = 0 then null else typsend::regproc::text end as typsend, -- regproc (references pg_proc.oid) Output conversion function (binary format), or zero if none
-	case when typmodin = 0 then null else typmodin::regproc::text end as typmodin, -- regproc (references pg_proc.oid) Type modifier input function, or zero if type does not support modifiers
-	case when typmodout = 0 then null else typmodout::regproc::text end as typmodout, -- regproc (references pg_proc.oid) Type modifier output function, or zero to use the standard format
-	case when typanalyze = 0 then null else typanalyze::regproc::text end as typanalyze, -- regproc (references pg_proc.oid) Custom ANALYZE function, or zero to use the standard function
+	typinput::regprocedure::text as typinput, -- regproc (references pg_proc.oid) Input conversion function (text format)
+	typoutput::regprocedure::text as typoutput, -- regproc (references pg_proc.oid) Output conversion function (text format)
+	case when typreceive = 0 then null else typreceive::regprocedure::text end as typreceive, -- regproc (references pg_proc.oid) Input conversion function (binary format), or zero if none
+	case when typsend = 0 then null else typsend::regprocedure::text end as typsend, -- regproc (references pg_proc.oid) Output conversion function (binary format), or zero if none
+	case when typmodin = 0 then null else typmodin::regprocedure::text end as typmodin, -- regproc (references pg_proc.oid) Type modifier input function, or zero if type does not support modifiers
+	case when typmodout = 0 then null else typmodout::regprocedure::text end as typmodout, -- regproc (references pg_proc.oid) Type modifier output function, or zero to use the standard format
+	case when typanalyze = 0 then null else typanalyze::regprocedure::text end as typanalyze, -- regproc (references pg_proc.oid) Custom ANALYZE function, or zero to use the standard function
 	pg_type.typalign as typalign, -- char  typalign is the alignment required when storing a value of this type. It applies to storage on disk as well as most representations of the value inside PostgreSQL. When multiple values are stored consecutively, such as in the representation of a complete row on disk, padding is inserted before a datum of this type so that it begins on the specified boundary. The alignment reference is the beginning of the first datum in the sequence. Possible values are: c = char alignment, i.e., no alignment needed. s = short alignment (2 bytes on most machines). i = int alignment (4 bytes on most machines). d = double alignment (8 bytes on many machines, but by no means all).
 	pg_type.typstorage as typstorage, -- char  typstorage tells for varlena types (those with typlen = -1) if the type is prepared for toasting and what the default strategy for attributes of this type should be. Possible values are: p (plain): Values must always be stored plain (non-varlena types always use this value). e (external): Values can be stored in a secondary “TOAST” relation (if relation has one, see pg_class.reltoastrelid). m (main): Values can be compressed and stored inline. x (extended): Values can be compressed and/or moved to a secondary relation. x is the usual choice for toast-able types. Note that m values can also be moved out to secondary storage, but only as a last resort (e and x values are moved first).
 	pg_type.typnotnull as typnotnull, -- bool  typnotnull represents a not-null constraint on a type. Used for domains only.
@@ -961,11 +961,11 @@ select
 	case when pg_type.typcollation = 0 then null else pg_type.typcollation::regcollation::text end as typcollation, -- oid (references pg_collation.oid) typcollation specifies the collation of the type. If the type does not support collations, this will be zero. A base type that supports collations will have a nonzero value here, typically DEFAULT_COLLATION_OID. A domain over a collatable type can have a collation OID different from its base type's, if one was specified for the domain.
 	pg_get_expr(typdefaultbin, 0) as typdefaultbin, -- pg_node_tree  If typdefaultbin is not null, it is the nodeToString() representation of a default expression for the type. This is only used for domains.
 	pg_type.typdefault as typdefault, -- text  typdefault is null if the type has no associated default value. If typdefaultbin is not null, typdefault must contain a human-readable version of the default expression represented by typdefaultbin. If typdefaultbin is null and typdefault is not, then typdefault is the external representation of the type's default value, which can be fed to the type's input converter to produce a constant.
-	typacl::text[] as typacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_temp.format_type_aclitems(pg_type.typacl) as typacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_description.description as description, -- text  The comment from pg_description
 	pg_seclabel.label as seclabel, -- text  The seclabel from pg_seclabel
 	pg_seclabel.provider as seclabel_provider, -- text  The provider from pg_seclabel
-	pg_init_privs.initprivs::text[] as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
+	pg_temp.format_type_aclitems(pg_init_privs.initprivs) as initprivs, -- aclitem[]  The initial access privileges from pg_init_privs.
 	pg_init_privs.privtype as initprivs_type -- char  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 from
 	pg_type

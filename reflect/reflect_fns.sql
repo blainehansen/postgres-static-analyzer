@@ -1,10 +1,20 @@
 set search_path = '';
 
+-- TODO if you do this you have to get it right
+-- create schema _____reflection_temp_utils;
+
+create function pg_temp.quote_with_namespace(namespace_name name, object_name name) returns text as $$
+	begin
+		return case
+			when namespace_name = 'pg_catalog' then object_name::text
+			else quote_ident(namespace_name) || '.' || quote_ident(object_name)
+		end;
+	end;
+$$ language plpgsql stable strict;
+
 create function pg_temp.format_role_oid_array(role_oids oid[]) returns text[] as $$
 	begin
 		return array (
-			-- select case when ${name} = 0 then null else pg_get_userbyid(${name})::text end
-			-- pg_catalog.format_type(p.arg_type_oid, null)
 			select case when role_oid = 0 then null else pg_get_userbyid(role_oid)::text end
 			from unnest(role_oids)
 				with ordinality as p(role_oid, ordinality)
@@ -39,7 +49,7 @@ $$ language plpgsql stable;
 create function pg_temp.format_pg_opclass_oidvector(oids oidvector) returns text[] as $$
 	begin
 		return array (
-			select quote_ident(pg_namespace.nspname) || '.' || quote_ident(pg_opclass.opcname)
+			select pg_temp.quote_with_namespace(pg_namespace.nspname, pg_opclass.opcname)
 			from
 				unnest(oids) with ordinality as p(o, ordinality)
 				left join pg_opclass on p.o = pg_opclass.oid
@@ -90,7 +100,7 @@ create type pg_temp.type_aclprivilege as enum('USAGE');
 create type pg_temp.acldefault_aclprivilege as enum(
 	'INSERT', 'SELECT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'MAINTAIN',
 	'USAGE',
-	'EXECUTE',
+	'EXECUTE'
 );
 
 
@@ -115,7 +125,7 @@ create function pg_temp.format_db_aclitems(acls aclitem[]) returns pg_temp.db_ac
 			group by grantee, grantor
 		);
 	end;
-$$ language plpgsql immutable;
+$$ language plpgsql stable strict;
 
 
 create type pg_temp.function_aclgrant as (
@@ -139,7 +149,7 @@ create function pg_temp.format_function_aclitems(acls aclitem[]) returns pg_temp
 			group by grantee, grantor
 		);
 	end;
-$$ language plpgsql immutable;
+$$ language plpgsql stable strict;
 
 
 create type pg_temp.foreigndatawrapper_aclgrant as (
@@ -163,7 +173,7 @@ create function pg_temp.format_foreigndatawrapper_aclitems(acls aclitem[]) retur
 			group by grantee, grantor
 		);
 	end;
-$$ language plpgsql immutable;
+$$ language plpgsql stable strict;
 
 
 create type pg_temp.foreignserver_aclgrant as (
@@ -187,7 +197,7 @@ create function pg_temp.format_foreignserver_aclitems(acls aclitem[]) returns pg
 			group by grantee, grantor
 		);
 	end;
-$$ language plpgsql immutable;
+$$ language plpgsql stable strict;
 
 
 create type pg_temp.language_aclgrant as (
@@ -211,7 +221,7 @@ create function pg_temp.format_language_aclitems(acls aclitem[]) returns pg_temp
 			group by grantee, grantor
 		);
 	end;
-$$ language plpgsql immutable;
+$$ language plpgsql stable strict;
 
 
 create type pg_temp.parameter_aclgrant as (
@@ -235,7 +245,7 @@ create function pg_temp.format_parameter_aclitems(acls aclitem[]) returns pg_tem
 			group by grantee, grantor
 		);
 	end;
-$$ language plpgsql immutable;
+$$ language plpgsql stable strict;
 
 
 create type pg_temp.schema_aclgrant as (
@@ -259,7 +269,7 @@ create function pg_temp.format_schema_aclitems(acls aclitem[]) returns pg_temp.s
 			group by grantee, grantor
 		);
 	end;
-$$ language plpgsql immutable;
+$$ language plpgsql stable strict;
 
 
 create type pg_temp.table_aclgrant as (
@@ -283,7 +293,7 @@ create function pg_temp.format_table_aclitems(acls aclitem[]) returns pg_temp.ta
 			group by grantee, grantor
 		);
 	end;
-$$ language plpgsql immutable;
+$$ language plpgsql stable strict;
 
 
 create type pg_temp.tablecolumn_aclgrant as (
@@ -307,7 +317,7 @@ create function pg_temp.format_tablecolumn_aclitems(acls aclitem[]) returns pg_t
 			group by grantee, grantor
 		);
 	end;
-$$ language plpgsql immutable;
+$$ language plpgsql stable strict;
 
 
 create type pg_temp.type_aclgrant as (
@@ -331,7 +341,7 @@ create function pg_temp.format_type_aclitems(acls aclitem[]) returns pg_temp.typ
 			group by grantee, grantor
 		);
 	end;
-$$ language plpgsql immutable;
+$$ language plpgsql stable strict;
 
 
 create type pg_temp.acldefault_aclgrant as (
@@ -355,4 +365,4 @@ create function pg_temp.format_acldefault_aclitems(acls aclitem[]) returns pg_te
 			group by grantee, grantor
 		);
 	end;
-$$ language plpgsql immutable;
+$$ language plpgsql stable strict;

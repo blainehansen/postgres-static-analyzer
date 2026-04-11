@@ -1,6 +1,6 @@
 //! Struct definitions for all the [postgres catalog tables](https://www.postgresql.org/docs/17/catalogs.html) that are [**DDL only**](https://en.wikipedia.org/wiki/Data_definition_language), meaning only the tables and columns that describe the "schema" of the database are included. No `oid`s, no transient server state or like clustering or tablespaces etc, and of course no actual table data.
 //!
-//! `oid`s pointing to other tables are translated either to strings (as [`Str`]) if they aren't contained in a [namespace](https://www.postgresql.org/docs/17/catalog-pg-namespace.html) (confusingly created with [`create schema`](https://www.postgresql.org/docs/17/sql-createschema.html)), or a "qualified name" struct [`Qual`] for those that are.
+//! `oid`s pointing to other tables are translated to strings (as [`Str`]) representing their qualified name, using their ["reg" cast](https://www.postgresql.org/docs/17/datatype-oid.html) if they have one, or are constructed manually using `quote_ident` if not. Objects that are contained in a [namespace](https://www.postgresql.org/docs/17/catalog-pg-namespace.html) are prefixed with it, except for objects in the `pg_catalog` namespace due to the way `search_path` rules work.
 
 pub use smol_str::SmolStr as Str;
 pub use ordered_float;
@@ -12,53 +12,95 @@ pub type Map<T> = hashbrown::HashMap<Str, T>;
 mod struct_gen;
 pub use struct_gen::*;
 
-pub mod aclitem;
-
-/// The qualified name of an object that exists in a [`namespace`](https://www.postgresql.org/docs/17/catalog-pg-namespace.html).
-#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
-pub struct Qual {
-	pub schema_name: Str,
-	pub name: Str,
+/// [Access control items](https://www.postgresql.org/docs/17/ddl-priv.html), similar to what you'd get if you called [`aclexplode`](https://www.postgresql.org/docs/17/functions-info.html#FUNCTIONS-ACLITEM-FN-TABLE), except that grants are grouped by grantee/grantor pairs.
+#[derive(Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd)]
+pub struct AclItem<G> {
+	/// `None` means the grants are for [`public`](https://www.postgresql.org/docs/17/ddl-schemas.html#DDL-SCHEMAS-PUBLIC)
+	pub grantee: Option<Str>,
+	/// The role who granted these grants
+	pub grantor: Str,
+	pub grants: Vec<Grant<G>>,
 }
-impl Qual {
-	// pub(crate) fn make(schema_name: &str, name: &str) -> Qual {
-	// 	Qual { schema_name: schema_name.into(), name: name.into() }
-	// }
 
-	// pub(crate) fn maybe(schema_name: Option<&str>, name: Option<&str>) -> Option<Qual> {
-	// 	match (schema_name, name) {
-	// 		(Some(schema_name), Some(name)) => Some(Qual::make(schema_name, name)),
-	// 		_ => None,
-	// 	}
-	// }
-
-	/// Parse a qualifed name as would be given by the sql `quote_ident(namespace_name) || '.' || quote_ident(object_name)`
-	pub fn parse(qualified: &str) -> Qual {
-		if let Ok((_, (schema_name, name))) = aclitem::parse_qualified(qualified) {
-			return Qual { schema_name, name }
-		}
-
-		Qual { schema_name: "pg_catalog".into(), name: qualified.into() }
-	}
-
-	pub fn parse_func(qualified: &str) -> Qual {
-		if let Ok((_, (schema_name, name))) = aclitem::parse_qualified_func(qualified) {
-			return Qual { schema_name, name }
-		}
-
-		Qual { schema_name: "pg_catalog".into(), name: qualified.into() }
-	}
-
-	/// Optionally call `parse`
-	pub fn maybe_parse(qualified: Option<&str>) -> Option<Qual> {
-		qualified.map(Qual::parse)
-	}
+#[derive(Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd)]
+pub struct Grant<G> {
+	pub privilege: G,
+	/// Whether `grantee` can re-grant this grant
+	pub with_grant_option: bool,
 }
-// impl<T: AsRef<str>> hashbrown::Equivalent<Qual> for (&T, &T) {
-// 	fn equivalent(&self, key: &Qual) -> bool {
-// 		key.schema_name == self.0.as_ref() && key.name == self.1.as_ref()
-// 	}
-// }
+
+// DATABASE	CTc	Tc	\l
+pub type DbAclItem = AclItem<DbAclPrivilege>;
+pub type DbGrant = Grant<DbAclPrivilege>;
+#[derive(Copy, Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd, postgres_types::FromSql, postgres_types::ToSql)]
+pub enum DbAclPrivilege { CREATE, TEMPORARY, CONNECT }
+
+// DOMAIN  U  U  \dD+
+
+// FUNCTION or PROCEDURE	X	X	\df+
+pub type FunctionAclItem = AclItem<FunctionAclPrivilege>;
+pub type FunctionGrant = Grant<FunctionAclPrivilege>;
+#[derive(Copy, Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd, postgres_types::FromSql, postgres_types::ToSql)]
+pub enum FunctionAclPrivilege { EXECUTE }
+
+// FOREIGN DATA WRAPPER	U	none	\dew+
+pub type ForeignDataWrapperAclItem = AclItem<ForeignDataWrapperAclPrivilege>;
+pub type ForeignDataWrapperGrant = Grant<ForeignDataWrapperAclPrivilege>;
+#[derive(Copy, Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd, postgres_types::FromSql, postgres_types::ToSql)]
+pub enum ForeignDataWrapperAclPrivilege { USAGE }
+
+// FOREIGN SERVER	U	none	\des+
+pub type ForeignServerAclItem = AclItem<ForeignServerAclPrivilege>;
+pub type ForeignServerGrant = Grant<ForeignServerAclPrivilege>;
+#[derive(Copy, Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd, postgres_types::FromSql, postgres_types::ToSql)]
+pub enum ForeignServerAclPrivilege { USAGE }
+
+// LANGUAGE	U	U	\dL+
+pub type LanguageAclItem = AclItem<LanguageAclPrivilege>;
+pub type LanguageGrant = Grant<LanguageAclPrivilege>;
+#[derive(Copy, Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd, postgres_types::FromSql, postgres_types::ToSql)]
+pub enum LanguageAclPrivilege { USAGE }
+
+// PARAMETER	sA	none	\dconfig+
+pub type ParameterAclItem = AclItem<ParameterAclPrivilege>;
+pub type ParameterGrant = Grant<ParameterAclPrivilege>;
+#[derive(Copy, Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd, postgres_types::FromSql, postgres_types::ToSql)]
+pub enum ParameterAclPrivilege {  SET, #[postgres(name = "ALTER SYSTEM")] ALTERSYSTEM  }
+
+// SCHEMA	UC	none	\dn+
+pub type SchemaAclItem = AclItem<SchemaAclPrivilege>;
+pub type SchemaGrant = Grant<SchemaAclPrivilege>;
+#[derive(Copy, Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd, postgres_types::FromSql, postgres_types::ToSql)]
+pub enum SchemaAclPrivilege { USAGE, CREATE }
+
+// SEQUENCE	rwU	none	\dp
+
+// TABLE (and table-like objects)	arwdDxtm	none	\dp
+pub type TableAclItem = AclItem<TableAclPrivilege>;
+pub type TableGrant = Grant<TableAclPrivilege>;
+#[derive(Copy, Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd, postgres_types::FromSql, postgres_types::ToSql)]
+pub enum TableAclPrivilege { INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN, USAGE }
+
+// Table column	arwx	none	\dp
+pub type TableColumnAclItem = AclItem<TableColumnAclPrivilege>;
+pub type TableColumnGrant = Grant<TableColumnAclPrivilege>;
+#[derive(Copy, Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd, postgres_types::FromSql, postgres_types::ToSql)]
+pub enum TableColumnAclPrivilege { INSERT, SELECT, UPDATE, REFERENCES }
+
+// TYPE	U	U	\dT+
+pub type TypeAclItem = AclItem<TypeAclPrivilege>;
+pub type TypeGrant = Grant<TypeAclPrivilege>;
+#[derive(Copy, Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd, postgres_types::FromSql, postgres_types::ToSql)]
+pub enum TypeAclPrivilege { USAGE }
+
+pub type AclDefaultAclItem = AclItem<AclDefaultAclPrivilege>;
+pub type AclDefaultGrant = Grant<AclDefaultAclPrivilege>;
+#[derive(Copy, Debug, serde::Serialize, serde::Deserialize, Clone, PartialEq, Eq, Ord, PartialOrd, postgres_types::FromSql, postgres_types::ToSql)]
+pub enum AclDefaultAclPrivilege {
+	INSERT, SELECT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN,
+	USAGE,
+	EXECUTE,
+}
 
 /// A large wrapper struct that holds the results of all the other reflections.
 /// Only includes information for the single [database](https://www.postgresql.org/docs/17/sql-createdatabase.html), which is why `pg_database` isn't a collection.
@@ -128,7 +170,7 @@ pub struct DbState {
 	pub pg_user_mappings: Vec<PgUserMappings>,
 }
 
-macro_rules! impl_name_hash_and_equivalent {
+macro_rules! impl_hash_and_equivalent {
 	($type:ty, $field:ident) => {
 		impl std::hash::Hash for $type {
 			fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -149,51 +191,7 @@ macro_rules! impl_name_hash_and_equivalent {
 		}
 	};
 }
-pub(crate) use impl_name_hash_and_equivalent;
-
-macro_rules! impl_qual_hash_and_equivalent {
-	($type:ty) => {
-		impl std::hash::Hash for $type {
-			fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-				self.oid.schema_name.hash(state);
-				self.oid.name.hash(state);
-			}
-		}
-
-		impl hashbrown::Equivalent<$type> for (&str, &str) {
-			fn equivalent(&self, key: &$type) -> bool {
-				key.oid.schema_name == *self.0 && key.oid.name == *self.1
-			}
-		}
-
-		impl hashbrown::Equivalent<$type> for (&Str, &Str) {
-			fn equivalent(&self, key: &$type) -> bool {
-				key.oid.schema_name == *self.0 && key.oid.name == *self.1
-			}
-		}
-	};
-	($type:ty, $field:ident) => {
-		impl std::hash::Hash for $type {
-			fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-				self.$field.schema_name.hash(state);
-				self.$field.name.hash(state);
-			}
-		}
-
-		impl hashbrown::Equivalent<$type> for (&str, &str) {
-			fn equivalent(&self, key: &$type) -> bool {
-				key.$field.schema_name == *self.0 && key.$field.name == *self.1
-			}
-		}
-
-		impl hashbrown::Equivalent<$type> for (&Str, &Str) {
-			fn equivalent(&self, key: &$type) -> bool {
-				key.$field.schema_name == *self.0 && key.$field.name == *self.1
-			}
-		}
-	};
-}
-pub(crate) use impl_qual_hash_and_equivalent;
+pub(crate) use impl_hash_and_equivalent;
 
 // macro_rules! impl_pg_from_str {
 // 	($type:ident, $($variant:ident),+ $(,)?) => {
@@ -282,12 +280,12 @@ pub struct PgDbRoleSetting {
 pub struct PgEnum {
 	// `oid`  Row identifier
 	/// enumtypid `oid` `(references pg_type.oid)` The OID of the pg_type entry owning this enum value
-	pub enumtypid: Qual,
+	pub enumtypid: Str,
 	/// enumlabel `name`  The textual label for this enum value
 	pub enumlabels: Vec<Str>,
 	// enumsortorder `float4`  The sort position of this enum value within its enum type
 }
-impl_qual_hash_and_equivalent!(PgEnum, enumtypid);
+impl_hash_and_equivalent!(PgEnum, enumtypid);
 
 // `pg_event_trigger`: https://www.postgresql.org/docs/17/catalog-pg-event-trigger.html
 
@@ -325,7 +323,7 @@ impl_qual_hash_and_equivalent!(PgEnum, enumtypid);
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgProc {
 	/// `oid`  Row identifier
-	pub oid: Qual,
+	pub oid: Str,
 	/// `name`  Name of the function
 	pub proname: Str,
 	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this function
@@ -339,9 +337,9 @@ pub struct PgProc {
 	/// `float4`  Estimated number of result rows (zero if not proretset)
 	pub prorows: Option<ordered_float::NotNan<f32>>,
 	/// `oid` `(references pg_type.oid)` Data type of the variadic array parameter's elements, or zero if the function does not have a variadic parameter
-	pub provariadic: Option<Qual>,
+	pub provariadic: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Planner support function for this function (see Section 36.11), or zero if none
-	pub prosupport: Option<Qual>,
+	pub prosupport: Option<Str>,
 	/// `char`  f for a normal function, p for a procedure, a for an aggregate function, or w for a window function
 	pub prokind: PgProcProkind,
 	/// `bool`  Function is a security definer (i.e., a “setuid” function)
@@ -361,11 +359,11 @@ pub struct PgProc {
 	/// `int2`  Number of arguments that have defaults
 	pub pronargdefaults: u16,
 	/// `oid` `(references pg_type.oid)` Data type of the return value
-	pub prorettype: Qual,
+	pub prorettype: Str,
 	// `oidvector` `(references pg_type.oid)` An array of the data types of the function arguments. This includes only input arguments (including INOUT and VARIADIC arguments), and thus represents the call signature of the function.
-	pub proargtypes: Vec<Qual>,
+	pub proargtypes: Vec<Str>,
 	/// `oid[]` `(references pg_type.oid)` An array of the data types of the function arguments. This includes all arguments (including OUT and INOUT arguments); however, if all the arguments are IN arguments, this field will be null. Note that subscripting is 1-based, whereas for historical reasons proargtypes is subscripted from 0.
-	pub proallargtypes: Option<Vec<Qual>>,
+	pub proallargtypes: Option<Vec<Str>>,
 	/// `char[]`  An array of the modes of the function arguments, encoded as i for IN arguments, o for OUT arguments, b for INOUT arguments, v for VARIADIC arguments, t for TABLE arguments. If all the arguments are IN arguments, this field will be null. Note that subscripts correspond to positions of proallargtypes not proargtypes.
 	pub proargmodes: Option<Vec<PgProcProargmodes>>,
 	/// `text[]`  An array of the names of the function arguments. Arguments without a name are set to empty strings in the array. If none of the arguments have a name, this field will be null. Note that subscripts correspond to positions of proallargtypes not proargtypes.
@@ -373,7 +371,7 @@ pub struct PgProc {
 	/// `pg_node_tree`  Expression trees (in nodeToString() representation) for default values. This is a list with pronargdefaults elements, corresponding to the last N input arguments (i.e., the last N proargtypes positions). If none of the arguments have defaults, this field will be null.
 	pub proargdefaults: Option<Vec<Option<Str>>>,
 	/// `oid[]` `(references pg_type.oid)` An array of the argument/result data type(s) for which to apply transforms (from the function's TRANSFORM clause). Null if none.
-	pub protrftypes: Option<Vec<Qual>>,
+	pub protrftypes: Option<Vec<Str>>,
 	/// `text`  This tells the function handler how to invoke the function. It might be the actual source code of the function for interpreted languages, a link symbol, a file name, or just about anything else, depending on the implementation language/call convention.
 	pub prosrc: Option<Str>,
 	/// `text`  Additional information about how to invoke the function. Again, the interpretation is language-specific.
@@ -383,11 +381,11 @@ pub struct PgProc {
 	/// `text[]`  Function's local settings for run-time configuration variables
 	pub proconfig: Option<Vec<Str>>,
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
-	pub proacl: Option<Vec<aclitem::FunctionAclItem>>,
+	pub proacl: Option<Vec<FunctionAclItem>>,
 	/// `text`  The comment from pg_description
 	pub description: Option<Str>,
 }
-impl_qual_hash_and_equivalent!(PgProc);
+impl_hash_and_equivalent!(PgProc, oid);
 
 // f for a normal function, p for a procedure, a for an aggregate function, or w for a window function
 pg_char_enum!(PgProcProkind { 'f' => NormalFunction, 'p' => Procedure, 'a' => AggregateFunction, 'w' => WindowFunction });

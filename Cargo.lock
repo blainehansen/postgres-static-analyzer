@@ -641,15 +641,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nom"
-version = "8.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df9761775871bdef83bee530e60050f7e54b1105350d6884eb0fb4f46c2f9405"
-dependencies = [
- "memchr",
-]
-
-[[package]]
 name = "num-traits"
 version = "0.2.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -708,12 +699,6 @@ dependencies = [
  "smallvec",
  "windows-link",
 ]
-
-[[package]]
-name = "paste"
-version = "1.0.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "percent-encoding"
@@ -840,9 +825,8 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "hashbrown 0.16.1",
- "nom",
  "ordered-float",
- "paste",
+ "postgres-types",
  "serde",
  "smol_str",
 ]
@@ -871,6 +855,7 @@ dependencies = [
  "futures",
  "postgres",
  "postgres-protocol",
+ "postgres-static-analyzer-ddl-catalog-structs",
  "postgres-types",
  "tokio-postgres",
 ]

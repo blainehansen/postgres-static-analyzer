@@ -211,9 +211,9 @@ async function decideTable({ tableName, columns, url }: RawTable): Promise<Table
 
 		decidedColumns["initprivs"] = {
 			typ: "aclitem[]", ref: "", desc: "The initial access privileges from pg_init_privs.",
-			sel: `pg_init_privs.initprivs::text[]`,
-			ty: `Option<Vec<aclitem::${aclPrefix}AclItem>>`,
-			exp: `${tableName}.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &${aclPrefix}GrantParser)).collect())`,
+			sel: `pg_temp.format_${aclPrefix.toLowerCase()}_aclitems(pg_init_privs.initprivs)`,
+			ty: `Option<Vec<${aclPrefix}AclItem>>`,
+			exp: `${tableName}.initprivs.map(|initprivs| initprivs.map(|acl| aclitems!(acl, ${aclPrefix}AclItem, ${aclPrefix}Grant)).collect())`,
 			joins: [join],
 		}
 
@@ -276,8 +276,7 @@ async function decideColumn(
 		const reg = refToReg[tableName]
 		if (!reg) throw ''
 		const sel = `${tableName}.${name}::${reg}::text`
-		const ty = "Qual"
-		const exp = `Qual::parse(${tableName}.${name})`
+		const [ty, exp] = makeStr(tableName, name, false)
 		const hashCol = tableName !== "pg_collation" ? true : undefined
 		return [hashCol, { typ, ref, desc, sel, ty, exp }]
 	}
@@ -285,10 +284,9 @@ async function decideColumn(
 		const zeroable = ovZero ?? /zero/i.test(desc)
 		const nullable = ovNullable ?? zeroable ?? false
 		const sel = zeroable
-			? `case when ${name} = 0 then null else ${name}::regproc::text end`
-			: `${name}::regproc::text`
-		const ty = nullable ? `Option<Qual>` : `Qual`
-		const exp = `${nullable ? 'Qual::maybe_parse' : 'Qual::parse'}(${tableName}.${name})`
+			? `case when ${name} = 0 then null else ${name}::regprocedure::text end`
+			: `${name}::regprocedure::text`
+		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, sel, ty, exp, filters: override?.filters }]
 	}
 	if (typ === "oid" && ref === "(references pg_authid.oid)") {
@@ -354,16 +352,15 @@ async function decideColumn(
 		const sel = zeroable
 			? `case when ${tableName}.${name} = 0 then null else ${tableName}.${name}::${reg}::text end`
 			: `${tableName}.${name}::${reg}::text`
-		const ty = nullable ? "Option<Qual>" : "Qual"
-		const exp = `${nullable ? 'Qual::maybe_parse' : 'Qual::parse'}(${tableName}.${name})`
+		const [ty, exp] = makeStr(tableName, name, nullable)
 		return [undefined, { typ, ref, desc, ...override, sel, ty, exp }]
 	}
 	if ((typ === "oid[]" || typ === "oidvector") && genericReferencesTable && (genericReferencesTable in refToReg)) {
 		const reg = refToReg[genericReferencesTable as keyof typeof refToReg]
 		if (!reg) throw ''
 		const sel = `${tableName}.${name}::${reg}[]::text[]`
-		const ty = "Option<Vec<Qual>>"
-		const exp = `${tableName}.${name}.map(|items| items.map(Qual::parse).collect())`
+		const ty = "Option<Vec<Str>>"
+		const exp = `${tableName}.${name}.map(|items| items.map(Str::new).collect())`
 		return [undefined, { typ, ref, desc, ...override, sel, ty, exp }]
 	}
 	if (typ === "oid" && genericReferencesTable && (noNamespaceTables.has(genericReferencesTable))) {
@@ -389,9 +386,8 @@ async function decideColumn(
 		const joinTableName = `${name}_${genericReferencesTable}`
 
 		const prefix = getTablePrefix(genericReferencesTable)
-		const sel = `quote_ident(${joinNamespaceName}.nspname) || '.' || quote_ident(${joinTableName}.${prefix}name)`
-		const ty = nullable ? `Option<Qual>` : `Qual`
-		const exp = `Qual::${nullable ? 'maybe_parse' : 'parse'}(${tableName}.${name})`
+		const sel = `pg_temp.quote_with_namespace(${joinNamespaceName}.nspname, ${joinTableName}.${prefix}name)`
+		const [ty, exp] = makeStr(tableName, name, nullable)
 
 		const leftPortion = nullable ? 'left ' : ''
 		const joins = [
@@ -460,9 +456,9 @@ async function decideColumn(
 	}
 	if (typ === "aclitem[]") {
 		const aclPrefix = aclitemMapping[tableName]; if (!aclPrefix) throw `no acl for ${tableName}`
-		const sel = `${name}::text[]`
-		const ty = `Option<Vec<aclitem::${aclPrefix}AclItem>>`
-		const exp = `${tableName}.${name}.map(|${name}| ${name}.map(|acl| aclitem(acl, &${aclPrefix}GrantParser)).collect())`
+		const sel = `pg_temp.format_${aclPrefix.toLowerCase()}_aclitems(${tableName}.${name})`
+		const ty = `Option<Vec<${aclPrefix}AclItem>>`
+		const exp = `${tableName}.${name}.map(|${name}| ${name}.map(|acl| aclitems!(acl, ${aclPrefix}AclItem, ${aclPrefix}Grant)).collect())`
 		return [undefined, { typ, ref, desc, sel, ty, exp }]
 	}
 	if (name === "attnum" || (typ === "int2" && ref === "(references pg_attribute.attnum)")) {

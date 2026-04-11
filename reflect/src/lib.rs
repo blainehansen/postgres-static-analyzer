@@ -13,6 +13,21 @@ mod reflect_test;
 
 mod reflect_gen;
 
+pub(crate) fn maybe_str(s: Option<&str>) -> Option<Str> {
+	s.map(Str::new)
+}
+
+macro_rules! aclitems {
+	($acl: ident, $item_type: ident, $grant_type: ident) => {
+		$item_type {
+			grantee: if $acl.grantee == "public" {None} else {Some($acl.grantee.into())},
+			grantor: $acl.grantor.into(),
+			grants: $acl.grants.map(|g| $grant_type { privilege: g.privilege, with_grant_option: g.with_grant_option }).collect(),
+		}
+	};
+}
+pub(crate) use aclitems;
+
 pub use postgres_static_analyzer_ddl_catalog_structs::*;
 use futures::TryStreamExt;
 
@@ -280,7 +295,7 @@ pub async fn reflect_pg_enum(
 	let pg_enum_coll = queries_crate::queries::manual::reflect_pg_enum().bind(client)
 		.map(|pg_enum| {
 			PgEnum {
-				enumtypid: Qual::parse(pg_enum.enumtypid),
+				enumtypid: pg_enum.enumtypid.into(),
 				enumlabels: pg_enum.enumlabels.map(Into::into).collect(),
 			}
 		})
@@ -331,15 +346,15 @@ pub async fn reflect_pg_proc(
 	let pg_proc_coll = queries_crate::queries::manual::reflect_pg_proc().bind(client)
 		.map(|pg_proc| {
 			PgProc {
-				oid: Qual::parse(pg_proc.oid),
+				oid: pg_proc.oid.into(),
 				proname: pg_proc.proname.into(),
 				pronamespace: pg_proc.pronamespace.into(),
 				proowner: pg_proc.proowner.into(),
 				prolang: pg_proc.prolang.into(),
 				procost: pg_proc.procost.map(|n| ordered_float::NotNan::new(n).unwrap()),
 				prorows: pg_proc.prorows.map(|n| ordered_float::NotNan::new(n).unwrap()),
-				provariadic: Qual::maybe_parse(pg_proc.provariadic),
-				prosupport: Qual::maybe_parse(pg_proc.prosupport),
+				provariadic: pg_proc.provariadic.map(Str::new),
+				prosupport: pg_proc.prosupport.map(Str::new),
 				prokind: PgProcProkind::pg_from_char(pg_proc.prokind),
 				prosecdef: pg_proc.prosecdef,
 				proleakproof: pg_proc.proleakproof,
@@ -349,18 +364,18 @@ pub async fn reflect_pg_proc(
 				proparallel: PgProcProparallel::pg_from_char(pg_proc.proparallel),
 				pronargs: pg_proc.pronargs.unsigned_abs(),
 				pronargdefaults: pg_proc.pronargdefaults.unsigned_abs(),
-				prorettype: Qual::parse(pg_proc.prorettype),
-		    proargtypes: pg_proc.proargtypes.map(Qual::parse).collect(),
-				proallargtypes: pg_proc.proallargtypes.map(|items| items.map(Qual::parse).collect()),
+				prorettype: pg_proc.prorettype.into(),
+		    proargtypes: pg_proc.proargtypes.map(Str::new).collect(),
+				proallargtypes: pg_proc.proallargtypes.map(|items| items.map(Str::new).collect()),
 		    proargmodes: pg_proc.proargmodes.map(|items| items.map(PgProcProargmodes::pg_from_char).collect()),
 				proargnames: pg_proc.proargnames.map(|items| items.map(Into::into).collect()),
 		    proargdefaults: pg_proc.proargdefaults.map(|items| items.map(|item| item.map(Into::into)).collect()),
-				protrftypes: pg_proc.protrftypes.map(|items| items.map(Qual::parse).collect()),
+				protrftypes: pg_proc.protrftypes.map(|items| items.map(Str::new).collect()),
 				prosrc: pg_proc.prosrc.map(Into::into),
 				probin: pg_proc.probin.map(Into::into),
 		    prosqlbody: pg_proc.prosqlbody.map(Into::into),
 				proconfig: pg_proc.proconfig.map(|items| items.map(Into::into).collect()),
-				proacl: pg_proc.proacl.map(|proacl| proacl.map(|acl| aclitem::aclitem(acl, &aclitem::FunctionGrantParser)).collect()),
+				proacl: pg_proc.proacl.map(|proacl| proacl.map(|acl| aclitems!(acl, FunctionAclItem, FunctionGrant)).collect()),
 				description: pg_proc.description.map(Into::into),
 			}
 		})

@@ -8,7 +8,6 @@ hashbrown = { workspace = true }
 chrono = { workspace = true, default-features = false, features = ["alloc", "std", "alloc", "clock", "now", "serde"] }
 # thiserror = { workspace = true }
 smol_str = { workspace = true }
-nom = { workspace = true }
-paste = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 ordered-float = { workspace = true }
+postgres-types = { workspace = true, features = ["derive"] }

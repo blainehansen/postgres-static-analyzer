@@ -134,8 +134,8 @@ pg_index.indcheckxmin = 'skip'
 pg_index.indisready = 'skip'
 pg_index.indislive = 'skip'
 pg_index.indoption = { sel="pg_index.indoption::int2[]", ty="Vec<i16>", exp="pg_index.indoption.collect()" }
-pg_index.indcollation = { sel="pg_temp.format_pg_collation_oidvector(pg_index.indcollation)", ty="Vec<Option<Qual>>", exp="pg_index.indcollation.map(Qual::maybe_parse).collect()" }
-pg_index.indclass = { sel="pg_temp.format_pg_opclass_oidvector(pg_index.indclass)", ty="Vec<Qual>", exp="pg_index.indclass.map(Qual::parse).collect()" }
+pg_index.indcollation = { sel="pg_temp.format_pg_collation_oidvector(pg_index.indcollation)", ty="Vec<Option<Str>>", exp="pg_index.indcollation.map(maybe_str).collect()" }
+pg_index.indclass = { sel="pg_temp.format_pg_opclass_oidvector(pg_index.indclass)", ty="Vec<Str>", exp="pg_index.indclass.map(Str::new).collect()" }
 
 # pg_inherits = {}
 pg_inherits.inhdetachpending = 'skip'
@@ -158,8 +158,8 @@ pg_opfamily = {}
 pg_parameter_acl = {}
 
 # pg_partitioned_table = {}
-pg_partitioned_table.partclass = { sel="pg_temp.format_pg_opclass_oidvector(pg_partitioned_table.partclass)", ty="Vec<Qual>", exp="pg_partitioned_table.partclass.map(Qual::parse).collect()" }
-pg_partitioned_table.partcollation = { sel="pg_temp.format_pg_collation_oidvector(pg_partitioned_table.partcollation)", ty="Vec<Option<Qual>>", exp="pg_partitioned_table.partcollation.map(Qual::maybe_parse).collect()" }
+pg_partitioned_table.partclass = { sel="pg_temp.format_pg_opclass_oidvector(pg_partitioned_table.partclass)", ty="Vec<Str>", exp="pg_partitioned_table.partclass.map(Str::new).collect()" }
+pg_partitioned_table.partcollation = { sel="pg_temp.format_pg_collation_oidvector(pg_partitioned_table.partcollation)", ty="Vec<Option<Str>>", exp="pg_partitioned_table.partcollation.map(maybe_str).collect()" }
 pg_partitioned_table.partexprs = { sel="pg_get_expr(pg_partitioned_table.partexprs, pg_partitioned_table.partrelid)", ty="Option<Str>", exp="pg_partitioned_table.partexprs.map(Into::into)" }
 # Partitioning strategy; h = hash partitioned table, l = list partitioned table, r = range partitioned table
 pg_partitioned_table.partstrat = { pgEnum="'h' => HashPartitionedTable, 'l' => ListPartitionedTable, 'r' => RangePartitionedTable" }
@@ -188,13 +188,13 @@ pg_range = {}
 
 # pg_rewrite ignored and and replaced with pg_rules pg_views and pg_matviews
 pg_rules = {}
-pg_rules.tablename = { sel="quote_ident(pg_rules.schemaname) || '.' || quote_ident(pg_rules.tablename)", ty="Qual", exp="Qual::parse(pg_rules.tablename)" }
+pg_rules.tablename = { sel="pg_temp.quote_with_namespace(pg_rules.schemaname, pg_rules.tablename)", ty="Str", exp="pg_rules.tablename.into()" }
 
 pg_views = {}
-pg_views.viewname = { sel="quote_ident(pg_views.schemaname) || '.' || quote_ident(pg_views.viewname)", ty="Qual", exp="Qual::parse(pg_views.viewname)", filters=["not starts_with(pg_views.schemaname, 'pg_toast')"] }
+pg_views.viewname = { sel="pg_temp.quote_with_namespace(pg_views.schemaname, pg_views.viewname)", ty="Str", exp="pg_views.viewname.into()", filters=["not starts_with(pg_views.schemaname, 'pg_toast')"] }
 
 pg_matviews = {}
-pg_matviews.matviewname = { sel="quote_ident(pg_matviews.schemaname) || '.' || quote_ident(pg_matviews.matviewname)", ty="Qual", exp="Qual::parse(pg_matviews.matviewname)" }
+pg_matviews.matviewname = { sel="pg_temp.quote_with_namespace(pg_matviews.schemaname, pg_matviews.matviewname)", ty="Str", exp="pg_matviews.matviewname.into()" }
 pg_matviews.tablespace = 'skip'
 pg_matviews.hasindexes = 'skip'
 pg_matviews.ispopulated = 'skip'

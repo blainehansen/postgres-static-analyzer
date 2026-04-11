@@ -9,3 +9,17 @@ edition = "2024"
 
 [manifest.dependencies]
 # serde = { version = "1.0", features = ["derive"] }
+postgres-static-analyzer-ddl-catalog-structs = { path = "../../catalog_structs" }
+
+[types.mapping]
+"pg_temp_1.db_aclprivilege" = "postgres_static_analyzer_ddl_catalog_structs::DbAclPrivilege"
+"pg_temp_1.function_aclprivilege" = "postgres_static_analyzer_ddl_catalog_structs::FunctionAclPrivilege"
+"pg_temp_1.foreigndatawrapper_aclprivilege" = "postgres_static_analyzer_ddl_catalog_structs::ForeignDataWrapperAclPrivilege"
+"pg_temp_1.foreignserver_aclprivilege" = "postgres_static_analyzer_ddl_catalog_structs::ForeignServerAclPrivilege"
+"pg_temp_1.language_aclprivilege" = "postgres_static_analyzer_ddl_catalog_structs::LanguageAclPrivilege"
+"pg_temp_1.parameter_aclprivilege" = "postgres_static_analyzer_ddl_catalog_structs::ParameterAclPrivilege"
+"pg_temp_1.schema_aclprivilege" = "postgres_static_analyzer_ddl_catalog_structs::SchemaAclPrivilege"
+"pg_temp_1.table_aclprivilege" = "postgres_static_analyzer_ddl_catalog_structs::TableAclPrivilege"
+"pg_temp_1.tablecolumn_aclprivilege" = "postgres_static_analyzer_ddl_catalog_structs::TableColumnAclPrivilege"
+"pg_temp_1.type_aclprivilege" = "postgres_static_analyzer_ddl_catalog_structs::TypeAclPrivilege"
+"pg_temp_1.acldefault_aclprivilege" = "postgres_static_analyzer_ddl_catalog_structs::AclDefaultAclPrivilege"

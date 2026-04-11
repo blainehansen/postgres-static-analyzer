@@ -13,7 +13,7 @@ const structText = 'use super::*;\n\n'
 	+ formatted.map(({ struct }) => `${struct}\n\n`).join('\n')
 
 const queryText = formatted.map(({ query }) => `${query}\n\n`).join('\n')
-const reflectText = 'use super::*;\nuse futures::TryStreamExt;\nuse crate::aclitem::*;\n\n'
+const reflectText = 'use super::*;\nuse futures::TryStreamExt;\n\n'
 	+ formatted.map(({ reflect }) => `${reflect}\n\n`).join('\n')
 
 await Promise.all([
@@ -85,8 +85,8 @@ function formatTable(
 	`)
 
 	const implHashPortion =
-		hashCol === true ? `\n\t\timpl_qual_hash_and_equivalent!(${structName});`
-		: hashCol ? `\n\t\timpl_name_hash_and_equivalent!(${structName}, ${hashCol});`
+		hashCol === true ? `\n\t\timpl_hash_and_equivalent!(${structName}, oid);`
+		: hashCol ? `\n\t\timpl_hash_and_equivalent!(${structName}, ${hashCol});`
 		: ''
 	const pgEnumsPortion =
 		!allPgEnums.length ? ''

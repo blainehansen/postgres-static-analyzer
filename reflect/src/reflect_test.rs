@@ -21,9 +21,11 @@ async fn test_reflect_pg_state() -> anyhow::Result<()> {
 	let snapshot_content = tokio::fs::read_to_string("./src/snapshots/postgres_static_analyzer_reflect__reflect_test__reflect_pg_state.snap").await?;
 	assert!(!snapshot_content.contains("schema_name: \"pg_toast"));
 	assert!(!snapshot_content.contains("schema_name: \"pg_temp"));
+	assert!(!snapshot_content.contains(": \"pg_catalog."));
 
+	assert!(snapshot_content.contains("aggfnoid: \"my_schema.catalog_sum(numeric)\","));
 	assert!(snapshot_content.contains(r#"Some("COMMENT ON DATABASE tempdb")"#));
-	assert!(snapshot_content.contains(r#"Some("COMMENT ON SCHEMA catalog_schema")"#));
+	assert!(snapshot_content.contains(r#"Some("COMMENT ON SCHEMA my_schema")"#));
 	assert!(snapshot_content.contains(r#"Some("COMMENT ON TABLE parent_table")"#));
 	assert!(snapshot_content.contains(r#"Some("COMMENT ON COLUMN parent_table.status")"#));
 	assert!(snapshot_content.contains(r#"Some("COMMENT ON COLUMN parent_table.active_period")"#));

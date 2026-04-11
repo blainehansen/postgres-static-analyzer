@@ -1,6 +1,5 @@
 use super::*;
 use futures::TryStreamExt;
-use crate::aclitem::*;
 
 /// Asynchronously pull the contents of [`pg_aggregate`](https://www.postgresql.org/docs/17/catalog-pg-aggregate.html)
 pub async fn reflect_pg_aggregate(
@@ -9,24 +8,24 @@ pub async fn reflect_pg_aggregate(
 	let pg_aggregate_coll = queries_crate::queries::query_gen::reflect_pg_aggregate().bind(client)
 		.map(|pg_aggregate| {
 			PgAggregate {
-				aggfnoid: Qual::parse(pg_aggregate.aggfnoid),
+				aggfnoid: pg_aggregate.aggfnoid.into(),
 				aggkind: PgAggregateAggkind::pg_from_char(pg_aggregate.aggkind),
 				aggnumdirectargs: pg_aggregate.aggnumdirectargs.unsigned_abs(),
-				aggtransfn: Qual::parse(pg_aggregate.aggtransfn),
-				aggfinalfn: Qual::maybe_parse(pg_aggregate.aggfinalfn),
-				aggcombinefn: Qual::maybe_parse(pg_aggregate.aggcombinefn),
-				aggserialfn: Qual::maybe_parse(pg_aggregate.aggserialfn),
-				aggdeserialfn: Qual::maybe_parse(pg_aggregate.aggdeserialfn),
-				aggmtransfn: Qual::maybe_parse(pg_aggregate.aggmtransfn),
-				aggminvtransfn: Qual::maybe_parse(pg_aggregate.aggminvtransfn),
-				aggmfinalfn: Qual::maybe_parse(pg_aggregate.aggmfinalfn),
+				aggtransfn: pg_aggregate.aggtransfn.into(),
+				aggfinalfn: pg_aggregate.aggfinalfn.map(Into::into),
+				aggcombinefn: pg_aggregate.aggcombinefn.map(Into::into),
+				aggserialfn: pg_aggregate.aggserialfn.map(Into::into),
+				aggdeserialfn: pg_aggregate.aggdeserialfn.map(Into::into),
+				aggmtransfn: pg_aggregate.aggmtransfn.map(Into::into),
+				aggminvtransfn: pg_aggregate.aggminvtransfn.map(Into::into),
+				aggmfinalfn: pg_aggregate.aggmfinalfn.map(Into::into),
 				aggfinalextra: pg_aggregate.aggfinalextra,
 				aggmfinalextra: pg_aggregate.aggmfinalextra,
 				aggfinalmodify: PgAggregateAggfinalmodify::pg_from_char(pg_aggregate.aggfinalmodify),
 				aggmfinalmodify: PgAggregateAggmfinalmodify::pg_from_char(pg_aggregate.aggmfinalmodify),
-				aggsortop: Qual::maybe_parse(pg_aggregate.aggsortop),
-				aggtranstype: Qual::parse(pg_aggregate.aggtranstype),
-				aggmtranstype: Qual::maybe_parse(pg_aggregate.aggmtranstype),
+				aggsortop: pg_aggregate.aggsortop.map(Into::into),
+				aggtranstype: pg_aggregate.aggtranstype.into(),
+				aggmtranstype: pg_aggregate.aggmtranstype.map(Into::into),
 				agginitval: pg_aggregate.agginitval.map(Into::into),
 				aggminitval: pg_aggregate.aggminitval.map(Into::into),
 			}
@@ -46,7 +45,7 @@ pub async fn reflect_pg_am(
 		.map(|pg_am| {
 			PgAm {
 				amname: pg_am.amname.into(),
-				amhandler: Qual::parse(pg_am.amhandler),
+				amhandler: pg_am.amhandler.into(),
 				amtype: PgAmAmtype::pg_from_char(pg_am.amtype),
 				description: pg_am.description.map(Into::into),
 			}
@@ -65,14 +64,14 @@ pub async fn reflect_pg_amop(
 	let pg_amop_coll = queries_crate::queries::query_gen::reflect_pg_amop().bind(client)
 		.map(|pg_amop| {
 			PgAmop {
-				amopfamily: Qual::parse(pg_amop.amopfamily),
-				amoplefttype: Qual::parse(pg_amop.amoplefttype),
-				amoprighttype: Qual::parse(pg_amop.amoprighttype),
+				amopfamily: pg_amop.amopfamily.into(),
+				amoplefttype: pg_amop.amoplefttype.into(),
+				amoprighttype: pg_amop.amoprighttype.into(),
 				amopstrategy: pg_amop.amopstrategy.unsigned_abs(),
 				amoppurpose: PgAmopAmoppurpose::pg_from_char(pg_amop.amoppurpose),
-				amopopr: Qual::parse(pg_amop.amopopr),
+				amopopr: pg_amop.amopopr.into(),
 				amopmethod: pg_amop.amopmethod.into(),
-				amopsortfamily: Qual::maybe_parse(pg_amop.amopsortfamily),
+				amopsortfamily: pg_amop.amopsortfamily.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -89,11 +88,11 @@ pub async fn reflect_pg_amproc(
 	let pg_amproc_coll = queries_crate::queries::query_gen::reflect_pg_amproc().bind(client)
 		.map(|pg_amproc| {
 			PgAmproc {
-				amprocfamily: Qual::parse(pg_amproc.amprocfamily),
-				amproclefttype: Qual::parse(pg_amproc.amproclefttype),
-				amprocrighttype: Qual::parse(pg_amproc.amprocrighttype),
+				amprocfamily: pg_amproc.amprocfamily.into(),
+				amproclefttype: pg_amproc.amproclefttype.into(),
+				amprocrighttype: pg_amproc.amprocrighttype.into(),
 				amprocnum: pg_amproc.amprocnum.unsigned_abs(),
-				amproc: Qual::parse(pg_amproc.amproc),
+				amproc: pg_amproc.amproc.into(),
 			}
 		})
 		.iter().await?.try_collect()
@@ -110,7 +109,7 @@ pub async fn reflect_pg_attrdef(
 	let pg_attrdef_coll = queries_crate::queries::query_gen::reflect_pg_attrdef().bind(client)
 		.map(|pg_attrdef| {
 			PgAttrdef {
-				adrelid: Qual::parse(pg_attrdef.adrelid),
+				adrelid: pg_attrdef.adrelid.into(),
 				adnum: pg_attrdef.adnum.unsigned_abs(),
 				adbin: pg_attrdef.adbin.into(),
 			}
@@ -129,9 +128,9 @@ pub async fn reflect_pg_attribute(
 	let pg_attribute_coll = queries_crate::queries::query_gen::reflect_pg_attribute().bind(client)
 		.map(|pg_attribute| {
 			PgAttribute {
-				attrelid: Qual::parse(pg_attribute.attrelid),
+				attrelid: pg_attribute.attrelid.into(),
 				attname: pg_attribute.attname.into(),
-				atttypid: Qual::parse(pg_attribute.atttypid),
+				atttypid: pg_attribute.atttypid.into(),
 				attnum: pg_attribute.attnum.unsigned_abs(),
 				atttypmod: pg_attribute.atttypmod.map(i32::unsigned_abs),
 				attndims: pg_attribute.attndims.unsigned_abs(),
@@ -143,15 +142,15 @@ pub async fn reflect_pg_attribute(
 				attisdropped: pg_attribute.attisdropped,
 				attislocal: pg_attribute.attislocal,
 				attinhcount: pg_attribute.attinhcount.unsigned_abs(),
-				attcollation: Qual::maybe_parse(pg_attribute.attcollation),
+				attcollation: pg_attribute.attcollation.map(Into::into),
 				attstattarget: pg_attribute.attstattarget.map(i16::unsigned_abs),
-				attacl: pg_attribute.attacl.map(|attacl| attacl.map(|acl| aclitem(acl, &TableColumnGrantParser)).collect()),
+				attacl: pg_attribute.attacl.map(|attacl| attacl.map(|acl| aclitems!(acl, TableColumnAclItem, TableColumnGrant)).collect()),
 				attoptions: pg_attribute.attoptions.map(|items| items.map(Into::into).collect()),
 				attfdwoptions: pg_attribute.attfdwoptions.map(|items| items.map(Into::into).collect()),
 				description: pg_attribute.description.map(Into::into),
 				seclabel: pg_attribute.seclabel.map(Into::into),
 				seclabel_provider: pg_attribute.seclabel_provider.map(Into::into),
-				initprivs: pg_attribute.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &TableColumnGrantParser)).collect()),
+				initprivs: pg_attribute.initprivs.map(|initprivs| initprivs.map(|acl| aclitems!(acl, TableColumnAclItem, TableColumnGrant)).collect()),
 				initprivs_type: pg_attribute.initprivs_type.map(PgAttributeInitprivsType::pg_from_char),
 			}
 		})
@@ -221,9 +220,9 @@ pub async fn reflect_pg_cast(
 	let pg_cast_coll = queries_crate::queries::query_gen::reflect_pg_cast().bind(client)
 		.map(|pg_cast| {
 			PgCast {
-				castsource: Qual::parse(pg_cast.castsource),
-				casttarget: Qual::parse(pg_cast.casttarget),
-				castfunc: Qual::maybe_parse(pg_cast.castfunc),
+				castsource: pg_cast.castsource.into(),
+				casttarget: pg_cast.casttarget.into(),
+				castfunc: pg_cast.castfunc.map(Into::into),
 				castcontext: PgCastCastcontext::pg_from_char(pg_cast.castcontext),
 				castmethod: PgCastCastmethod::pg_from_char(pg_cast.castmethod),
 				description: pg_cast.description.map(Into::into),
@@ -243,11 +242,11 @@ pub async fn reflect_pg_class(
 	let pg_class_coll = queries_crate::queries::query_gen::reflect_pg_class().bind(client)
 		.map(|pg_class| {
 			PgClass {
-				oid: Qual::parse(pg_class.oid),
+				oid: pg_class.oid.into(),
 				relname: pg_class.relname.into(),
 				relnamespace: pg_class.relnamespace.into(),
-				reltype: Qual::maybe_parse(pg_class.reltype),
-				reloftype: Qual::maybe_parse(pg_class.reloftype),
+				reltype: pg_class.reltype.map(Into::into),
+				reloftype: pg_class.reloftype.map(Into::into),
 				relowner: pg_class.relowner.into(),
 				relam: pg_class.relam.map(Into::into),
 				relisshared: pg_class.relisshared,
@@ -259,13 +258,13 @@ pub async fn reflect_pg_class(
 				relforcerowsecurity: pg_class.relforcerowsecurity,
 				relreplident: PgClassRelreplident::pg_from_char(pg_class.relreplident),
 				relispartition: pg_class.relispartition,
-				relacl: pg_class.relacl.map(|relacl| relacl.map(|acl| aclitem(acl, &TableGrantParser)).collect()),
+				relacl: pg_class.relacl.map(|relacl| relacl.map(|acl| aclitems!(acl, TableAclItem, TableGrant)).collect()),
 				reloptions: pg_class.reloptions.map(|items| items.map(Into::into).collect()),
 				relpartbound: pg_class.relpartbound.map(Into::into),
 				description: pg_class.description.map(Into::into),
 				seclabel: pg_class.seclabel.map(Into::into),
 				seclabel_provider: pg_class.seclabel_provider.map(Into::into),
-				initprivs: pg_class.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &TableGrantParser)).collect()),
+				initprivs: pg_class.initprivs.map(|initprivs| initprivs.map(|acl| aclitems!(acl, TableAclItem, TableGrant)).collect()),
 				initprivs_type: pg_class.initprivs_type.map(PgClassInitprivsType::pg_from_char),
 			}
 		})
@@ -283,7 +282,7 @@ pub async fn reflect_pg_collation(
 	let pg_collation_coll = queries_crate::queries::query_gen::reflect_pg_collation().bind(client)
 		.map(|pg_collation| {
 			PgCollation {
-				oid: Qual::parse(pg_collation.oid),
+				oid: pg_collation.oid.into(),
 				collname: pg_collation.collname.into(),
 				collnamespace: pg_collation.collnamespace.into(),
 				collowner: pg_collation.collowner.into(),
@@ -318,11 +317,11 @@ pub async fn reflect_pg_constraint(
 				condeferrable: pg_constraint.condeferrable,
 				condeferred: pg_constraint.condeferred,
 				convalidated: pg_constraint.convalidated,
-				conrelid: Qual::maybe_parse(pg_constraint.conrelid),
-				contypid: Qual::maybe_parse(pg_constraint.contypid),
-				conindid: Qual::maybe_parse(pg_constraint.conindid),
-				conparentid: Qual::maybe_parse(pg_constraint.conparentid),
-				confrelid: Qual::maybe_parse(pg_constraint.confrelid),
+				conrelid: pg_constraint.conrelid.map(Into::into),
+				contypid: pg_constraint.contypid.map(Into::into),
+				conindid: pg_constraint.conindid.map(Into::into),
+				conparentid: pg_constraint.conparentid.map(Into::into),
+				confrelid: pg_constraint.confrelid.map(Into::into),
 				confupdtype: pg_constraint.confupdtype.map(PgConstraintConfupdtype::pg_from_char),
 				confdeltype: pg_constraint.confdeltype.map(PgConstraintConfdeltype::pg_from_char),
 				confmatchtype: pg_constraint.confmatchtype.map(PgConstraintConfmatchtype::pg_from_char),
@@ -331,11 +330,11 @@ pub async fn reflect_pg_constraint(
 				connoinherit: pg_constraint.connoinherit,
 				conkey: pg_constraint.conkey.map(|items| items.map(i16::unsigned_abs).collect()),
 				confkey: pg_constraint.confkey.map(|items| items.map(i16::unsigned_abs).collect()),
-				conpfeqop: pg_constraint.conpfeqop.map(|items| items.map(Qual::parse).collect()),
-				conppeqop: pg_constraint.conppeqop.map(|items| items.map(Qual::parse).collect()),
-				conffeqop: pg_constraint.conffeqop.map(|items| items.map(Qual::parse).collect()),
+				conpfeqop: pg_constraint.conpfeqop.map(|items| items.map(Str::new).collect()),
+				conppeqop: pg_constraint.conppeqop.map(|items| items.map(Str::new).collect()),
+				conffeqop: pg_constraint.conffeqop.map(|items| items.map(Str::new).collect()),
 				confdelsetcols: pg_constraint.confdelsetcols.map(|items| items.map(i16::unsigned_abs).collect()),
-				conexclop: pg_constraint.conexclop.map(|items| items.map(Qual::parse).collect()),
+				conexclop: pg_constraint.conexclop.map(|items| items.map(Str::new).collect()),
 				conbin: pg_constraint.conbin.map(Into::into),
 				description: pg_constraint.description.map(Into::into),
 			}
@@ -359,7 +358,7 @@ pub async fn reflect_pg_conversion(
 				conowner: pg_conversion.conowner.into(),
 				conforencoding: pg_conversion.conforencoding.into(),
 				contoencoding: pg_conversion.contoencoding.into(),
-				conproc: Qual::parse(pg_conversion.conproc),
+				conproc: pg_conversion.conproc.into(),
 				condefault: pg_conversion.condefault,
 				description: pg_conversion.description.map(Into::into),
 			}
@@ -390,7 +389,7 @@ pub async fn reflect_pg_database(
 				datlocale: pg_database.datlocale.map(Into::into),
 				daticurules: pg_database.daticurules.map(Into::into),
 				datcollversion: pg_database.datcollversion.map(Into::into),
-				datacl: pg_database.datacl.map(|datacl| datacl.map(|acl| aclitem(acl, &DbGrantParser)).collect()),
+				datacl: pg_database.datacl.map(|datacl| datacl.map(|acl| aclitems!(acl, DbAclItem, DbGrant)).collect()),
 				description: pg_database.description.map(Into::into),
 				seclabel: pg_database.seclabel.map(Into::into),
 				seclabel_provider: pg_database.seclabel_provider.map(Into::into),
@@ -413,7 +412,7 @@ pub async fn reflect_pg_default_acl(
 				defaclrole: pg_default_acl.defaclrole.into(),
 				defaclnamespace: pg_default_acl.defaclnamespace.map(Into::into),
 				defaclobjtype: PgDefaultAclDefaclobjtype::pg_from_char(pg_default_acl.defaclobjtype),
-				defaclacl: pg_default_acl.defaclacl.map(|defaclacl| defaclacl.map(|acl| aclitem(acl, &AclDefaultGrantParser)).collect()),
+				defaclacl: pg_default_acl.defaclacl.map(|defaclacl| defaclacl.map(|acl| aclitems!(acl, AclDefaultAclItem, AclDefaultGrant)).collect()),
 			}
 		})
 		.iter().await?.try_collect()
@@ -433,7 +432,7 @@ pub async fn reflect_pg_event_trigger(
 				evtname: pg_event_trigger.evtname.into(),
 				evtevent: pg_event_trigger.evtevent.into(),
 				evtowner: pg_event_trigger.evtowner.into(),
-				evtfoid: Qual::parse(pg_event_trigger.evtfoid),
+				evtfoid: pg_event_trigger.evtfoid.into(),
 				evtenabled: PgEventTriggerEvtenabled::pg_from_char(pg_event_trigger.evtenabled),
 				evttags: pg_event_trigger.evttags.map(|items| items.map(Into::into).collect()),
 				description: pg_event_trigger.description.map(Into::into),
@@ -460,7 +459,7 @@ pub async fn reflect_pg_extension(
 				extnamespace: pg_extension.extnamespace.into(),
 				extrelocatable: pg_extension.extrelocatable,
 				extversion: pg_extension.extversion.into(),
-				extconfig: pg_extension.extconfig.map(|items| items.map(Qual::parse).collect()),
+				extconfig: pg_extension.extconfig.map(|items| items.map(Str::new).collect()),
 				extcondition: pg_extension.extcondition.map(|items| items.map(Into::into).collect()),
 				description: pg_extension.description.map(Into::into),
 			}
@@ -481,12 +480,12 @@ pub async fn reflect_pg_foreign_data_wrapper(
 			PgForeignDataWrapper {
 				fdwname: pg_foreign_data_wrapper.fdwname.into(),
 				fdwowner: pg_foreign_data_wrapper.fdwowner.into(),
-				fdwhandler: Qual::maybe_parse(pg_foreign_data_wrapper.fdwhandler),
-				fdwvalidator: Qual::maybe_parse(pg_foreign_data_wrapper.fdwvalidator),
-				fdwacl: pg_foreign_data_wrapper.fdwacl.map(|fdwacl| fdwacl.map(|acl| aclitem(acl, &ForeignDataWrapperGrantParser)).collect()),
+				fdwhandler: pg_foreign_data_wrapper.fdwhandler.map(Into::into),
+				fdwvalidator: pg_foreign_data_wrapper.fdwvalidator.map(Into::into),
+				fdwacl: pg_foreign_data_wrapper.fdwacl.map(|fdwacl| fdwacl.map(|acl| aclitems!(acl, ForeignDataWrapperAclItem, ForeignDataWrapperGrant)).collect()),
 				fdwoptions: pg_foreign_data_wrapper.fdwoptions.map(|items| items.map(Into::into).collect()),
 				description: pg_foreign_data_wrapper.description.map(Into::into),
-				initprivs: pg_foreign_data_wrapper.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &ForeignDataWrapperGrantParser)).collect()),
+				initprivs: pg_foreign_data_wrapper.initprivs.map(|initprivs| initprivs.map(|acl| aclitems!(acl, ForeignDataWrapperAclItem, ForeignDataWrapperGrant)).collect()),
 				initprivs_type: pg_foreign_data_wrapper.initprivs_type.map(PgForeignDataWrapperInitprivsType::pg_from_char),
 			}
 		})
@@ -509,10 +508,10 @@ pub async fn reflect_pg_foreign_server(
 				srvfdw: pg_foreign_server.srvfdw.into(),
 				srvtype: pg_foreign_server.srvtype.map(Into::into),
 				srvversion: pg_foreign_server.srvversion.map(Into::into),
-				srvacl: pg_foreign_server.srvacl.map(|srvacl| srvacl.map(|acl| aclitem(acl, &ForeignServerGrantParser)).collect()),
+				srvacl: pg_foreign_server.srvacl.map(|srvacl| srvacl.map(|acl| aclitems!(acl, ForeignServerAclItem, ForeignServerGrant)).collect()),
 				srvoptions: pg_foreign_server.srvoptions.map(|items| items.map(Into::into).collect()),
 				description: pg_foreign_server.description.map(Into::into),
-				initprivs: pg_foreign_server.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &ForeignServerGrantParser)).collect()),
+				initprivs: pg_foreign_server.initprivs.map(|initprivs| initprivs.map(|acl| aclitems!(acl, ForeignServerAclItem, ForeignServerGrant)).collect()),
 				initprivs_type: pg_foreign_server.initprivs_type.map(PgForeignServerInitprivsType::pg_from_char),
 			}
 		})
@@ -530,7 +529,7 @@ pub async fn reflect_pg_foreign_table(
 	let pg_foreign_table_coll = queries_crate::queries::query_gen::reflect_pg_foreign_table().bind(client)
 		.map(|pg_foreign_table| {
 			PgForeignTable {
-				ftrelid: Qual::parse(pg_foreign_table.ftrelid),
+				ftrelid: pg_foreign_table.ftrelid.into(),
 				ftserver: pg_foreign_table.ftserver.into(),
 				ftoptions: pg_foreign_table.ftoptions.map(|items| items.map(Into::into).collect()),
 			}
@@ -549,8 +548,8 @@ pub async fn reflect_pg_index(
 	let pg_index_coll = queries_crate::queries::query_gen::reflect_pg_index().bind(client)
 		.map(|pg_index| {
 			PgIndex {
-				indexrelid: Qual::parse(pg_index.indexrelid),
-				indrelid: Qual::parse(pg_index.indrelid),
+				indexrelid: pg_index.indexrelid.into(),
+				indrelid: pg_index.indrelid.into(),
 				indnatts: pg_index.indnatts.unsigned_abs(),
 				indnkeyatts: pg_index.indnkeyatts.unsigned_abs(),
 				indisunique: pg_index.indisunique,
@@ -561,8 +560,8 @@ pub async fn reflect_pg_index(
 				indisclustered: pg_index.indisclustered,
 				indisreplident: pg_index.indisreplident,
 				indkey: pg_index.indkey.map(i16::unsigned_abs).collect(),
-				indcollation: pg_index.indcollation.map(Qual::maybe_parse).collect(),
-				indclass: pg_index.indclass.map(Qual::parse).collect(),
+				indcollation: pg_index.indcollation.map(maybe_str).collect(),
+				indclass: pg_index.indclass.map(Str::new).collect(),
 				indoption: pg_index.indoption.collect(),
 				indexprs: pg_index.indexprs.map(Into::into),
 				indpred: pg_index.indpred.map(Into::into),
@@ -582,8 +581,8 @@ pub async fn reflect_pg_inherits(
 	let pg_inherits_coll = queries_crate::queries::query_gen::reflect_pg_inherits().bind(client)
 		.map(|pg_inherits| {
 			PgInherits {
-				inhrelid: Qual::parse(pg_inherits.inhrelid),
-				inhparent: Qual::parse(pg_inherits.inhparent),
+				inhrelid: pg_inherits.inhrelid.into(),
+				inhparent: pg_inherits.inhparent.into(),
 				inhseqno: pg_inherits.inhseqno.unsigned_abs(),
 			}
 		})
@@ -605,14 +604,14 @@ pub async fn reflect_pg_language(
 				lanowner: pg_language.lanowner.into(),
 				lanispl: pg_language.lanispl,
 				lanpltrusted: pg_language.lanpltrusted,
-				lanplcallfoid: Qual::maybe_parse(pg_language.lanplcallfoid),
-				laninline: Qual::maybe_parse(pg_language.laninline),
-				lanvalidator: Qual::maybe_parse(pg_language.lanvalidator),
-				lanacl: pg_language.lanacl.map(|lanacl| lanacl.map(|acl| aclitem(acl, &LanguageGrantParser)).collect()),
+				lanplcallfoid: pg_language.lanplcallfoid.map(Into::into),
+				laninline: pg_language.laninline.map(Into::into),
+				lanvalidator: pg_language.lanvalidator.map(Into::into),
+				lanacl: pg_language.lanacl.map(|lanacl| lanacl.map(|acl| aclitems!(acl, LanguageAclItem, LanguageGrant)).collect()),
 				description: pg_language.description.map(Into::into),
 				seclabel: pg_language.seclabel.map(Into::into),
 				seclabel_provider: pg_language.seclabel_provider.map(Into::into),
-				initprivs: pg_language.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &LanguageGrantParser)).collect()),
+				initprivs: pg_language.initprivs.map(|initprivs| initprivs.map(|acl| aclitems!(acl, LanguageAclItem, LanguageGrant)).collect()),
 				initprivs_type: pg_language.initprivs_type.map(PgLanguageInitprivsType::pg_from_char),
 			}
 		})
@@ -632,11 +631,11 @@ pub async fn reflect_pg_namespace(
 			PgNamespace {
 				nspname: pg_namespace.nspname.into(),
 				nspowner: pg_namespace.nspowner.into(),
-				nspacl: pg_namespace.nspacl.map(|nspacl| nspacl.map(|acl| aclitem(acl, &SchemaGrantParser)).collect()),
+				nspacl: pg_namespace.nspacl.map(|nspacl| nspacl.map(|acl| aclitems!(acl, SchemaAclItem, SchemaGrant)).collect()),
 				description: pg_namespace.description.map(Into::into),
 				seclabel: pg_namespace.seclabel.map(Into::into),
 				seclabel_provider: pg_namespace.seclabel_provider.map(Into::into),
-				initprivs: pg_namespace.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &SchemaGrantParser)).collect()),
+				initprivs: pg_namespace.initprivs.map(|initprivs| initprivs.map(|acl| aclitems!(acl, SchemaAclItem, SchemaGrant)).collect()),
 				initprivs_type: pg_namespace.initprivs_type.map(PgNamespaceInitprivsType::pg_from_char),
 			}
 		})
@@ -658,10 +657,10 @@ pub async fn reflect_pg_opclass(
 				opcname: pg_opclass.opcname.into(),
 				opcnamespace: pg_opclass.opcnamespace.into(),
 				opcowner: pg_opclass.opcowner.into(),
-				opcfamily: Qual::parse(pg_opclass.opcfamily),
-				opcintype: Qual::parse(pg_opclass.opcintype),
+				opcfamily: pg_opclass.opcfamily.into(),
+				opcintype: pg_opclass.opcintype.into(),
 				opcdefault: pg_opclass.opcdefault,
-				opckeytype: Qual::maybe_parse(pg_opclass.opckeytype),
+				opckeytype: pg_opclass.opckeytype.map(Into::into),
 				description: pg_opclass.description.map(Into::into),
 			}
 		})
@@ -679,21 +678,21 @@ pub async fn reflect_pg_operator(
 	let pg_operator_coll = queries_crate::queries::query_gen::reflect_pg_operator().bind(client)
 		.map(|pg_operator| {
 			PgOperator {
-				oid: Qual::parse(pg_operator.oid),
+				oid: pg_operator.oid.into(),
 				oprname: pg_operator.oprname.into(),
 				oprnamespace: pg_operator.oprnamespace.into(),
 				oprowner: pg_operator.oprowner.into(),
 				oprkind: PgOperatorOprkind::pg_from_char(pg_operator.oprkind),
 				oprcanmerge: pg_operator.oprcanmerge,
 				oprcanhash: pg_operator.oprcanhash,
-				oprleft: Qual::maybe_parse(pg_operator.oprleft),
-				oprright: Qual::parse(pg_operator.oprright),
-				oprresult: Qual::maybe_parse(pg_operator.oprresult),
-				oprcom: Qual::maybe_parse(pg_operator.oprcom),
-				oprnegate: Qual::maybe_parse(pg_operator.oprnegate),
-				oprcode: Qual::maybe_parse(pg_operator.oprcode),
-				oprrest: Qual::maybe_parse(pg_operator.oprrest),
-				oprjoin: Qual::maybe_parse(pg_operator.oprjoin),
+				oprleft: pg_operator.oprleft.map(Into::into),
+				oprright: pg_operator.oprright.into(),
+				oprresult: pg_operator.oprresult.map(Into::into),
+				oprcom: pg_operator.oprcom.map(Into::into),
+				oprnegate: pg_operator.oprnegate.map(Into::into),
+				oprcode: pg_operator.oprcode.map(Into::into),
+				oprrest: pg_operator.oprrest.map(Into::into),
+				oprjoin: pg_operator.oprjoin.map(Into::into),
 				description: pg_operator.description.map(Into::into),
 			}
 		})
@@ -733,8 +732,8 @@ pub async fn reflect_pg_parameter_acl(
 		.map(|pg_parameter_acl| {
 			PgParameterAcl {
 				parname: pg_parameter_acl.parname.into(),
-				paracl: pg_parameter_acl.paracl.map(|paracl| paracl.map(|acl| aclitem(acl, &ParameterGrantParser)).collect()),
-				initprivs: pg_parameter_acl.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &ParameterGrantParser)).collect()),
+				paracl: pg_parameter_acl.paracl.map(|paracl| paracl.map(|acl| aclitems!(acl, ParameterAclItem, ParameterGrant)).collect()),
+				initprivs: pg_parameter_acl.initprivs.map(|initprivs| initprivs.map(|acl| aclitems!(acl, ParameterAclItem, ParameterGrant)).collect()),
 				initprivs_type: pg_parameter_acl.initprivs_type.map(PgParameterAclInitprivsType::pg_from_char),
 			}
 		})
@@ -752,13 +751,13 @@ pub async fn reflect_pg_partitioned_table(
 	let pg_partitioned_table_coll = queries_crate::queries::query_gen::reflect_pg_partitioned_table().bind(client)
 		.map(|pg_partitioned_table| {
 			PgPartitionedTable {
-				partrelid: Qual::parse(pg_partitioned_table.partrelid),
+				partrelid: pg_partitioned_table.partrelid.into(),
 				partstrat: PgPartitionedTablePartstrat::pg_from_char(pg_partitioned_table.partstrat),
 				partnatts: pg_partitioned_table.partnatts.unsigned_abs(),
-				partdefid: Qual::maybe_parse(pg_partitioned_table.partdefid),
+				partdefid: pg_partitioned_table.partdefid.map(Into::into),
 				partattrs: pg_partitioned_table.partattrs.map(i16::unsigned_abs).collect(),
-				partclass: pg_partitioned_table.partclass.map(Qual::parse).collect(),
-				partcollation: pg_partitioned_table.partcollation.map(Qual::maybe_parse).collect(),
+				partclass: pg_partitioned_table.partclass.map(Str::new).collect(),
+				partcollation: pg_partitioned_table.partcollation.map(maybe_str).collect(),
 				partexprs: pg_partitioned_table.partexprs.map(Into::into),
 			}
 		})
@@ -777,7 +776,7 @@ pub async fn reflect_pg_policy(
 		.map(|pg_policy| {
 			PgPolicy {
 				polname: pg_policy.polname.into(),
-				polrelid: Qual::parse(pg_policy.polrelid),
+				polrelid: pg_policy.polrelid.into(),
 				polcmd: PgPolicyPolcmd::pg_from_char(pg_policy.polcmd),
 				polpermissive: pg_policy.polpermissive,
 				polroles: pg_policy.polroles.map(|item| item.map(Into::into)).collect(),
@@ -846,7 +845,7 @@ pub async fn reflect_pg_publication_rel(
 		.map(|pg_publication_rel| {
 			PgPublicationRel {
 				prpubid: pg_publication_rel.prpubid.into(),
-				prrelid: Qual::parse(pg_publication_rel.prrelid),
+				prrelid: pg_publication_rel.prrelid.into(),
 				prqual: pg_publication_rel.prqual.map(Into::into),
 				prattrs: pg_publication_rel.prattrs.map(|items| items.map(i16::unsigned_abs).collect()),
 			}
@@ -865,13 +864,13 @@ pub async fn reflect_pg_range(
 	let pg_range_coll = queries_crate::queries::query_gen::reflect_pg_range().bind(client)
 		.map(|pg_range| {
 			PgRange {
-				rngtypid: Qual::parse(pg_range.rngtypid),
-				rngsubtype: Qual::parse(pg_range.rngsubtype),
-				rngmultitypid: Qual::parse(pg_range.rngmultitypid),
-				rngcollation: Qual::maybe_parse(pg_range.rngcollation),
-				rngsubopc: Qual::parse(pg_range.rngsubopc),
-				rngcanonical: Qual::maybe_parse(pg_range.rngcanonical),
-				rngsubdiff: Qual::maybe_parse(pg_range.rngsubdiff),
+				rngtypid: pg_range.rngtypid.into(),
+				rngsubtype: pg_range.rngsubtype.into(),
+				rngmultitypid: pg_range.rngmultitypid.into(),
+				rngcollation: pg_range.rngcollation.map(Into::into),
+				rngsubopc: pg_range.rngsubopc.into(),
+				rngcanonical: pg_range.rngcanonical.map(Into::into),
+				rngsubdiff: pg_range.rngsubdiff.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -889,7 +888,7 @@ pub async fn reflect_pg_rules(
 		.map(|pg_rules| {
 			PgRules {
 				schemaname: pg_rules.schemaname.into(),
-				tablename: Qual::parse(pg_rules.tablename),
+				tablename: pg_rules.tablename.into(),
 				rulename: pg_rules.rulename.into(),
 				definition: pg_rules.definition.into(),
 				description: pg_rules.description.map(Into::into),
@@ -910,7 +909,7 @@ pub async fn reflect_pg_views(
 		.map(|pg_views| {
 			PgViews {
 				schemaname: pg_views.schemaname.into(),
-				viewname: Qual::parse(pg_views.viewname),
+				viewname: pg_views.viewname.into(),
 				viewowner: pg_views.viewowner.into(),
 				definition: pg_views.definition.into(),
 			}
@@ -930,7 +929,7 @@ pub async fn reflect_pg_matviews(
 		.map(|pg_matviews| {
 			PgMatviews {
 				schemaname: pg_matviews.schemaname.into(),
-				matviewname: Qual::parse(pg_matviews.matviewname),
+				matviewname: pg_matviews.matviewname.into(),
 				matviewowner: pg_matviews.matviewowner.into(),
 				definition: pg_matviews.definition.into(),
 			}
@@ -949,8 +948,8 @@ pub async fn reflect_pg_sequence(
 	let pg_sequence_coll = queries_crate::queries::query_gen::reflect_pg_sequence().bind(client)
 		.map(|pg_sequence| {
 			PgSequence {
-				seqrelid: Qual::parse(pg_sequence.seqrelid),
-				seqtypid: Qual::parse(pg_sequence.seqtypid),
+				seqrelid: pg_sequence.seqrelid.into(),
+				seqtypid: pg_sequence.seqtypid.into(),
 				seqstart: pg_sequence.seqstart,
 				seqincrement: pg_sequence.seqincrement,
 				seqmax: pg_sequence.seqmax,
@@ -973,7 +972,7 @@ pub async fn reflect_pg_statistic_ext(
 	let pg_statistic_ext_coll = queries_crate::queries::query_gen::reflect_pg_statistic_ext().bind(client)
 		.map(|pg_statistic_ext| {
 			PgStatisticExt {
-				stxrelid: Qual::parse(pg_statistic_ext.stxrelid),
+				stxrelid: pg_statistic_ext.stxrelid.into(),
 				stxname: pg_statistic_ext.stxname.into(),
 				stxnamespace: pg_statistic_ext.stxnamespace.into(),
 				stxowner: pg_statistic_ext.stxowner.into(),
@@ -1032,10 +1031,10 @@ pub async fn reflect_pg_transform(
 	let pg_transform_coll = queries_crate::queries::query_gen::reflect_pg_transform().bind(client)
 		.map(|pg_transform| {
 			PgTransform {
-				trftype: Qual::parse(pg_transform.trftype),
+				trftype: pg_transform.trftype.into(),
 				trflang: pg_transform.trflang.into(),
-				trffromsql: Qual::maybe_parse(pg_transform.trffromsql),
-				trftosql: Qual::maybe_parse(pg_transform.trftosql),
+				trffromsql: pg_transform.trffromsql.map(Into::into),
+				trftosql: pg_transform.trftosql.map(Into::into),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1052,16 +1051,16 @@ pub async fn reflect_pg_trigger(
 	let pg_trigger_coll = queries_crate::queries::query_gen::reflect_pg_trigger().bind(client)
 		.map(|pg_trigger| {
 			PgTrigger {
-				tgrelid: Qual::parse(pg_trigger.tgrelid),
+				tgrelid: pg_trigger.tgrelid.into(),
 				tgparentid: pg_trigger.tgparentid.map(Into::into),
 				tgname: pg_trigger.tgname.into(),
-				tgfoid: Qual::parse(pg_trigger.tgfoid),
+				tgfoid: pg_trigger.tgfoid.into(),
 				tgtype: pg_trigger.tgtype,
 				tgenabled: PgTriggerTgenabled::pg_from_char(pg_trigger.tgenabled),
 				tgisinternal: pg_trigger.tgisinternal,
-				tgconstrrelid: Qual::maybe_parse(pg_trigger.tgconstrrelid),
-				tgconstrindid: Qual::maybe_parse(pg_trigger.tgconstrindid),
-				tgconstraint: Qual::maybe_parse(pg_trigger.tgconstraint),
+				tgconstrrelid: pg_trigger.tgconstrrelid.map(Into::into),
+				tgconstrindid: pg_trigger.tgconstrindid.map(Into::into),
+				tgconstraint: pg_trigger.tgconstraint.map(Into::into),
 				tgdeferrable: pg_trigger.tgdeferrable,
 				tginitdeferred: pg_trigger.tginitdeferred,
 				tgnargs: pg_trigger.tgnargs.unsigned_abs(),
@@ -1089,7 +1088,7 @@ pub async fn reflect_pg_ts_config(
 	let pg_ts_config_coll = queries_crate::queries::query_gen::reflect_pg_ts_config().bind(client)
 		.map(|pg_ts_config| {
 			PgTsConfig {
-				oid: Qual::parse(pg_ts_config.oid),
+				oid: pg_ts_config.oid.into(),
 				cfgname: pg_ts_config.cfgname.into(),
 				cfgnamespace: pg_ts_config.cfgnamespace.into(),
 				cfgowner: pg_ts_config.cfgowner.into(),
@@ -1112,10 +1111,10 @@ pub async fn reflect_pg_ts_config_map(
 	let pg_ts_config_map_coll = queries_crate::queries::query_gen::reflect_pg_ts_config_map().bind(client)
 		.map(|pg_ts_config_map| {
 			PgTsConfigMap {
-				mapcfg: Qual::parse(pg_ts_config_map.mapcfg),
+				mapcfg: pg_ts_config_map.mapcfg.into(),
 				maptokentype: pg_ts_config_map.maptokentype,
 				mapseqno: pg_ts_config_map.mapseqno,
-				mapdict: Qual::parse(pg_ts_config_map.mapdict),
+				mapdict: pg_ts_config_map.mapdict.into(),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1132,7 +1131,7 @@ pub async fn reflect_pg_ts_dict(
 	let pg_ts_dict_coll = queries_crate::queries::query_gen::reflect_pg_ts_dict().bind(client)
 		.map(|pg_ts_dict| {
 			PgTsDict {
-				oid: Qual::parse(pg_ts_dict.oid),
+				oid: pg_ts_dict.oid.into(),
 				dictname: pg_ts_dict.dictname.into(),
 				dictnamespace: pg_ts_dict.dictnamespace.into(),
 				dictowner: pg_ts_dict.dictowner.into(),
@@ -1158,11 +1157,11 @@ pub async fn reflect_pg_ts_parser(
 			PgTsParser {
 				prsname: pg_ts_parser.prsname.into(),
 				prsnamespace: pg_ts_parser.prsnamespace.into(),
-				prsstart: Qual::parse(pg_ts_parser.prsstart),
-				prstoken: Qual::parse(pg_ts_parser.prstoken),
-				prsend: Qual::parse(pg_ts_parser.prsend),
-				prsheadline: Qual::maybe_parse(pg_ts_parser.prsheadline),
-				prslextype: Qual::parse(pg_ts_parser.prslextype),
+				prsstart: pg_ts_parser.prsstart.into(),
+				prstoken: pg_ts_parser.prstoken.into(),
+				prsend: pg_ts_parser.prsend.into(),
+				prsheadline: pg_ts_parser.prsheadline.map(Into::into),
+				prslextype: pg_ts_parser.prslextype.into(),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1181,8 +1180,8 @@ pub async fn reflect_pg_ts_template(
 			PgTsTemplate {
 				tmplname: pg_ts_template.tmplname.into(),
 				tmplnamespace: pg_ts_template.tmplnamespace.into(),
-				tmplinit: Qual::maybe_parse(pg_ts_template.tmplinit),
-				tmpllexize: Qual::parse(pg_ts_template.tmpllexize),
+				tmplinit: pg_ts_template.tmplinit.map(Into::into),
+				tmpllexize: pg_ts_template.tmpllexize.into(),
 			}
 		})
 		.iter().await?.try_collect()
@@ -1199,7 +1198,7 @@ pub async fn reflect_pg_type(
 	let pg_type_coll = queries_crate::queries::query_gen::reflect_pg_type().bind(client)
 		.map(|pg_type| {
 			PgType {
-				oid: Qual::parse(pg_type.oid),
+				oid: pg_type.oid.into(),
 				typname: pg_type.typname.into(),
 				typnamespace: pg_type.typnamespace.into(),
 				typowner: pg_type.typowner.into(),
@@ -1209,31 +1208,31 @@ pub async fn reflect_pg_type(
 				typispreferred: pg_type.typispreferred,
 				typisdefined: pg_type.typisdefined,
 				typdelim: pg_type.typdelim,
-				typrelid: Qual::maybe_parse(pg_type.typrelid),
-				typsubscript: Qual::maybe_parse(pg_type.typsubscript),
-				typelem: Qual::maybe_parse(pg_type.typelem),
-				typarray: Qual::maybe_parse(pg_type.typarray),
-				typinput: Qual::parse(pg_type.typinput),
-				typoutput: Qual::parse(pg_type.typoutput),
-				typreceive: Qual::maybe_parse(pg_type.typreceive),
-				typsend: Qual::maybe_parse(pg_type.typsend),
-				typmodin: Qual::maybe_parse(pg_type.typmodin),
-				typmodout: Qual::maybe_parse(pg_type.typmodout),
-				typanalyze: Qual::maybe_parse(pg_type.typanalyze),
+				typrelid: pg_type.typrelid.map(Into::into),
+				typsubscript: pg_type.typsubscript.map(Into::into),
+				typelem: pg_type.typelem.map(Into::into),
+				typarray: pg_type.typarray.map(Into::into),
+				typinput: pg_type.typinput.into(),
+				typoutput: pg_type.typoutput.into(),
+				typreceive: pg_type.typreceive.map(Into::into),
+				typsend: pg_type.typsend.map(Into::into),
+				typmodin: pg_type.typmodin.map(Into::into),
+				typmodout: pg_type.typmodout.map(Into::into),
+				typanalyze: pg_type.typanalyze.map(Into::into),
 				typalign: PgTypeTypalign::pg_from_char(pg_type.typalign),
 				typstorage: PgTypeTypstorage::pg_from_char(pg_type.typstorage),
 				typnotnull: pg_type.typnotnull,
-				typbasetype: Qual::maybe_parse(pg_type.typbasetype),
+				typbasetype: pg_type.typbasetype.map(Into::into),
 				typtypmod: pg_type.typtypmod.map(i32::unsigned_abs),
 				typndims: pg_type.typndims.unsigned_abs(),
-				typcollation: Qual::maybe_parse(pg_type.typcollation),
+				typcollation: pg_type.typcollation.map(Into::into),
 				typdefaultbin: pg_type.typdefaultbin.map(Into::into),
 				typdefault: pg_type.typdefault.map(Into::into),
-				typacl: pg_type.typacl.map(|typacl| typacl.map(|acl| aclitem(acl, &TypeGrantParser)).collect()),
+				typacl: pg_type.typacl.map(|typacl| typacl.map(|acl| aclitems!(acl, TypeAclItem, TypeGrant)).collect()),
 				description: pg_type.description.map(Into::into),
 				seclabel: pg_type.seclabel.map(Into::into),
 				seclabel_provider: pg_type.seclabel_provider.map(Into::into),
-				initprivs: pg_type.initprivs.map(|initprivs| initprivs.map(|acl| aclitem(acl, &TypeGrantParser)).collect()),
+				initprivs: pg_type.initprivs.map(|initprivs| initprivs.map(|acl| aclitems!(acl, TypeAclItem, TypeGrant)).collect()),
 				initprivs_type: pg_type.initprivs_type.map(PgTypeInitprivsType::pg_from_char),
 			}
 		})

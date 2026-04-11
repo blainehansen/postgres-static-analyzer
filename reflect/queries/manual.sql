@@ -122,7 +122,7 @@ select
 	case when pg_proc.probin = '' then null else pg_proc.probin end as probin, -- text  Additional information about how to invoke the function. Again, the interpretation is language-specific.
 	pg_get_function_sqlbody(pg_proc.oid) as prosqlbody, -- pg_node_tree  Pre-parsed SQL function body. This is used for SQL-language functions when the body is given in SQL-standard notation rather than as a string literal. It's null in other cases.
 	pg_proc.proconfig as proconfig, -- text[]  Function's local settings for run-time configuration variables
-	proacl::text[] as proacl, -- aclitem[]  Access privileges; see Section 5.8 for details
+	pg_temp.format_function_aclitems(proacl) as proacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_description.description as description -- text   The comment from pg_description
 from
 	pg_proc

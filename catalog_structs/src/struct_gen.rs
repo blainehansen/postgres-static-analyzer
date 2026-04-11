@@ -4,27 +4,27 @@ use super::*;
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgAggregate {
 	/// `regproc` `(references pg_proc.oid)` pg_proc OID of the aggregate function
-	pub aggfnoid: Qual,
+	pub aggfnoid: Str,
 	/// `char`  Aggregate kind: n for “normal” aggregates, o for “ordered-set” aggregates, or h for “hypothetical-set” aggregates
 	pub aggkind: PgAggregateAggkind,
 	/// `int2`  Number of direct (non-aggregated) arguments of an ordered-set or hypothetical-set aggregate, counting a variadic array as one argument. If equal to pronargs, the aggregate must be variadic and the variadic array describes the aggregated arguments as well as the final direct arguments. Always zero for normal aggregates.
 	pub aggnumdirectargs: u16,
 	/// `regproc` `(references pg_proc.oid)` Transition function
-	pub aggtransfn: Qual,
+	pub aggtransfn: Str,
 	/// `regproc` `(references pg_proc.oid)` Final function (zero if none)
-	pub aggfinalfn: Option<Qual>,
+	pub aggfinalfn: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Combine function (zero if none)
-	pub aggcombinefn: Option<Qual>,
+	pub aggcombinefn: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Serialization function (zero if none)
-	pub aggserialfn: Option<Qual>,
+	pub aggserialfn: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Deserialization function (zero if none)
-	pub aggdeserialfn: Option<Qual>,
+	pub aggdeserialfn: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Forward transition function for moving-aggregate mode (zero if none)
-	pub aggmtransfn: Option<Qual>,
+	pub aggmtransfn: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Inverse transition function for moving-aggregate mode (zero if none)
-	pub aggminvtransfn: Option<Qual>,
+	pub aggminvtransfn: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Final function for moving-aggregate mode (zero if none)
-	pub aggmfinalfn: Option<Qual>,
+	pub aggmfinalfn: Option<Str>,
 	/// `bool`  True to pass extra dummy arguments to aggfinalfn
 	pub aggfinalextra: bool,
 	/// `bool`  True to pass extra dummy arguments to aggmfinalfn
@@ -34,12 +34,12 @@ pub struct PgAggregate {
 	/// `char`  Like aggfinalmodify, but for the aggmfinalfn
 	pub aggmfinalmodify: PgAggregateAggmfinalmodify,
 	/// `oid` `(references pg_operator.oid)` Associated sort operator (zero if none)
-	pub aggsortop: Option<Qual>,
+	pub aggsortop: Option<Str>,
 	/// `oid` `(references pg_type.oid)` Data type of the aggregate function's internal transition (state) data
-	pub aggtranstype: Qual,
+	pub aggtranstype: Str,
 	// aggtransspace int4  Approximate average size (in bytes) of the transition state data, or zero to use a default estimate
 	/// `oid` `(references pg_type.oid)` Data type of the aggregate function's internal transition (state) data for moving-aggregate mode (zero if none)
-	pub aggmtranstype: Option<Qual>,
+	pub aggmtranstype: Option<Str>,
 	// aggmtransspace int4  Approximate average size (in bytes) of the transition state data for moving-aggregate mode, or zero to use a default estimate
 	/// `text`  The initial value of the transition state. This is a text field containing the initial value in its external string representation. If this field is null, the transition state value starts out null.
 	pub agginitval: Option<Str>,
@@ -59,13 +59,13 @@ pub struct PgAm {
 	/// `name`  Name of the access method
 	pub amname: Str,
 	/// `regproc` `(references pg_proc.oid)` OID of a handler function that is responsible for supplying information about the access method
-	pub amhandler: Qual,
+	pub amhandler: Str,
 	/// `char`  t = table (including materialized views), i = index.
 	pub amtype: PgAmAmtype,
 	/// `text`  The comment from pg_description
 	pub description: Option<Str>,
 }
-impl_name_hash_and_equivalent!(PgAm, amname);
+impl_hash_and_equivalent!(PgAm, amname);
 
 pg_char_enum!(PgAmAmtype { 't' => Table, 'i' => Index });
 
@@ -75,21 +75,21 @@ pg_char_enum!(PgAmAmtype { 't' => Table, 'i' => Index });
 pub struct PgAmop {
 	// oid oid  Row identifier
 	/// `oid` `(references pg_opfamily.oid)` The operator family this entry is for
-	pub amopfamily: Qual,
+	pub amopfamily: Str,
 	/// `oid` `(references pg_type.oid)` Left-hand input data type of operator
-	pub amoplefttype: Qual,
+	pub amoplefttype: Str,
 	/// `oid` `(references pg_type.oid)` Right-hand input data type of operator
-	pub amoprighttype: Qual,
+	pub amoprighttype: Str,
 	/// `int2`  Operator strategy number
 	pub amopstrategy: u16,
 	/// `char`  Operator purpose, either s for search or o for ordering
 	pub amoppurpose: PgAmopAmoppurpose,
 	/// `oid` `(references pg_operator.oid)` OID of the operator
-	pub amopopr: Qual,
+	pub amopopr: Str,
 	/// `oid` `(references pg_am.oid)` Index access method operator family is for
 	pub amopmethod: Str,
 	/// `oid` `(references pg_opfamily.oid)` The B-tree operator family this entry sorts according to, if an ordering operator; zero if a search operator
-	pub amopsortfamily: Option<Qual>,
+	pub amopsortfamily: Option<Str>,
 }
 
 pg_char_enum!(PgAmopAmoppurpose { 's' => Search, 'o' => Ordering });
@@ -100,15 +100,15 @@ pg_char_enum!(PgAmopAmoppurpose { 's' => Search, 'o' => Ordering });
 pub struct PgAmproc {
 	// oid oid  Row identifier
 	/// `oid` `(references pg_opfamily.oid)` The operator family this entry is for
-	pub amprocfamily: Qual,
+	pub amprocfamily: Str,
 	/// `oid` `(references pg_type.oid)` Left-hand input data type of associated operator
-	pub amproclefttype: Qual,
+	pub amproclefttype: Str,
 	/// `oid` `(references pg_type.oid)` Right-hand input data type of associated operator
-	pub amprocrighttype: Qual,
+	pub amprocrighttype: Str,
 	/// `int2`  Support function number
 	pub amprocnum: u16,
 	/// `regproc` `(references pg_proc.oid)` OID of the function
-	pub amproc: Qual,
+	pub amproc: Str,
 }
 
 
@@ -117,7 +117,7 @@ pub struct PgAmproc {
 pub struct PgAttrdef {
 	// oid oid  Row identifier
 	/// `oid` `(references pg_class.oid)` The table this column belongs to
-	pub adrelid: Qual,
+	pub adrelid: Str,
 	/// `int2` `(references pg_attribute.attnum)` The number of the column
 	pub adnum: u16,
 	/// `pg_node_tree`  The column default value, in nodeToString() representation. Use pg_get_expr(adbin, adrelid) to convert it to an SQL expression.
@@ -129,11 +129,11 @@ pub struct PgAttrdef {
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgAttribute {
 	/// `oid` `(references pg_class.oid)` The table this column belongs to
-	pub attrelid: Qual,
+	pub attrelid: Str,
 	/// `name`  The column name
 	pub attname: Str,
 	/// `oid` `(references pg_type.oid)` The data type of this column (zero for a dropped column)
-	pub atttypid: Qual,
+	pub atttypid: Str,
 	// attlen int2  A copy of pg_type.typlen of this column's type
 	/// `int2`  The number of the column. Ordinary columns are numbered from 1 up. System columns, such as ctid, have (arbitrary) negative numbers.
 	pub attnum: u16,
@@ -163,11 +163,11 @@ pub struct PgAttribute {
 	/// `int2`  The number of direct ancestors this column has. A column with a nonzero number of ancestors cannot be dropped nor renamed.
 	pub attinhcount: u16,
 	/// `oid` `(references pg_collation.oid)` The defined collation of the column, or zero if the column is not of a collatable data type
-	pub attcollation: Option<Qual>,
+	pub attcollation: Option<Str>,
 	/// `int2`  attstattarget controls the level of detail of statistics accumulated for this column by ANALYZE. A zero value indicates that no statistics should be collected. A null value says to use the system default statistics target. The exact meaning of positive values is data type-dependent. For scalar data types, attstattarget is both the target number of “most common values” to collect, and the target number of histogram bins to create.
 	pub attstattarget: Option<u16>,
 	/// `aclitem[]`  Column-level access privileges, if any have been granted specifically on this column
-	pub attacl: Option<Vec<aclitem::TableColumnAclItem>>,
+	pub attacl: Option<Vec<TableColumnAclItem>>,
 	/// `text[]`  Attribute-level options, as “keyword=value” strings
 	pub attoptions: Option<Vec<Str>>,
 	/// `text[]`  Attribute-level foreign data wrapper options, as “keyword=value” strings
@@ -180,7 +180,7 @@ pub struct PgAttribute {
 	/// `text`  The provider from pg_seclabel
 	pub seclabel_provider: Option<Str>,
 	/// `aclitem[]`  The initial access privileges from pg_init_privs.
-	pub initprivs: Option<Vec<aclitem::TableColumnAclItem>>,
+	pub initprivs: Option<Vec<TableColumnAclItem>>,
 	/// `char`  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 	pub initprivs_type: Option<PgAttributeInitprivsType>,
 }
@@ -225,7 +225,7 @@ pub struct PgRoles {
 	/// `text`  The provider from pg_shseclabel
 	pub seclabel_provider: Option<Str>,
 }
-impl_name_hash_and_equivalent!(PgRoles, rolname);
+impl_hash_and_equivalent!(PgRoles, rolname);
 
 
 /// The DDL-only contents of [`pg_auth_members`](https://www.postgresql.org/docs/17/catalog-pg-auth-members.html)
@@ -252,11 +252,11 @@ pub struct PgAuthMembers {
 pub struct PgCast {
 	// oid oid  Row identifier
 	/// `oid` `(references pg_type.oid)` OID of the source data type
-	pub castsource: Qual,
+	pub castsource: Str,
 	/// `oid` `(references pg_type.oid)` OID of the target data type
-	pub casttarget: Qual,
+	pub casttarget: Str,
 	/// `oid` `(references pg_proc.oid)` The OID of the function to use to perform this cast. Zero is stored if the cast method doesn't require a function.
-	pub castfunc: Option<Qual>,
+	pub castfunc: Option<Str>,
 	/// `char`  Indicates what contexts the cast can be invoked in. e means only as an explicit cast (using CAST or :: syntax). a means implicitly in assignment to a target column, as well as explicitly. i means implicitly in expressions, as well as the other cases.
 	pub castcontext: PgCastCastcontext,
 	/// `char`  Indicates how the cast is performed. f means that the function specified in the castfunc field is used. i means that the input/output functions are used. b means that the types are binary-coercible, thus no conversion is required.
@@ -273,15 +273,15 @@ pg_char_enum!(PgCastCastmethod { 'f' => Castfunc, 'i' => IOFunc, 'b' => BinaryCo
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgClass {
 	/// `oid`  Row identifier
-	pub oid: Qual,
+	pub oid: Str,
 	/// `name`  Name of the table, index, view, etc.
 	pub relname: Str,
 	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this relation
 	pub relnamespace: Str,
 	/// `oid` `(references pg_type.oid)` The OID of the data type that corresponds to this table's row type, if any; zero for indexes, sequences, and toast tables, which have no pg_type entry
-	pub reltype: Option<Qual>,
+	pub reltype: Option<Str>,
 	/// `oid` `(references pg_type.oid)` For typed tables, the OID of the underlying composite type; zero for all other relations
-	pub reloftype: Option<Qual>,
+	pub reloftype: Option<Str>,
 	/// `oid` `(references pg_authid.oid)` Owner of the relation
 	pub relowner: Str,
 	/// `oid` `(references pg_am.oid)` The access method used to access this table or index. Not meaningful if the relation is a sequence or has no on-disk file, except for partitioned tables, where, if set, it takes precedence over default_table_access_method when determining the access method to use for partitions created when one is not specified in the creation command.
@@ -319,7 +319,7 @@ pub struct PgClass {
 	// relfrozenxid xid  All transaction IDs before this one have been replaced with a permanent (“frozen”) transaction ID in this table. This is used to track whether the table needs to be vacuumed in order to prevent transaction ID wraparound or to allow pg_xact to be shrunk. Zero (InvalidTransactionId) if the relation is not a table.
 	// relminmxid xid  All multixact IDs before this one have been replaced by a transaction ID in this table. This is used to track whether the table needs to be vacuumed in order to prevent multixact ID wraparound or to allow pg_multixact to be shrunk. Zero (InvalidMultiXactId) if the relation is not a table.
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
-	pub relacl: Option<Vec<aclitem::TableAclItem>>,
+	pub relacl: Option<Vec<TableAclItem>>,
 	/// `text[]`  Access-method-specific options, as “keyword=value” strings
 	pub reloptions: Option<Vec<Str>>,
 	/// `pg_node_tree`  If table is a partition (see relispartition), internal representation of the partition bound
@@ -331,11 +331,11 @@ pub struct PgClass {
 	/// `text`  The provider from pg_seclabel
 	pub seclabel_provider: Option<Str>,
 	/// `aclitem[]`  The initial access privileges from pg_init_privs.
-	pub initprivs: Option<Vec<aclitem::TableAclItem>>,
+	pub initprivs: Option<Vec<TableAclItem>>,
 	/// `char`  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 	pub initprivs_type: Option<PgClassInitprivsType>,
 }
-impl_qual_hash_and_equivalent!(PgClass);
+impl_hash_and_equivalent!(PgClass, oid);
 
 pg_char_enum!(PgClassRelpersistence { 'p' => Permanent, 'u' => Unlogged, 't' => Temporary });
 pg_char_enum!(PgClassRelkind { 'r' => Ordinary, 'i' => Index, 'S' => Sequence, 't' => Toast, 'v' => View, 'm' => MaterializedView, 'c' => CompositeType, 'f' => ForeignTable, 'p' => PartitionedTable, 'I' => PartitionedIndex });
@@ -347,7 +347,7 @@ pg_char_enum!(PgClassInitprivsType { 'i' => InitDb, 'e' => CreateExtension });
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgCollation {
 	/// `oid`  Row identifier
-	pub oid: Qual,
+	pub oid: Str,
 	/// `name`  Collation name (unique per namespace and encoding)
 	pub collname: Str,
 	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this collation
@@ -394,15 +394,15 @@ pub struct PgConstraint {
 	/// `bool`  Has the constraint been validated? Currently, can be false only for foreign keys and CHECK constraints
 	pub convalidated: bool,
 	/// `oid` `(references pg_class.oid)` The table this constraint is on; zero if not a table constraint
-	pub conrelid: Option<Qual>,
+	pub conrelid: Option<Str>,
 	/// `oid` `(references pg_type.oid)` The domain this constraint is on; zero if not a domain constraint
-	pub contypid: Option<Qual>,
+	pub contypid: Option<Str>,
 	/// `oid` `(references pg_class.oid)` The index supporting this constraint, if it's a unique, primary key, foreign key, or exclusion constraint; else zero
-	pub conindid: Option<Qual>,
+	pub conindid: Option<Str>,
 	/// `oid` `(references pg_constraint.oid)` The corresponding constraint of the parent partitioned table, if this is a constraint on a partition; else zero
-	pub conparentid: Option<Qual>,
+	pub conparentid: Option<Str>,
 	/// `oid` `(references pg_class.oid)` If a foreign key, the referenced table; else zero
-	pub confrelid: Option<Qual>,
+	pub confrelid: Option<Str>,
 	/// `char`  Foreign key update action code: a = no action, r = restrict, c = cascade, n = set null, d = set default
 	pub confupdtype: Option<PgConstraintConfupdtype>,
 	/// `char`  Foreign key deletion action code: a = no action, r = restrict, c = cascade, n = set null, d = set default
@@ -420,15 +420,15 @@ pub struct PgConstraint {
 	/// `int2[]` `(references pg_attribute.attnum)` If a foreign key, list of the referenced columns
 	pub confkey: Option<Vec<u16>>,
 	/// `oid[]` `(references pg_operator.oid)` If a foreign key, list of the equality operators for PK = FK comparisons
-	pub conpfeqop: Option<Vec<Qual>>,
+	pub conpfeqop: Option<Vec<Str>>,
 	/// `oid[]` `(references pg_operator.oid)` If a foreign key, list of the equality operators for PK = PK comparisons
-	pub conppeqop: Option<Vec<Qual>>,
+	pub conppeqop: Option<Vec<Str>>,
 	/// `oid[]` `(references pg_operator.oid)` If a foreign key, list of the equality operators for FK = FK comparisons
-	pub conffeqop: Option<Vec<Qual>>,
+	pub conffeqop: Option<Vec<Str>>,
 	/// `int2[]` `(references pg_attribute.attnum)` If a foreign key with a SET NULL or SET DEFAULT delete action, the columns that will be updated. If null, all of the referencing columns will be updated.
 	pub confdelsetcols: Option<Vec<u16>>,
 	/// `oid[]` `(references pg_operator.oid)` If an exclusion constraint, list of the per-column exclusion operators
-	pub conexclop: Option<Vec<Qual>>,
+	pub conexclop: Option<Vec<Str>>,
 	/// `pg_node_tree`  If a check constraint, an internal representation of the expression. (It's recommended to use pg_get_constraintdef() to extract the definition of a check constraint.)
 	pub conbin: Option<Str>,
 	/// `text`  The comment from pg_description
@@ -456,7 +456,7 @@ pub struct PgConversion {
 	/// `int4`  Destination encoding ID (pg_encoding_to_char() can translate this number to the encoding name)
 	pub contoencoding: Str,
 	/// `regproc` `(references pg_proc.oid)` Conversion function
-	pub conproc: Qual,
+	pub conproc: Str,
 	/// `bool`  True if this is the default conversion
 	pub condefault: bool,
 	/// `text`  The comment from pg_description
@@ -497,7 +497,7 @@ pub struct PgDatabase {
 	/// `text`  Provider-specific version of the collation. This is recorded when the database is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
 	pub datcollversion: Option<Str>,
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
-	pub datacl: Option<Vec<aclitem::DbAclItem>>,
+	pub datacl: Option<Vec<DbAclItem>>,
 	/// `text`  The comment from pg_shdescription
 	pub description: Option<Str>,
 	/// `text`  The seclabel from pg_shseclabel
@@ -505,7 +505,7 @@ pub struct PgDatabase {
 	/// `text`  The provider from pg_shseclabel
 	pub seclabel_provider: Option<Str>,
 }
-impl_name_hash_and_equivalent!(PgDatabase, datname);
+impl_hash_and_equivalent!(PgDatabase, datname);
 
 pg_char_enum!(PgDatabaseDatlocprovider { 'b' => Builtin, 'c' => Libc, 'i' => Icu });
 
@@ -521,7 +521,7 @@ pub struct PgDefaultAcl {
 	/// `char`  Type of object this entry is for: r = relation (table, view), S = sequence, f = function, T = type, n = schema
 	pub defaclobjtype: PgDefaultAclDefaclobjtype,
 	/// `aclitem[]`  Access privileges that this type of object should have on creation
-	pub defaclacl: Option<Vec<aclitem::AclDefaultAclItem>>,
+	pub defaclacl: Option<Vec<AclDefaultAclItem>>,
 }
 
 pg_char_enum!(PgDefaultAclDefaclobjtype { 'r' => Relation, 'S' => Sequence, 'f' => Function, 'T' => Type, 'n' => Schema });
@@ -538,7 +538,7 @@ pub struct PgEventTrigger {
 	/// `oid` `(references pg_authid.oid)` Owner of the event trigger
 	pub evtowner: Str,
 	/// `oid` `(references pg_proc.oid)` The function to be called
-	pub evtfoid: Qual,
+	pub evtfoid: Str,
 	/// `char`  Controls in which session_replication_role modes the event trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always.
 	pub evtenabled: PgEventTriggerEvtenabled,
 	/// `text[]`  Command tags for which this trigger will fire. If NULL, the firing of this trigger is not restricted on the basis of the command tag.
@@ -569,7 +569,7 @@ pub struct PgExtension {
 	/// `text`  Version name for the extension
 	pub extversion: Str,
 	/// `oid[]` `(references pg_class.oid)` Array of regclass OIDs for the extension's configuration table(s), or NULL if none
-	pub extconfig: Option<Vec<Qual>>,
+	pub extconfig: Option<Vec<Str>>,
 	/// `text[]`  Array of WHERE-clause filter conditions for the extension's configuration table(s), or NULL if none
 	pub extcondition: Option<Vec<Str>>,
 	/// `text`  The comment from pg_description
@@ -586,17 +586,17 @@ pub struct PgForeignDataWrapper {
 	/// `oid` `(references pg_authid.oid)` Owner of the foreign-data wrapper
 	pub fdwowner: Str,
 	/// `oid` `(references pg_proc.oid)` References a handler function that is responsible for supplying execution routines for the foreign-data wrapper. Zero if no handler is provided
-	pub fdwhandler: Option<Qual>,
+	pub fdwhandler: Option<Str>,
 	/// `oid` `(references pg_proc.oid)` References a validator function that is responsible for checking the validity of the options given to the foreign-data wrapper, as well as options for foreign servers and user mappings using the foreign-data wrapper. Zero if no validator is provided
-	pub fdwvalidator: Option<Qual>,
+	pub fdwvalidator: Option<Str>,
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
-	pub fdwacl: Option<Vec<aclitem::ForeignDataWrapperAclItem>>,
+	pub fdwacl: Option<Vec<ForeignDataWrapperAclItem>>,
 	/// `text[]`  Foreign-data wrapper specific options, as “keyword=value” strings
 	pub fdwoptions: Option<Vec<Str>>,
 	/// `text`  The comment from pg_description
 	pub description: Option<Str>,
 	/// `aclitem[]`  The initial access privileges from pg_init_privs.
-	pub initprivs: Option<Vec<aclitem::ForeignDataWrapperAclItem>>,
+	pub initprivs: Option<Vec<ForeignDataWrapperAclItem>>,
 	/// `char`  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 	pub initprivs_type: Option<PgForeignDataWrapperInitprivsType>,
 }
@@ -619,13 +619,13 @@ pub struct PgForeignServer {
 	/// `text`  Version of the server (optional)
 	pub srvversion: Option<Str>,
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
-	pub srvacl: Option<Vec<aclitem::ForeignServerAclItem>>,
+	pub srvacl: Option<Vec<ForeignServerAclItem>>,
 	/// `text[]`  Foreign server specific options, as “keyword=value” strings
 	pub srvoptions: Option<Vec<Str>>,
 	/// `text`  The comment from pg_description
 	pub description: Option<Str>,
 	/// `aclitem[]`  The initial access privileges from pg_init_privs.
-	pub initprivs: Option<Vec<aclitem::ForeignServerAclItem>>,
+	pub initprivs: Option<Vec<ForeignServerAclItem>>,
 	/// `char`  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 	pub initprivs_type: Option<PgForeignServerInitprivsType>,
 }
@@ -637,7 +637,7 @@ pg_char_enum!(PgForeignServerInitprivsType { 'i' => InitDb, 'e' => CreateExtensi
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgForeignTable {
 	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for this foreign table
-	pub ftrelid: Qual,
+	pub ftrelid: Str,
 	/// `oid` `(references pg_foreign_server.oid)` OID of the foreign server for this foreign table
 	pub ftserver: Str,
 	/// `text[]`  Foreign table options, as “keyword=value” strings
@@ -649,9 +649,9 @@ pub struct PgForeignTable {
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgIndex {
 	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for this index
-	pub indexrelid: Qual,
+	pub indexrelid: Str,
 	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for the table this index is for
-	pub indrelid: Qual,
+	pub indrelid: Str,
 	/// `int2`  The total number of columns in the index (duplicates pg_class.relnatts); this number includes both key and included attributes
 	pub indnatts: u16,
 	/// `int2`  The number of key columns in the index, not counting any included columns, which are merely stored and do not participate in the index semantics
@@ -677,9 +677,9 @@ pub struct PgIndex {
 	/// `int2vector` `(references pg_attribute.attnum)` This is an array of indnatts values that indicate which table columns this index indexes. For example, a value of 1 3 would mean that the first and the third table columns make up the index entries. Key columns come before non-key (included) columns. A zero in this array indicates that the corresponding index attribute is an expression over the table columns, rather than a simple column reference.
 	pub indkey: Vec<u16>,
 	/// `oidvector` `(references pg_collation.oid)` For each column in the index key (indnkeyatts values), this contains the OID of the collation to use for the index, or zero if the column is not of a collatable data type.
-	pub indcollation: Vec<Option<Qual>>,
+	pub indcollation: Vec<Option<Str>>,
 	/// `oidvector` `(references pg_opclass.oid)` For each column in the index key (indnkeyatts values), this contains the OID of the operator class to use. See pg_opclass for details.
-	pub indclass: Vec<Qual>,
+	pub indclass: Vec<Str>,
 	/// `int2vector`  This is an array of indnkeyatts values that store per-column flag bits. The meaning of the bits is defined by the index's access method.
 	pub indoption: Vec<i16>,
 	/// `pg_node_tree`  Expression trees (in nodeToString() representation) for index attributes that are not simple column references. This is a list with one element for each zero entry in indkey. Null if all index attributes are simple references.
@@ -693,9 +693,9 @@ pub struct PgIndex {
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgInherits {
 	/// `oid` `(references pg_class.oid)` The OID of the child table or index
-	pub inhrelid: Qual,
+	pub inhrelid: Str,
 	/// `oid` `(references pg_class.oid)` The OID of the parent table or index
-	pub inhparent: Qual,
+	pub inhparent: Str,
 	/// `int4`  If there is more than one direct parent for a child table (multiple inheritance), this number tells the order in which the inherited columns are to be arranged. The count starts at 1. Indexes cannot have multiple inheritance, since they can only inherit when using declarative partitioning.
 	pub inhseqno: u32,
 	// inhdetachpending bool  true for a partition that is in the process of being detached; false otherwise.
@@ -715,13 +715,13 @@ pub struct PgLanguage {
 	/// `bool`  True if this is a trusted language, which means that it is believed not to grant access to anything outside the normal SQL execution environment. Only superusers can create functions in untrusted languages.
 	pub lanpltrusted: bool,
 	/// `oid` `(references pg_proc.oid)` For noninternal languages this references the language handler, which is a special function that is responsible for executing all functions that are written in the particular language. Zero for internal languages.
-	pub lanplcallfoid: Option<Qual>,
+	pub lanplcallfoid: Option<Str>,
 	/// `oid` `(references pg_proc.oid)` This references a function that is responsible for executing “inline” anonymous code blocks (DO blocks). Zero if inline blocks are not supported.
-	pub laninline: Option<Qual>,
+	pub laninline: Option<Str>,
 	/// `oid` `(references pg_proc.oid)` This references a language validator function that is responsible for checking the syntax and validity of new functions when they are created. Zero if no validator is provided.
-	pub lanvalidator: Option<Qual>,
+	pub lanvalidator: Option<Str>,
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
-	pub lanacl: Option<Vec<aclitem::LanguageAclItem>>,
+	pub lanacl: Option<Vec<LanguageAclItem>>,
 	/// `text`  The comment from pg_description
 	pub description: Option<Str>,
 	/// `text`  The seclabel from pg_seclabel
@@ -729,11 +729,11 @@ pub struct PgLanguage {
 	/// `text`  The provider from pg_seclabel
 	pub seclabel_provider: Option<Str>,
 	/// `aclitem[]`  The initial access privileges from pg_init_privs.
-	pub initprivs: Option<Vec<aclitem::LanguageAclItem>>,
+	pub initprivs: Option<Vec<LanguageAclItem>>,
 	/// `char`  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 	pub initprivs_type: Option<PgLanguageInitprivsType>,
 }
-impl_name_hash_and_equivalent!(PgLanguage, lanname);
+impl_hash_and_equivalent!(PgLanguage, lanname);
 
 pg_char_enum!(PgLanguageInitprivsType { 'i' => InitDb, 'e' => CreateExtension });
 
@@ -747,7 +747,7 @@ pub struct PgNamespace {
 	/// `oid` `(references pg_authid.oid)` Owner of the namespace
 	pub nspowner: Str,
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
-	pub nspacl: Option<Vec<aclitem::SchemaAclItem>>,
+	pub nspacl: Option<Vec<SchemaAclItem>>,
 	/// `text`  The comment from pg_description
 	pub description: Option<Str>,
 	/// `text`  The seclabel from pg_seclabel
@@ -755,11 +755,11 @@ pub struct PgNamespace {
 	/// `text`  The provider from pg_seclabel
 	pub seclabel_provider: Option<Str>,
 	/// `aclitem[]`  The initial access privileges from pg_init_privs.
-	pub initprivs: Option<Vec<aclitem::SchemaAclItem>>,
+	pub initprivs: Option<Vec<SchemaAclItem>>,
 	/// `char`  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 	pub initprivs_type: Option<PgNamespaceInitprivsType>,
 }
-impl_name_hash_and_equivalent!(PgNamespace, nspname);
+impl_hash_and_equivalent!(PgNamespace, nspname);
 
 pg_char_enum!(PgNamespaceInitprivsType { 'i' => InitDb, 'e' => CreateExtension });
 
@@ -777,13 +777,13 @@ pub struct PgOpclass {
 	/// `oid` `(references pg_authid.oid)` Owner of the operator class
 	pub opcowner: Str,
 	/// `oid` `(references pg_opfamily.oid)` Operator family containing the operator class
-	pub opcfamily: Qual,
+	pub opcfamily: Str,
 	/// `oid` `(references pg_type.oid)` Data type that the operator class indexes
-	pub opcintype: Qual,
+	pub opcintype: Str,
 	/// `bool`  True if this operator class is the default for opcintype
 	pub opcdefault: bool,
 	/// `oid` `(references pg_type.oid)` Type of data stored in index, or zero if same as opcintype
-	pub opckeytype: Option<Qual>,
+	pub opckeytype: Option<Str>,
 	/// `text`  The comment from pg_description
 	pub description: Option<Str>,
 }
@@ -793,7 +793,7 @@ pub struct PgOpclass {
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgOperator {
 	/// `oid`  Row identifier
-	pub oid: Qual,
+	pub oid: Str,
 	/// `name`  Name of the operator
 	pub oprname: Str,
 	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this operator
@@ -807,25 +807,25 @@ pub struct PgOperator {
 	/// `bool`  This operator supports hash joins
 	pub oprcanhash: bool,
 	/// `oid` `(references pg_type.oid)` Type of the left operand (zero for a prefix operator)
-	pub oprleft: Option<Qual>,
+	pub oprleft: Option<Str>,
 	/// `oid` `(references pg_type.oid)` Type of the right operand
-	pub oprright: Qual,
+	pub oprright: Str,
 	/// `oid` `(references pg_type.oid)` Type of the result (zero for a not-yet-defined “shell” operator)
-	pub oprresult: Option<Qual>,
+	pub oprresult: Option<Str>,
 	/// `oid` `(references pg_operator.oid)` Commutator of this operator (zero if none)
-	pub oprcom: Option<Qual>,
+	pub oprcom: Option<Str>,
 	/// `oid` `(references pg_operator.oid)` Negator of this operator (zero if none)
-	pub oprnegate: Option<Qual>,
+	pub oprnegate: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Function that implements this operator (zero for a not-yet-defined “shell” operator)
-	pub oprcode: Option<Qual>,
+	pub oprcode: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Restriction selectivity estimation function for this operator (zero if none)
-	pub oprrest: Option<Qual>,
+	pub oprrest: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Join selectivity estimation function for this operator (zero if none)
-	pub oprjoin: Option<Qual>,
+	pub oprjoin: Option<Str>,
 	/// `text`  The comment from pg_description
 	pub description: Option<Str>,
 }
-impl_qual_hash_and_equivalent!(PgOperator);
+impl_hash_and_equivalent!(PgOperator, oid);
 
 pg_char_enum!(PgOperatorOprkind { 'b' => InfixOperatorBoth, 'l' => PrefixOperatorLeft });
 
@@ -854,9 +854,9 @@ pub struct PgParameterAcl {
 	/// `text`  The name of a configuration parameter for which privileges are granted
 	pub parname: Str,
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
-	pub paracl: Option<Vec<aclitem::ParameterAclItem>>,
+	pub paracl: Option<Vec<ParameterAclItem>>,
 	/// `aclitem[]`  The initial access privileges from pg_init_privs.
-	pub initprivs: Option<Vec<aclitem::ParameterAclItem>>,
+	pub initprivs: Option<Vec<ParameterAclItem>>,
 	/// `char`  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 	pub initprivs_type: Option<PgParameterAclInitprivsType>,
 }
@@ -868,19 +868,19 @@ pg_char_enum!(PgParameterAclInitprivsType { 'i' => InitDb, 'e' => CreateExtensio
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgPartitionedTable {
 	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for this partitioned table
-	pub partrelid: Qual,
+	pub partrelid: Str,
 	/// `char`  Partitioning strategy; h = hash partitioned table, l = list partitioned table, r = range partitioned table
 	pub partstrat: PgPartitionedTablePartstrat,
 	/// `int2`  The number of columns in the partition key
 	pub partnatts: u16,
 	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for the default partition of this partitioned table, or zero if this partitioned table does not have a default partition
-	pub partdefid: Option<Qual>,
+	pub partdefid: Option<Str>,
 	/// `int2vector` `(references pg_attribute.attnum)` This is an array of partnatts values that indicate which table columns are part of the partition key. For example, a value of 1 3 would mean that the first and the third table columns make up the partition key. A zero in this array indicates that the corresponding partition key column is an expression, rather than a simple column reference.
 	pub partattrs: Vec<u16>,
 	/// `oidvector` `(references pg_opclass.oid)` For each column in the partition key, this contains the OID of the operator class to use. See pg_opclass for details.
-	pub partclass: Vec<Qual>,
+	pub partclass: Vec<Str>,
 	/// `oidvector` `(references pg_collation.oid)` For each column in the partition key, this contains the OID of the collation to use for partitioning, or zero if the column is not of a collatable data type.
-	pub partcollation: Vec<Option<Qual>>,
+	pub partcollation: Vec<Option<Str>>,
 	/// `pg_node_tree`  Expression trees (in nodeToString() representation) for partition key columns that are not simple column references. This is a list with one element for each zero entry in partattrs. Null if all partition key columns are simple references.
 	pub partexprs: Option<Str>,
 }
@@ -895,7 +895,7 @@ pub struct PgPolicy {
 	/// `name`  The name of the policy
 	pub polname: Str,
 	/// `oid` `(references pg_class.oid)` The table to which the policy applies
-	pub polrelid: Qual,
+	pub polrelid: Str,
 	/// `char`  The command type to which the policy is applied: r for SELECT, a for INSERT, w for UPDATE, d for DELETE, or * for all
 	pub polcmd: PgPolicyPolcmd,
 	/// `bool`  Is the policy permissive or restrictive?
@@ -940,7 +940,7 @@ pub struct PgPublication {
 	/// `text`  The provider from pg_seclabel
 	pub seclabel_provider: Option<Str>,
 }
-impl_name_hash_and_equivalent!(PgPublication, pubname);
+impl_hash_and_equivalent!(PgPublication, pubname);
 
 
 /// The DDL-only contents of [`pg_publication_namespace`](https://www.postgresql.org/docs/17/catalog-pg-publication-namespace.html)
@@ -961,7 +961,7 @@ pub struct PgPublicationRel {
 	/// `oid` `(references pg_publication.oid)` Reference to publication
 	pub prpubid: Str,
 	/// `oid` `(references pg_class.oid)` Reference to relation
-	pub prrelid: Qual,
+	pub prrelid: Str,
 	/// `pg_node_tree`  Expression tree (in nodeToString() representation) for the relation's publication qualifying condition. Null if there is no publication qualifying condition.
 	pub prqual: Option<Str>,
 	/// `int2vector` `(references pg_attribute.attnum)` This is an array of values that indicates which table columns are part of the publication. For example, a value of 1 3 would mean that the first and the third table columns are published. A null value indicates that all columns are published.
@@ -973,19 +973,19 @@ pub struct PgPublicationRel {
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgRange {
 	/// `oid` `(references pg_type.oid)` OID of the range type
-	pub rngtypid: Qual,
+	pub rngtypid: Str,
 	/// `oid` `(references pg_type.oid)` OID of the element type (subtype) of this range type
-	pub rngsubtype: Qual,
+	pub rngsubtype: Str,
 	/// `oid` `(references pg_type.oid)` OID of the multirange type for this range type
-	pub rngmultitypid: Qual,
+	pub rngmultitypid: Str,
 	/// `oid` `(references pg_collation.oid)` OID of the collation used for range comparisons, or zero if none
-	pub rngcollation: Option<Qual>,
+	pub rngcollation: Option<Str>,
 	/// `oid` `(references pg_opclass.oid)` OID of the subtype's operator class used for range comparisons
-	pub rngsubopc: Qual,
+	pub rngsubopc: Str,
 	/// `regproc` `(references pg_proc.oid)` OID of the function to convert a range value into canonical form, or zero if none
-	pub rngcanonical: Option<Qual>,
+	pub rngcanonical: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` OID of the function to return the difference between two element values as double precision, or zero if none
-	pub rngsubdiff: Option<Qual>,
+	pub rngsubdiff: Option<Str>,
 }
 
 
@@ -995,7 +995,7 @@ pub struct PgRules {
 	/// `name` `(references pg_namespace.nspname)` Name of schema containing table
 	pub schemaname: Str,
 	/// `name` `(references pg_class.relname)` Name of table the rule is for
-	pub tablename: Qual,
+	pub tablename: Str,
 	/// `name` `(references pg_rewrite.rulename)` Name of rule
 	pub rulename: Str,
 	/// `text`  Rule definition (a reconstructed creation command)
@@ -1011,7 +1011,7 @@ pub struct PgViews {
 	/// `name` `(references pg_namespace.nspname)` Name of schema containing view
 	pub schemaname: Str,
 	/// `name` `(references pg_class.relname)` Name of view
-	pub viewname: Qual,
+	pub viewname: Str,
 	/// `name` `(references pg_authid.rolname)` Name of view's owner
 	pub viewowner: Str,
 	/// `text`  View definition (a reconstructed SELECT query)
@@ -1025,7 +1025,7 @@ pub struct PgMatviews {
 	/// `name` `(references pg_namespace.nspname)` Name of schema containing materialized view
 	pub schemaname: Str,
 	/// `name` `(references pg_class.relname)` Name of materialized view
-	pub matviewname: Qual,
+	pub matviewname: Str,
 	/// `name` `(references pg_authid.rolname)` Name of materialized view's owner
 	pub matviewowner: Str,
 	// tablespace name (references pg_tablespace.spcname) Name of tablespace containing materialized view (null if default for database)
@@ -1040,9 +1040,9 @@ pub struct PgMatviews {
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgSequence {
 	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for this sequence
-	pub seqrelid: Qual,
+	pub seqrelid: Str,
 	/// `oid` `(references pg_type.oid)` Data type of the sequence
-	pub seqtypid: Qual,
+	pub seqtypid: Str,
 	/// `int8`  Start value of the sequence
 	pub seqstart: i64,
 	/// `int8`  Increment value of the sequence
@@ -1063,7 +1063,7 @@ pub struct PgSequence {
 pub struct PgStatisticExt {
 	// oid oid  Row identifier
 	/// `oid` `(references pg_class.oid)` Table containing the columns described by this object
-	pub stxrelid: Qual,
+	pub stxrelid: Str,
 	/// `name`  Name of the statistics object
 	pub stxname: Str,
 	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this statistics object
@@ -1138,13 +1138,13 @@ pg_char_enum!(PgSubscriptionSubtwophasestate { 'd' => Disabled, 'p' => PendingEn
 pub struct PgTransform {
 	// oid oid  Row identifier
 	/// `oid` `(references pg_type.oid)` OID of the data type this transform is for
-	pub trftype: Qual,
+	pub trftype: Str,
 	/// `oid` `(references pg_language.oid)` OID of the language this transform is for
 	pub trflang: Str,
 	/// `regproc` `(references pg_proc.oid)` The OID of the function to use when converting the data type for input to the procedural language (e.g., function parameters). Zero is stored if the default behavior should be used.
-	pub trffromsql: Option<Qual>,
+	pub trffromsql: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` The OID of the function to use when converting output from the procedural language (e.g., return values) to the data type. Zero is stored if the default behavior should be used.
-	pub trftosql: Option<Qual>,
+	pub trftosql: Option<Str>,
 }
 
 
@@ -1153,13 +1153,13 @@ pub struct PgTransform {
 pub struct PgTrigger {
 	// oid oid  Row identifier
 	/// `oid` `(references pg_class.oid)` The table this trigger is on
-	pub tgrelid: Qual,
+	pub tgrelid: Str,
 	/// `oid` `(references pg_trigger.oid)` Parent trigger that this trigger is cloned from (this happens when partitions are created or attached to a partitioned table); zero if not a clone
 	pub tgparentid: Option<Str>,
 	/// `name`  Trigger name (must be unique among triggers of same table)
 	pub tgname: Str,
 	/// `oid` `(references pg_proc.oid)` The function to be called
-	pub tgfoid: Qual,
+	pub tgfoid: Str,
 	/// `int2`  Bit mask identifying trigger firing conditions
 	pub tgtype: i16,
 	/// `char`  Controls in which session_replication_role modes the trigger fires. O = trigger fires in “origin” and “local” modes, D = trigger is disabled, R = trigger fires in “replica” mode, A = trigger fires always.
@@ -1167,11 +1167,11 @@ pub struct PgTrigger {
 	/// `bool`  True if trigger is internally generated (usually, to enforce the constraint identified by tgconstraint)
 	pub tgisinternal: bool,
 	/// `oid` `(references pg_class.oid)` The table referenced by a referential integrity constraint (zero if trigger is not for a referential integrity constraint)
-	pub tgconstrrelid: Option<Qual>,
+	pub tgconstrrelid: Option<Str>,
 	/// `oid` `(references pg_class.oid)` The index supporting a unique, primary key, referential integrity, or exclusion constraint (zero if trigger is not for one of these types of constraint)
-	pub tgconstrindid: Option<Qual>,
+	pub tgconstrindid: Option<Str>,
 	/// `oid` `(references pg_constraint.oid)` The pg_constraint entry associated with the trigger (zero if trigger is not for a constraint)
-	pub tgconstraint: Option<Qual>,
+	pub tgconstraint: Option<Str>,
 	/// `bool`  True if constraint trigger is deferrable
 	pub tgdeferrable: bool,
 	/// `bool`  True if constraint trigger is initially deferred
@@ -1203,7 +1203,7 @@ pg_char_enum!(PgTriggerTgenabled { 'O' => OriginAndLocalMode, 'D' => Disabled, '
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsConfig {
 	/// `oid`  Row identifier
-	pub oid: Qual,
+	pub oid: Str,
 	/// `name`  Text search configuration name
 	pub cfgname: Str,
 	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this configuration
@@ -1218,20 +1218,20 @@ pub struct PgTsConfig {
 	/// `text`  The provider from pg_seclabel
 	pub seclabel_provider: Option<Str>,
 }
-impl_qual_hash_and_equivalent!(PgTsConfig);
+impl_hash_and_equivalent!(PgTsConfig, oid);
 
 
 /// The DDL-only contents of [`pg_ts_config_map`](https://www.postgresql.org/docs/17/catalog-pg-ts-config-map.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsConfigMap {
 	/// `oid` `(references pg_ts_config.oid)` The OID of the pg_ts_config entry owning this map entry
-	pub mapcfg: Qual,
+	pub mapcfg: Str,
 	/// `int4`  A token type emitted by the configuration's parser
 	pub maptokentype: i32,
 	/// `int4`  Order in which to consult this entry (lower mapseqnos first)
 	pub mapseqno: i32,
 	/// `oid` `(references pg_ts_dict.oid)` The OID of the text search dictionary to consult
-	pub mapdict: Qual,
+	pub mapdict: Str,
 }
 
 
@@ -1239,7 +1239,7 @@ pub struct PgTsConfigMap {
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsDict {
 	/// `oid`  Row identifier
-	pub oid: Qual,
+	pub oid: Str,
 	/// `name`  Text search dictionary name
 	pub dictname: Str,
 	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this dictionary
@@ -1256,7 +1256,7 @@ pub struct PgTsDict {
 	/// `text`  The provider from pg_seclabel
 	pub seclabel_provider: Option<Str>,
 }
-impl_qual_hash_and_equivalent!(PgTsDict);
+impl_hash_and_equivalent!(PgTsDict, oid);
 
 
 /// The DDL-only contents of [`pg_ts_parser`](https://www.postgresql.org/docs/17/catalog-pg-ts-parser.html)
@@ -1268,15 +1268,15 @@ pub struct PgTsParser {
 	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this parser
 	pub prsnamespace: Str,
 	/// `regproc` `(references pg_proc.oid)` OID of the parser's startup function
-	pub prsstart: Qual,
+	pub prsstart: Str,
 	/// `regproc` `(references pg_proc.oid)` OID of the parser's next-token function
-	pub prstoken: Qual,
+	pub prstoken: Str,
 	/// `regproc` `(references pg_proc.oid)` OID of the parser's shutdown function
-	pub prsend: Qual,
+	pub prsend: Str,
 	/// `regproc` `(references pg_proc.oid)` OID of the parser's headline function (zero if none)
-	pub prsheadline: Option<Qual>,
+	pub prsheadline: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` OID of the parser's lextype function
-	pub prslextype: Qual,
+	pub prslextype: Str,
 }
 
 
@@ -1289,9 +1289,9 @@ pub struct PgTsTemplate {
 	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this template
 	pub tmplnamespace: Str,
 	/// `regproc` `(references pg_proc.oid)` OID of the template's initialization function (zero if none)
-	pub tmplinit: Option<Qual>,
+	pub tmplinit: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` OID of the template's lexize function
-	pub tmpllexize: Qual,
+	pub tmpllexize: Str,
 }
 
 
@@ -1299,7 +1299,7 @@ pub struct PgTsTemplate {
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgType {
 	/// `oid`  Row identifier
-	pub oid: Qual,
+	pub oid: Str,
 	/// `name`  Data type name
 	pub typname: Str,
 	/// `oid` `(references pg_namespace.oid)` The OID of the namespace that contains this type
@@ -1320,27 +1320,27 @@ pub struct PgType {
 	/// `char`  Character that separates two values of this type when parsing array input. Note that the delimiter is associated with the array element data type, not the array data type.
 	pub typdelim: i8,
 	/// `oid` `(references pg_class.oid)` If this is a composite type (see typtype), then this column points to the pg_class entry that defines the corresponding table. (For a free-standing composite type, the pg_class entry doesn't really represent a table, but it is needed anyway for the type's pg_attribute entries to link to.) Zero for non-composite types.
-	pub typrelid: Option<Qual>,
+	pub typrelid: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Subscripting handler function's OID, or zero if this type doesn't support subscripting. Types that are “true” array types have typsubscript = array_subscript_handler, but other types may have other handler functions to implement specialized subscripting behavior.
-	pub typsubscript: Option<Qual>,
+	pub typsubscript: Option<Str>,
 	/// `oid` `(references pg_type.oid)` If typelem is not zero then it identifies another row in pg_type, defining the type yielded by subscripting. This should be zero if typsubscript is zero. However, it can be zero when typsubscript isn't zero, if the handler doesn't need typelem to determine the subscripting result type. Note that a typelem dependency is considered to imply physical containment of the element type in this type; so DDL changes on the element type might be restricted by the presence of this type.
-	pub typelem: Option<Qual>,
+	pub typelem: Option<Str>,
 	/// `oid` `(references pg_type.oid)` If typarray is not zero then it identifies another row in pg_type, which is the “true” array type having this type as element
-	pub typarray: Option<Qual>,
+	pub typarray: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Input conversion function (text format)
-	pub typinput: Qual,
+	pub typinput: Str,
 	/// `regproc` `(references pg_proc.oid)` Output conversion function (text format)
-	pub typoutput: Qual,
+	pub typoutput: Str,
 	/// `regproc` `(references pg_proc.oid)` Input conversion function (binary format), or zero if none
-	pub typreceive: Option<Qual>,
+	pub typreceive: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Output conversion function (binary format), or zero if none
-	pub typsend: Option<Qual>,
+	pub typsend: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Type modifier input function, or zero if type does not support modifiers
-	pub typmodin: Option<Qual>,
+	pub typmodin: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Type modifier output function, or zero to use the standard format
-	pub typmodout: Option<Qual>,
+	pub typmodout: Option<Str>,
 	/// `regproc` `(references pg_proc.oid)` Custom ANALYZE function, or zero to use the standard function
-	pub typanalyze: Option<Qual>,
+	pub typanalyze: Option<Str>,
 	/// `char`  typalign is the alignment required when storing a value of this type. It applies to storage on disk as well as most representations of the value inside PostgreSQL. When multiple values are stored consecutively, such as in the representation of a complete row on disk, padding is inserted before a datum of this type so that it begins on the specified boundary. The alignment reference is the beginning of the first datum in the sequence. Possible values are: c = char alignment, i.e., no alignment needed. s = short alignment (2 bytes on most machines). i = int alignment (4 bytes on most machines). d = double alignment (8 bytes on many machines, but by no means all).
 	pub typalign: PgTypeTypalign,
 	/// `char`  typstorage tells for varlena types (those with typlen = -1) if the type is prepared for toasting and what the default strategy for attributes of this type should be. Possible values are: p (plain): Values must always be stored plain (non-varlena types always use this value). e (external): Values can be stored in a secondary “TOAST” relation (if relation has one, see pg_class.reltoastrelid). m (main): Values can be compressed and stored inline. x (extended): Values can be compressed and/or moved to a secondary relation. x is the usual choice for toast-able types. Note that m values can also be moved out to secondary storage, but only as a last resort (e and x values are moved first).
@@ -1348,19 +1348,19 @@ pub struct PgType {
 	/// `bool`  typnotnull represents a not-null constraint on a type. Used for domains only.
 	pub typnotnull: bool,
 	/// `oid` `(references pg_type.oid)` If this is a domain (see typtype), then typbasetype identifies the type that this one is based on. Zero if this type is not a domain.
-	pub typbasetype: Option<Qual>,
+	pub typbasetype: Option<Str>,
 	/// `int4`  Domains use typtypmod to record the typmod to be applied to their base type (-1 if base type does not use a typmod). -1 if this type is not a domain.
 	pub typtypmod: Option<u32>,
 	/// `int4`  typndims is the number of array dimensions for a domain over an array (that is, typbasetype is an array type). Zero for types other than domains over array types.
 	pub typndims: u32,
 	/// `oid` `(references pg_collation.oid)` typcollation specifies the collation of the type. If the type does not support collations, this will be zero. A base type that supports collations will have a nonzero value here, typically DEFAULT_COLLATION_OID. A domain over a collatable type can have a collation OID different from its base type's, if one was specified for the domain.
-	pub typcollation: Option<Qual>,
+	pub typcollation: Option<Str>,
 	/// `pg_node_tree`  If typdefaultbin is not null, it is the nodeToString() representation of a default expression for the type. This is only used for domains.
 	pub typdefaultbin: Option<Str>,
 	/// `text`  typdefault is null if the type has no associated default value. If typdefaultbin is not null, typdefault must contain a human-readable version of the default expression represented by typdefaultbin. If typdefaultbin is null and typdefault is not, then typdefault is the external representation of the type's default value, which can be fed to the type's input converter to produce a constant.
 	pub typdefault: Option<Str>,
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
-	pub typacl: Option<Vec<aclitem::TypeAclItem>>,
+	pub typacl: Option<Vec<TypeAclItem>>,
 	/// `text`  The comment from pg_description
 	pub description: Option<Str>,
 	/// `text`  The seclabel from pg_seclabel
@@ -1368,11 +1368,11 @@ pub struct PgType {
 	/// `text`  The provider from pg_seclabel
 	pub seclabel_provider: Option<Str>,
 	/// `aclitem[]`  The initial access privileges from pg_init_privs.
-	pub initprivs: Option<Vec<aclitem::TypeAclItem>>,
+	pub initprivs: Option<Vec<TypeAclItem>>,
 	/// `char`  A code defining the type of initial privilege of this object from pg_init_privs. 'i' if set by initdb, 'e' if set by CREATE EXTENSION.
 	pub initprivs_type: Option<PgTypeInitprivsType>,
 }
-impl_qual_hash_and_equivalent!(PgType);
+impl_hash_and_equivalent!(PgType, oid);
 
 pg_char_enum!(PgTypeTyptype { 'b' => Base, 'c' => Composite, 'd' => Domain, 'e' => Enum, 'p' => Pseudo, 'r' => Range, 'm' => Multirange });
 pg_char_enum!(PgTypeTypalign { 'c' => Char, 's' => Short, 'i' => Int, 'd' => Double });
