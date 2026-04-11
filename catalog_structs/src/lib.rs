@@ -34,9 +34,19 @@ impl Qual {
 
 	/// Parse a qualifed name as would be given by the sql `quote_ident(namespace_name) || '.' || quote_ident(object_name)`
 	pub fn parse(qualified: &str) -> Qual {
-		// TODO this needs to be smarter to account for complex quoted identifiers that could contain .
-		let (schema_name, name) = qualified.split_once(".").unwrap_or(("pg_catalog", qualified));
-		Qual { schema_name: schema_name.into(), name: name.into() }
+		if let Ok((_, (schema_name, name))) = aclitem::parse_qualified(qualified) {
+			return Qual { schema_name, name }
+		}
+
+		Qual { schema_name: "pg_catalog".into(), name: qualified.into() }
+	}
+
+	pub fn parse_func(qualified: &str) -> Qual {
+		if let Ok((_, (schema_name, name))) = aclitem::parse_qualified_func(qualified) {
+			return Qual { schema_name, name }
+		}
+
+		Qual { schema_name: "pg_catalog".into(), name: qualified.into() }
 	}
 
 	/// Optionally call `parse`

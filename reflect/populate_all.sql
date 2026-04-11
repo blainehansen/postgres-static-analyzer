@@ -445,3 +445,16 @@ COMMENT ON TYPE point_composite IS 'COMMENT ON TYPE point_composite';
 --   C handler functions; the entries we reference ('default' parser,
 --   'simple' template) already satisfy these catalogs non-trivially.
 -- ====================================================================
+
+
+-- TODO put these all in!
+-- create schema _NiGhTmArE_$_sChEmA;
+
+-- create role "oh no""... agh!";
+
+-- create schema " bam. ";
+
+-- grant usage on schema " bam. " to "oh no""... agh!";
+
+-- create function " bam. "." terrible .🙃{}"(a integer) returns integer
+-- 	language sql immutable strict return a + 1;

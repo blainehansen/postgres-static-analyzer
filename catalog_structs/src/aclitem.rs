@@ -103,9 +103,9 @@ use nom::{
 	branch::alt,
 	bytes::complete::take_until,
 	character::complete::{char, one_of, satisfy},
-	combinator::{all_consuming, map, opt, recognize},
+	combinator::{all_consuming, map, opt, recognize, rest},
 	multi::many0,
-	sequence::pair,
+	sequence::{pair, separated_pair},
 };
 
 
@@ -134,10 +134,9 @@ fn parse_aclitem<'a, GP>(
 where
 	GP: GrantParser,
 {
-	let (input, grantee) = opt(parse_role_name).parse(input)?;
+	let (input, grantee) = opt(parse_ident).parse(input)?;
 	let (input, _) = char('=').parse(input)?;
 
-	// TODO is this ever actually zero or more?
 	let (input, grants) = many0(|i: &'a str| {
 		let (i, privilege) = grant_parser.parse_grant(i)?;
 		let (i, star) = opt(char('*')).parse(i)?;
@@ -146,16 +145,102 @@ where
 	.parse(input)?;
 
 	let (input, _) = char('/').parse(input)?;
-	let (input, grantor) = all_consuming(parse_role_name).parse(input)?;
+	let (input, grantor) = all_consuming(parse_ident).parse(input)?;
 
 	Ok((input, AclItem { grantee, grantor, grants }))
 }
 
-fn parse_role_name(input: &str) -> IResult<&str, Str> {
-	alt((parse_quoted_name, parse_unquoted_name)).parse(input)
+// if we went the route of having separate Qual types for normal things, funcs, and operators, you have to change:
+// - macros to enable impl hash etc for those two other types
+// - the decisions for both the oid columns of those tables, and the decisions for columns that reference them
+
+pub(crate) fn parse_qualified(input: &str) -> IResult<&str, (Str, Str)> {
+	all_consuming(
+		separated_pair(
+			parse_ident,
+			char('.'),
+			parse_ident,
+		),
+	).parse(input)
 }
 
-fn parse_unquoted_name(input: &str) -> IResult<&str, Str> {
+pub(crate) fn parse_qualified_func(input: &str) -> IResult<&str, (Str, Str)> {
+	separated_pair(
+		parse_ident,
+		char('.'),
+		map(
+			recognize(pair(
+				parse_ident,
+				rest,
+			)),
+			Str::new,
+		),
+	).parse(input)
+}
+
+pub(crate) fn parse_qualified_op(input: &str) -> IResult<&str, (Str, Str)> {
+	separated_pair(
+		parse_ident,
+		char('.'),
+		map(
+			rest,
+			Str::new,
+		),
+	).parse(input)
+}
+
+#[cfg(test)]
+mod qualifed_tests {
+	use super::*;
+
+	#[test]
+	fn test_parse_qualified() {
+		assert!(parse_qualified("\"C.utf8\"").is_err());
+		assert!(parse_qualified("\"C.ut\"\"f8\"").is_err());
+		assert_eq!(
+			parse_qualified("stuff.\"C.utf8\"").unwrap().1,
+			("stuff".into(), "C.utf8".into()),
+		);
+		assert_eq!(
+			parse_qualified("\" .\"\".. \".\" bad. \"\" \"").unwrap().1,
+			(" .\".. ".into(), " bad. \" ".into()),
+		);
+	}
+
+	#[test]
+	fn test_parse_qualified_func() {
+		assert!(parse_qualified_func("\"C.utf8\"").is_err());
+		assert!(parse_qualified_func("\"C.ut\"\"f8\"").is_err());
+		assert_eq!(
+			parse_qualified_func("stuff.\"C.utf8\"(bigint,bigint)").unwrap().1,
+			("stuff".into(), "\"C.utf8\"(bigint,bigint)".into()),
+		);
+		assert_eq!(
+			parse_qualified_func("\" .\"\".. \".\" bad. \"\" \"(bigint,bigint)").unwrap().1,
+			(" .\".. ".into(), " bad. \" (bigint,bigint)".into()),
+		);
+	}
+
+	#[test]
+	fn test_parse_qualified_op() {
+		assert!(parse_qualified_op("\"C.utf8\"").is_err());
+		assert!(parse_qualified_op("\"C.ut\"\"f8\"").is_err());
+		assert_eq!(
+			parse_qualified_op("stuff.\"C.utf8\"(bigint,bigint)").unwrap().1,
+			("stuff".into(), "C.utf8(bigint,bigint)".into()),
+		);
+		assert_eq!(
+			parse_qualified_func("\" .\"\".. \".<(bigint,bigint)").unwrap().1,
+			(" .\".. ".into(), "<(bigint,bigint)".into()),
+		);
+	}
+}
+
+pub(crate) fn parse_ident(input: &str) -> IResult<&str, Str> {
+	alt((parse_quoted_ident, parse_unquoted_ident)).parse(input)
+}
+
+pub(crate) fn parse_unquoted_ident(input: &str) -> IResult<&str, Str> {
 	map(
 		recognize(pair(
 			satisfy(|c: char| c.is_alphabetic() || c == '_'),
@@ -166,7 +251,7 @@ fn parse_unquoted_name(input: &str) -> IResult<&str, Str> {
 	.parse(input)
 }
 
-fn parse_quoted_name(input: &str) -> IResult<&str, Str> {
+pub(crate) fn parse_quoted_ident(input: &str) -> IResult<&str, Str> {
 	let (mut rest, _) = char('"').parse(input)?;
 	let mut name = String::new();
 	loop {
