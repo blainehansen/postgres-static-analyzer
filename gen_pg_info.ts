@@ -24,7 +24,7 @@ await Promise.all([
 
 
 function formatTable(
-	tableName: string, { columns, hashCol }: TableDecision,
+	tableName: string, { columns, hashCol, url }: TableDecision,
 ) {
 	const structName = toPascalCase(tableName)
 
@@ -96,6 +96,7 @@ function formatTable(
 	const collectPortion = tableName === "pg_database" ? ".one()" : ".iter().await?.try_collect()"
 
 	const struct = dedent(`
+		/// The DDL-only contents of [\`${tableName}\`](${url})
 		#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 		pub struct ${structName} {
 			${formattedStructColumns.join("\n\t\t\t")}
@@ -103,6 +104,7 @@ function formatTable(
 	`)
 
 	const reflect = dedent(`
+		/// Asynchronously pull the contents of [\`${tableName}\`](${url})
 		pub async fn reflect_${tableName}(
 			client: &PgClient
 		) -> Result<${returnPortion}, postgres::Error> {

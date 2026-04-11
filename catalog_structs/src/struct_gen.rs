@@ -1,5 +1,6 @@
 use super::*;
 
+/// The DDL-only contents of [`pg_aggregate`](https://www.postgresql.org/docs/17/catalog-pg-aggregate.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgAggregate {
 	/// `regproc` `(references pg_proc.oid)` pg_proc OID of the aggregate function
@@ -51,6 +52,7 @@ pg_char_enum!(PgAggregateAggfinalmodify { 'r' => ReadOnly, 's' => CannotApply, '
 pg_char_enum!(PgAggregateAggmfinalmodify { 'r' => ReadOnly, 's' => CannotApply, 'w' => Writes });
 
 
+/// The DDL-only contents of [`pg_am`](https://www.postgresql.org/docs/17/catalog-pg-am.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgAm {
 	// oid oid  Row identifier
@@ -68,6 +70,7 @@ impl_name_hash_and_equivalent!(PgAm, amname);
 pg_char_enum!(PgAmAmtype { 't' => Table, 'i' => Index });
 
 
+/// The DDL-only contents of [`pg_amop`](https://www.postgresql.org/docs/17/catalog-pg-amop.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgAmop {
 	// oid oid  Row identifier
@@ -92,6 +95,7 @@ pub struct PgAmop {
 pg_char_enum!(PgAmopAmoppurpose { 's' => Search, 'o' => Ordering });
 
 
+/// The DDL-only contents of [`pg_amproc`](https://www.postgresql.org/docs/17/catalog-pg-amproc.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgAmproc {
 	// oid oid  Row identifier
@@ -108,6 +112,7 @@ pub struct PgAmproc {
 }
 
 
+/// The DDL-only contents of [`pg_attrdef`](https://www.postgresql.org/docs/17/catalog-pg-attrdef.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgAttrdef {
 	// oid oid  Row identifier
@@ -120,6 +125,7 @@ pub struct PgAttrdef {
 }
 
 
+/// The DDL-only contents of [`pg_attribute`](https://www.postgresql.org/docs/17/catalog-pg-attribute.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgAttribute {
 	/// `oid` `(references pg_class.oid)` The table this column belongs to
@@ -185,6 +191,7 @@ pg_char_enum!(PgAttributeAttgenerated { 's' => Stored });
 pg_char_enum!(PgAttributeInitprivsType { 'i' => InitDb, 'e' => CreateExtension });
 
 
+/// The DDL-only contents of [`pg_roles`](https://www.postgresql.org/docs/17/view-pg-roles.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgRoles {
 	/// `name`  Role name
@@ -221,6 +228,7 @@ pub struct PgRoles {
 impl_name_hash_and_equivalent!(PgRoles, rolname);
 
 
+/// The DDL-only contents of [`pg_auth_members`](https://www.postgresql.org/docs/17/catalog-pg-auth-members.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgAuthMembers {
 	// oid oid  Row identifier
@@ -239,6 +247,7 @@ pub struct PgAuthMembers {
 }
 
 
+/// The DDL-only contents of [`pg_cast`](https://www.postgresql.org/docs/17/catalog-pg-cast.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgCast {
 	// oid oid  Row identifier
@@ -260,6 +269,7 @@ pg_char_enum!(PgCastCastcontext { 'e' => Explicit, 'a' => ImplicitAssignment, 'i
 pg_char_enum!(PgCastCastmethod { 'f' => Castfunc, 'i' => IOFunc, 'b' => BinaryCoercible });
 
 
+/// The DDL-only contents of [`pg_class`](https://www.postgresql.org/docs/17/catalog-pg-class.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgClass {
 	/// `oid`  Row identifier
@@ -333,6 +343,7 @@ pg_char_enum!(PgClassRelreplident { 'd' => Default, 'n' => Nothing, 'f' => AllCo
 pg_char_enum!(PgClassInitprivsType { 'i' => InitDb, 'e' => CreateExtension });
 
 
+/// The DDL-only contents of [`pg_collation`](https://www.postgresql.org/docs/17/catalog-pg-collation.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgCollation {
 	/// `oid`  Row identifier
@@ -366,6 +377,7 @@ pub struct PgCollation {
 pg_char_enum!(PgCollationCollprovider { 'd' => DatabaseDefault, 'b' => Builtin, 'c' => Libc, 'i' => Icu });
 
 
+/// The DDL-only contents of [`pg_constraint`](https://www.postgresql.org/docs/17/catalog-pg-constraint.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgConstraint {
 	// oid oid  Row identifier
@@ -429,6 +441,7 @@ pg_char_enum!(PgConstraintConfdeltype { 'a' => NoAction, 'r' => Restrict, 'c' =>
 pg_char_enum!(PgConstraintConfmatchtype { 'f' => Full, 'p' => Partial, 's' => Simple });
 
 
+/// The DDL-only contents of [`pg_conversion`](https://www.postgresql.org/docs/17/catalog-pg-conversion.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgConversion {
 	// oid oid  Row identifier
@@ -451,6 +464,7 @@ pub struct PgConversion {
 }
 
 
+/// The DDL-only contents of [`pg_database`](https://www.postgresql.org/docs/17/catalog-pg-database.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgDatabase {
 	// oid oid  Row identifier
@@ -496,6 +510,7 @@ impl_name_hash_and_equivalent!(PgDatabase, datname);
 pg_char_enum!(PgDatabaseDatlocprovider { 'b' => Builtin, 'c' => Libc, 'i' => Icu });
 
 
+/// The DDL-only contents of [`pg_default_acl`](https://www.postgresql.org/docs/17/catalog-pg-default-acl.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgDefaultAcl {
 	// oid oid  Row identifier
@@ -512,6 +527,7 @@ pub struct PgDefaultAcl {
 pg_char_enum!(PgDefaultAclDefaclobjtype { 'r' => Relation, 'S' => Sequence, 'f' => Function, 'T' => Type, 'n' => Schema });
 
 
+/// The DDL-only contents of [`pg_event_trigger`](https://www.postgresql.org/docs/17/catalog-pg-event-trigger.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgEventTrigger {
 	// oid oid  Row identifier
@@ -538,6 +554,7 @@ pub struct PgEventTrigger {
 pg_char_enum!(PgEventTriggerEvtenabled { 'O' => OriginLocal, 'D' => Disabled, 'R' => Replica, 'A' => Always });
 
 
+/// The DDL-only contents of [`pg_extension`](https://www.postgresql.org/docs/17/catalog-pg-extension.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgExtension {
 	// oid oid  Row identifier
@@ -560,6 +577,7 @@ pub struct PgExtension {
 }
 
 
+/// The DDL-only contents of [`pg_foreign_data_wrapper`](https://www.postgresql.org/docs/17/catalog-pg-foreign-data-wrapper.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgForeignDataWrapper {
 	// oid oid  Row identifier
@@ -586,6 +604,7 @@ pub struct PgForeignDataWrapper {
 pg_char_enum!(PgForeignDataWrapperInitprivsType { 'i' => InitDb, 'e' => CreateExtension });
 
 
+/// The DDL-only contents of [`pg_foreign_server`](https://www.postgresql.org/docs/17/catalog-pg-foreign-server.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgForeignServer {
 	// oid oid  Row identifier
@@ -614,6 +633,7 @@ pub struct PgForeignServer {
 pg_char_enum!(PgForeignServerInitprivsType { 'i' => InitDb, 'e' => CreateExtension });
 
 
+/// The DDL-only contents of [`pg_foreign_table`](https://www.postgresql.org/docs/17/catalog-pg-foreign-table.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgForeignTable {
 	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for this foreign table
@@ -625,6 +645,7 @@ pub struct PgForeignTable {
 }
 
 
+/// The DDL-only contents of [`pg_index`](https://www.postgresql.org/docs/17/catalog-pg-index.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgIndex {
 	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for this index
@@ -668,6 +689,7 @@ pub struct PgIndex {
 }
 
 
+/// The DDL-only contents of [`pg_inherits`](https://www.postgresql.org/docs/17/catalog-pg-inherits.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgInherits {
 	/// `oid` `(references pg_class.oid)` The OID of the child table or index
@@ -680,6 +702,7 @@ pub struct PgInherits {
 }
 
 
+/// The DDL-only contents of [`pg_language`](https://www.postgresql.org/docs/17/catalog-pg-language.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgLanguage {
 	// oid oid  Row identifier
@@ -715,6 +738,7 @@ impl_name_hash_and_equivalent!(PgLanguage, lanname);
 pg_char_enum!(PgLanguageInitprivsType { 'i' => InitDb, 'e' => CreateExtension });
 
 
+/// The DDL-only contents of [`pg_namespace`](https://www.postgresql.org/docs/17/catalog-pg-namespace.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgNamespace {
 	// oid oid  Row identifier
@@ -740,6 +764,7 @@ impl_name_hash_and_equivalent!(PgNamespace, nspname);
 pg_char_enum!(PgNamespaceInitprivsType { 'i' => InitDb, 'e' => CreateExtension });
 
 
+/// The DDL-only contents of [`pg_opclass`](https://www.postgresql.org/docs/17/catalog-pg-opclass.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgOpclass {
 	// oid oid  Row identifier
@@ -764,6 +789,7 @@ pub struct PgOpclass {
 }
 
 
+/// The DDL-only contents of [`pg_operator`](https://www.postgresql.org/docs/17/catalog-pg-operator.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgOperator {
 	/// `oid`  Row identifier
@@ -804,6 +830,7 @@ impl_qual_hash_and_equivalent!(PgOperator);
 pg_char_enum!(PgOperatorOprkind { 'b' => InfixOperatorBoth, 'l' => PrefixOperatorLeft });
 
 
+/// The DDL-only contents of [`pg_opfamily`](https://www.postgresql.org/docs/17/catalog-pg-opfamily.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgOpfamily {
 	// oid oid  Row identifier
@@ -820,6 +847,7 @@ pub struct PgOpfamily {
 }
 
 
+/// The DDL-only contents of [`pg_parameter_acl`](https://www.postgresql.org/docs/17/catalog-pg-parameter-acl.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgParameterAcl {
 	// oid oid  Row identifier
@@ -836,6 +864,7 @@ pub struct PgParameterAcl {
 pg_char_enum!(PgParameterAclInitprivsType { 'i' => InitDb, 'e' => CreateExtension });
 
 
+/// The DDL-only contents of [`pg_partitioned_table`](https://www.postgresql.org/docs/17/catalog-pg-partitioned-table.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgPartitionedTable {
 	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for this partitioned table
@@ -859,6 +888,7 @@ pub struct PgPartitionedTable {
 pg_char_enum!(PgPartitionedTablePartstrat { 'h' => HashPartitionedTable, 'l' => ListPartitionedTable, 'r' => RangePartitionedTable });
 
 
+/// The DDL-only contents of [`pg_policy`](https://www.postgresql.org/docs/17/catalog-pg-policy.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgPolicy {
 	// oid oid  Row identifier
@@ -883,6 +913,7 @@ pub struct PgPolicy {
 pg_char_enum!(PgPolicyPolcmd { 'r' => Select, 'a' => Insert, 'w' => Update, 'd' => Delete, '*' => All });
 
 
+/// The DDL-only contents of [`pg_publication`](https://www.postgresql.org/docs/17/catalog-pg-publication.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgPublication {
 	// oid oid  Row identifier
@@ -912,6 +943,7 @@ pub struct PgPublication {
 impl_name_hash_and_equivalent!(PgPublication, pubname);
 
 
+/// The DDL-only contents of [`pg_publication_namespace`](https://www.postgresql.org/docs/17/catalog-pg-publication-namespace.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgPublicationNamespace {
 	// oid oid  Row identifier
@@ -922,6 +954,7 @@ pub struct PgPublicationNamespace {
 }
 
 
+/// The DDL-only contents of [`pg_publication_rel`](https://www.postgresql.org/docs/17/catalog-pg-publication-rel.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgPublicationRel {
 	// oid oid  Row identifier
@@ -936,6 +969,7 @@ pub struct PgPublicationRel {
 }
 
 
+/// The DDL-only contents of [`pg_range`](https://www.postgresql.org/docs/17/catalog-pg-range.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgRange {
 	/// `oid` `(references pg_type.oid)` OID of the range type
@@ -955,6 +989,7 @@ pub struct PgRange {
 }
 
 
+/// The DDL-only contents of [`pg_rules`](https://www.postgresql.org/docs/17/view-pg-rules.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgRules {
 	/// `name` `(references pg_namespace.nspname)` Name of schema containing table
@@ -970,6 +1005,7 @@ pub struct PgRules {
 }
 
 
+/// The DDL-only contents of [`pg_views`](https://www.postgresql.org/docs/17/view-pg-views.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgViews {
 	/// `name` `(references pg_namespace.nspname)` Name of schema containing view
@@ -983,6 +1019,7 @@ pub struct PgViews {
 }
 
 
+/// The DDL-only contents of [`pg_matviews`](https://www.postgresql.org/docs/17/view-pg-matviews.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgMatviews {
 	/// `name` `(references pg_namespace.nspname)` Name of schema containing materialized view
@@ -999,6 +1036,7 @@ pub struct PgMatviews {
 }
 
 
+/// The DDL-only contents of [`pg_sequence`](https://www.postgresql.org/docs/17/catalog-pg-sequence.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgSequence {
 	/// `oid` `(references pg_class.oid)` The OID of the pg_class entry for this sequence
@@ -1020,6 +1058,7 @@ pub struct PgSequence {
 }
 
 
+/// The DDL-only contents of [`pg_statistic_ext`](https://www.postgresql.org/docs/17/catalog-pg-statistic-ext.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgStatisticExt {
 	// oid oid  Row identifier
@@ -1046,6 +1085,7 @@ pub struct PgStatisticExt {
 pg_char_enum!(PgStatisticExtStxkind { 'd' => NDistinct, 'f' => FunctionalDependency, 'm' => MostCommonValuesList, 'e' => Expression });
 
 
+/// The DDL-only contents of [`pg_subscription`](https://www.postgresql.org/docs/17/catalog-pg-subscription.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgSubscription {
 	// oid oid  Row identifier
@@ -1093,6 +1133,7 @@ pg_char_enum!(PgSubscriptionSubstream { 'f' => DisallowStreamingInProgress, 't' 
 pg_char_enum!(PgSubscriptionSubtwophasestate { 'd' => Disabled, 'p' => PendingEnablement, 'e' => Enabled });
 
 
+/// The DDL-only contents of [`pg_transform`](https://www.postgresql.org/docs/17/catalog-pg-transform.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTransform {
 	// oid oid  Row identifier
@@ -1107,6 +1148,7 @@ pub struct PgTransform {
 }
 
 
+/// The DDL-only contents of [`pg_trigger`](https://www.postgresql.org/docs/17/catalog-pg-trigger.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTrigger {
 	// oid oid  Row identifier
@@ -1157,6 +1199,7 @@ pub struct PgTrigger {
 pg_char_enum!(PgTriggerTgenabled { 'O' => OriginAndLocalMode, 'D' => Disabled, 'R' => ReplicaMode, 'A' => Always });
 
 
+/// The DDL-only contents of [`pg_ts_config`](https://www.postgresql.org/docs/17/catalog-pg-ts-config.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsConfig {
 	/// `oid`  Row identifier
@@ -1178,6 +1221,7 @@ pub struct PgTsConfig {
 impl_qual_hash_and_equivalent!(PgTsConfig);
 
 
+/// The DDL-only contents of [`pg_ts_config_map`](https://www.postgresql.org/docs/17/catalog-pg-ts-config-map.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsConfigMap {
 	/// `oid` `(references pg_ts_config.oid)` The OID of the pg_ts_config entry owning this map entry
@@ -1191,6 +1235,7 @@ pub struct PgTsConfigMap {
 }
 
 
+/// The DDL-only contents of [`pg_ts_dict`](https://www.postgresql.org/docs/17/catalog-pg-ts-dict.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsDict {
 	/// `oid`  Row identifier
@@ -1214,6 +1259,7 @@ pub struct PgTsDict {
 impl_qual_hash_and_equivalent!(PgTsDict);
 
 
+/// The DDL-only contents of [`pg_ts_parser`](https://www.postgresql.org/docs/17/catalog-pg-ts-parser.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsParser {
 	// oid oid  Row identifier
@@ -1234,6 +1280,7 @@ pub struct PgTsParser {
 }
 
 
+/// The DDL-only contents of [`pg_ts_template`](https://www.postgresql.org/docs/17/catalog-pg-ts-template.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgTsTemplate {
 	// oid oid  Row identifier
@@ -1248,6 +1295,7 @@ pub struct PgTsTemplate {
 }
 
 
+/// The DDL-only contents of [`pg_type`](https://www.postgresql.org/docs/17/catalog-pg-type.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgType {
 	/// `oid`  Row identifier
@@ -1332,6 +1380,7 @@ pg_char_enum!(PgTypeTypstorage { 'p' => Plain, 'e' => External, 'm' => Main, 'x'
 pg_char_enum!(PgTypeInitprivsType { 'i' => InitDb, 'e' => CreateExtension });
 
 
+/// The DDL-only contents of [`pg_user_mappings`](https://www.postgresql.org/docs/17/view-pg-user-mappings.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgUserMappings {
 	// umid oid (references pg_user_mapping.oid) OID of the user mapping

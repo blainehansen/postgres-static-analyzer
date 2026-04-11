@@ -1,3 +1,7 @@
+//! Struct definitions for all the [postgres catalog tables](https://www.postgresql.org/docs/17/catalogs.html) that are [**DDL only**](https://en.wikipedia.org/wiki/Data_definition_language), meaning only the tables and columns that describe the "schema" of the database are included. No `oid`s, no transient server state or like clustering or tablespaces etc, and of course no actual table data.
+//!
+//! `oid`s pointing to other tables are translated either to strings (as [`Str`]) if they aren't contained in a [namespace](https://www.postgresql.org/docs/17/catalog-pg-namespace.html) (confusingly created with [`create schema`](https://www.postgresql.org/docs/17/sql-createschema.html)), or a "qualified name" struct [`Qual`] for those that are.
+
 pub use smol_str::SmolStr as Str;
 pub use ordered_float;
 
@@ -10,6 +14,7 @@ pub use struct_gen::*;
 
 pub mod aclitem;
 
+/// The qualified name of an object that exists in a [`namespace`](https://www.postgresql.org/docs/17/catalog-pg-namespace.html).
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct Qual {
 	pub schema_name: Str,
@@ -27,12 +32,14 @@ impl Qual {
 	// 	}
 	// }
 
+	/// Parse a qualifed name as would be given by the sql `quote_ident(namespace_name) || '.' || quote_ident(object_name)`
 	pub fn parse(qualified: &str) -> Qual {
 		// TODO this needs to be smarter to account for complex quoted identifiers that could contain .
 		let (schema_name, name) = qualified.split_once(".").unwrap_or(("pg_catalog", qualified));
 		Qual { schema_name: schema_name.into(), name: name.into() }
 	}
 
+	/// Optionally call `parse`
 	pub fn maybe_parse(qualified: Option<&str>) -> Option<Qual> {
 		qualified.map(Qual::parse)
 	}
@@ -43,8 +50,11 @@ impl Qual {
 // 	}
 // }
 
+/// A large wrapper struct that holds the results of all the other reflections.
+/// Only includes information for the single [database](https://www.postgresql.org/docs/17/sql-createdatabase.html), which is why `pg_database` isn't a collection.
+/// Objects that are "cluster shared" such as roles are those for the entire cluster.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
-pub struct PgState {
+pub struct DbState {
 	pub pg_aggregate: Vec<PgAggregate>,
 	pub pg_am: Set<PgAm>,
 	pub pg_amop: Vec<PgAmop>,
@@ -240,7 +250,7 @@ pub(crate) use pg_char_enum;
 
 // `pg_database`: https://www.postgresql.org/docs/17/catalog-pg-database.html
 
-// `pg_db_role_setting`: https://www.postgresql.org/docs/17/catalog-pg-db-role-setting.html
+/// The DDL-only contents of [`pg_db_role_setting`](https://www.postgresql.org/docs/17/catalog-pg-db-role-setting.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgDbRoleSetting {
 	/// `oid` (references pg_database.oid) The OID of the database the setting is applicable to, or zero if not database-specific
@@ -257,7 +267,7 @@ pub struct PgDbRoleSetting {
 
 // `pg_description`: https://www.postgresql.org/docs/17/catalog-pg-description.html
 
-// `pg_enum`: https://www.postgresql.org/docs/17/catalog-pg-enum.html
+/// The DDL-only contents of [`pg_enum`](https://www.postgresql.org/docs/17/catalog-pg-enum.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgEnum {
 	// `oid`  Row identifier
@@ -301,7 +311,7 @@ impl_qual_hash_and_equivalent!(PgEnum, enumtypid);
 
 // `pg_policy`: https://www.postgresql.org/docs/17/catalog-pg-policy.html
 
-// `pg_proc`: https://www.postgresql.org/docs/17/catalog-pg-proc.html
+/// The DDL-only contents of [`pg_proc`](https://www.postgresql.org/docs/17/catalog-pg-proc.html)
 #[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
 pub struct PgProc {
 	/// `oid`  Row identifier

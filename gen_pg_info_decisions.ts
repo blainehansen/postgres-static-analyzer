@@ -38,7 +38,7 @@ await Deno.writeTextFile("./gen_pg_info_decisions.toml", tomlStringify(finalDeci
 
 
 
-async function decideTable({ tableName, columns }: RawTable): Promise<TableDecision | null> {
+async function decideTable({ tableName, columns, url }: RawTable): Promise<TableDecision | null> {
 	const tableOverride = tableOverrides[tableName]
 	if (tableOverride === 'todo' || tableOverride === 'manual')
 		return null
@@ -225,7 +225,7 @@ async function decideTable({ tableName, columns }: RawTable): Promise<TableDecis
 		}
 	}
 
-	return { columns: decidedColumns, hashCol: foundHashColumn }
+	return { columns: decidedColumns, hashCol: foundHashColumn, url }
 }
 
 async function decideColumn(

@@ -1,3 +1,9 @@
+//! Functions to actually read the catalog tables from a running postgres instance, and translate them into `ddl-catalog-structs`.
+//!
+//! Uses [`tokio-postgres`](https://docs.rs/tokio-postgres/latest/tokio_postgres/) through [`clorinde`](https://crates.io/crates/clorinde).
+//!
+//! Most likely you'll want to use [`reflect_db_state`].
+
 pub(crate) use postgres_static_analyzer_reflect_queries as queries_crate;
 pub(crate) use queries_crate::tokio_postgres as postgres;
 pub use queries_crate::tokio_postgres::Client as PgClient;
@@ -10,9 +16,14 @@ mod reflect_gen;
 pub use postgres_static_analyzer_ddl_catalog_structs::*;
 use futures::TryStreamExt;
 
-pub async fn reflect_pg_state(
+/// A large wrapper function that calls all the other reflection functions.
+///
+/// All reflection functions narrow their scope to the single [database](https://www.postgresql.org/docs/17/sql-createdatabase.html) `client` is configured to connect to. This includes all catalog tables that point to a database.
+///
+/// Any object created in the `pg_temp` namespace or any `pg_toast` namespaces are also ignored.
+pub async fn reflect_db_state(
 	client: &PgClient
-) -> Result<PgState, postgres::Error> {
+) -> Result<DbState, postgres::Error> {
 	client.batch_execute(include_str!("../reflect_fns.sql")).await?;
 
 	let (
@@ -141,7 +152,7 @@ pub async fn reflect_pg_state(
 		reflect_pg_user_mappings(client),
 	)?;
 
-	Ok(PgState {
+	Ok(DbState {
 		pg_aggregate,
 		pg_am,
 		pg_amop,
@@ -207,50 +218,36 @@ pub async fn reflect_pg_state(
 }
 
 
-// `pg_aggregate`: https://www.postgresql.org/docs/17/catalog-pg-aggregate.html
 pub use reflect_gen::reflect_pg_aggregate;
 
-// `pg_am`: https://www.postgresql.org/docs/17/catalog-pg-am.html
 pub use reflect_gen::reflect_pg_am;
 
-// `pg_amop`: https://www.postgresql.org/docs/17/catalog-pg-amop.html
 pub use reflect_gen::reflect_pg_amop;
 
-// `pg_amproc`: https://www.postgresql.org/docs/17/catalog-pg-amproc.html
 pub use reflect_gen::reflect_pg_amproc;
 
-// `pg_attrdef`: https://www.postgresql.org/docs/17/catalog-pg-attrdef.html
 pub use reflect_gen::reflect_pg_attrdef;
 
-// `pg_attribute`: https://www.postgresql.org/docs/17/catalog-pg-attribute.html
 pub use reflect_gen::reflect_pg_attribute;
 
 // `pg_authid`: https://www.postgresql.org/docs/17/catalog-pg-authid.html
-// `pg_roles`: https://www.postgresql.org/docs/17/view-pg-roles.html
 pub use reflect_gen::reflect_pg_roles;
 
-// `pg_auth_members`: https://www.postgresql.org/docs/17/catalog-pg-auth-members.html
 pub use reflect_gen::reflect_pg_auth_members;
 
-// `pg_cast`: https://www.postgresql.org/docs/17/catalog-pg-cast.html
 pub use reflect_gen::reflect_pg_cast;
 
-// `pg_class`: https://www.postgresql.org/docs/17/catalog-pg-class.html
 pub use reflect_gen::reflect_pg_class;
 
-// `pg_collation`: https://www.postgresql.org/docs/17/catalog-pg-collation.html
 pub use reflect_gen::reflect_pg_collation;
 
-// `pg_constraint`: https://www.postgresql.org/docs/17/catalog-pg-constraint.html
 pub use reflect_gen::reflect_pg_constraint;
 
-// `pg_conversion`: https://www.postgresql.org/docs/17/catalog-pg-conversion.html
 pub use reflect_gen::reflect_pg_conversion;
 
-// `pg_database`: https://www.postgresql.org/docs/17/catalog-pg-database.html
 pub use reflect_gen::reflect_pg_database;
 
-// `pg_db_role_setting`: https://www.postgresql.org/docs/17/catalog-pg-db-role-setting.html
+/// Asynchronously pull the contents of [`pg_db_role_setting`](https://www.postgresql.org/docs/17/catalog-pg-db-role-setting.html)
 pub async fn reflect_pg_db_role_setting(
 	client: &PgClient
 ) -> Result<Vec<PgDbRoleSetting>, postgres::Error> {
@@ -270,14 +267,13 @@ pub async fn reflect_pg_db_role_setting(
 	Ok(pg_db_role_setting_coll)
 }
 
-// `pg_default_acl`: https://www.postgresql.org/docs/17/catalog-pg-default-acl.html
 pub use reflect_gen::reflect_pg_default_acl;
 
 // `pg_depend`: https://www.postgresql.org/docs/17/catalog-pg-depend.html
 
 // `pg_description`: https://www.postgresql.org/docs/17/catalog-pg-description.html
 
-// `pg_enum`: https://www.postgresql.org/docs/17/catalog-pg-enum.html
+/// Asynchronously pull the contents of [`pg_enum`](https://www.postgresql.org/docs/17/catalog-pg-enum.html)
 pub async fn reflect_pg_enum(
 	client: &PgClient
 ) -> Result<Set<PgEnum>, postgres::Error> {
@@ -296,54 +292,39 @@ pub async fn reflect_pg_enum(
 	Ok(pg_enum_coll)
 }
 
-// `pg_event_trigger`: https://www.postgresql.org/docs/17/catalog-pg-event-trigger.html
 pub use reflect_gen::reflect_pg_event_trigger;
 
-// `pg_extension`: https://www.postgresql.org/docs/17/catalog-pg-extension.html
 pub use reflect_gen::reflect_pg_extension;
 
-// `pg_foreign_data_wrapper`: https://www.postgresql.org/docs/17/catalog-pg-foreign-data-wrapper.html
 pub use reflect_gen::reflect_pg_foreign_data_wrapper;
 
-// `pg_foreign_server`: https://www.postgresql.org/docs/17/catalog-pg-foreign-server.html
 pub use reflect_gen::reflect_pg_foreign_server;
 
-// `pg_foreign_table`: https://www.postgresql.org/docs/17/catalog-pg-foreign-table.html
 pub use reflect_gen::reflect_pg_foreign_table;
 
-// `pg_index`: https://www.postgresql.org/docs/17/catalog-pg-index.html
 pub use reflect_gen::reflect_pg_index;
 
-// `pg_inherits`: https://www.postgresql.org/docs/17/catalog-pg-inherits.html
 pub use reflect_gen::reflect_pg_inherits;
 
 // `pg_init_privs`: https://www.postgresql.org/docs/17/catalog-pg-init-privs.html
 
-// `pg_language`: https://www.postgresql.org/docs/17/catalog-pg-language.html
 pub use reflect_gen::reflect_pg_language;
 
-// `pg_namespace`: https://www.postgresql.org/docs/17/catalog-pg-namespace.html
 pub use reflect_gen::reflect_pg_namespace;
 
-// `pg_opclass`: https://www.postgresql.org/docs/17/catalog-pg-opclass.html
 pub use reflect_gen::reflect_pg_opclass;
 
-// `pg_operator`: https://www.postgresql.org/docs/17/catalog-pg-operator.html
 pub use reflect_gen::reflect_pg_operator;
 
-// `pg_opfamily`: https://www.postgresql.org/docs/17/catalog-pg-opfamily.html
 pub use reflect_gen::reflect_pg_opfamily;
 
-// `pg_parameter_acl`: https://www.postgresql.org/docs/17/catalog-pg-parameter-acl.html
 pub use reflect_gen::reflect_pg_parameter_acl;
 
-// `pg_partitioned_table`: https://www.postgresql.org/docs/17/catalog-pg-partitioned-table.html
 pub use reflect_gen::reflect_pg_partitioned_table;
 
-// `pg_policy`: https://www.postgresql.org/docs/17/catalog-pg-policy.html
 pub use reflect_gen::reflect_pg_policy;
 
-// `pg_proc`: https://www.postgresql.org/docs/17/catalog-pg-proc.html
+/// Asynchronously pull the contents of [`pg_proc`](https://www.postgresql.org/docs/17/catalog-pg-proc.html)
 pub async fn reflect_pg_proc(
 	client: &PgClient
 ) -> Result<Set<PgProc>, postgres::Error> {
@@ -391,32 +372,23 @@ pub async fn reflect_pg_proc(
 	Ok(pg_proc_coll)
 }
 
-// `pg_publication`: https://www.postgresql.org/docs/17/catalog-pg-publication.html
 pub use reflect_gen::reflect_pg_publication;
 
-// `pg_publication_namespace`: https://www.postgresql.org/docs/17/catalog-pg-publication-namespace.html
 pub use reflect_gen::reflect_pg_publication_namespace;
 
-// `pg_publication_rel`: https://www.postgresql.org/docs/17/catalog-pg-publication-rel.html
 pub use reflect_gen::reflect_pg_publication_rel;
 
-// `pg_range`: https://www.postgresql.org/docs/17/catalog-pg-range.html
 pub use reflect_gen::reflect_pg_range;
 
 // `pg_replication_origin`: https://www.postgresql.org/docs/17/catalog-pg-replication-origin.html
 
 // `pg_rewrite`: https://www.postgresql.org/docs/17/catalog-pg-rewrite.html
-
-// `pg_rules`: https://www.postgresql.org/docs/17/view-pg-rules.html
 pub use reflect_gen::reflect_pg_rules;
-// `pg_views`: https://www.postgresql.org/docs/17/view-pg-views.html
 pub use reflect_gen::reflect_pg_views;
-// `pg_matviews`: https://www.postgresql.org/docs/17/view-pg-matviews.html
 pub use reflect_gen::reflect_pg_matviews;
 
 // `pg_seclabel`: https://www.postgresql.org/docs/17/catalog-pg-seclabel.html
 
-// `pg_sequence`: https://www.postgresql.org/docs/17/catalog-pg-sequence.html
 pub use reflect_gen::reflect_pg_sequence;
 
 // `pg_shdepend`: https://www.postgresql.org/docs/17/catalog-pg-shdepend.html
@@ -425,35 +397,24 @@ pub use reflect_gen::reflect_pg_sequence;
 
 // `pg_shseclabel`: https://www.postgresql.org/docs/17/catalog-pg-shseclabel.html
 
-// `pg_statistic_ext`: https://www.postgresql.org/docs/17/catalog-pg-statistic-ext.html
 pub use reflect_gen::reflect_pg_statistic_ext;
 
-// `pg_subscription`: https://www.postgresql.org/docs/17/catalog-pg-subscription.html
 pub use reflect_gen::reflect_pg_subscription;
 
-// `pg_transform`: https://www.postgresql.org/docs/17/catalog-pg-transform.html
 pub use reflect_gen::reflect_pg_transform;
 
-// `pg_trigger`: https://www.postgresql.org/docs/17/catalog-pg-trigger.html
 pub use reflect_gen::reflect_pg_trigger;
 
-// `pg_ts_config`: https://www.postgresql.org/docs/17/catalog-pg-ts-config.html
 pub use reflect_gen::reflect_pg_ts_config;
 
-// `pg_ts_config_map`: https://www.postgresql.org/docs/17/catalog-pg-ts-config-map.html
 pub use reflect_gen::reflect_pg_ts_config_map;
 
-// `pg_ts_dict`: https://www.postgresql.org/docs/17/catalog-pg-ts-dict.html
 pub use reflect_gen::reflect_pg_ts_dict;
 
-// `pg_ts_parser`: https://www.postgresql.org/docs/17/catalog-pg-ts-parser.html
 pub use reflect_gen::reflect_pg_ts_parser;
 
-// `pg_ts_template`: https://www.postgresql.org/docs/17/catalog-pg-ts-template.html
 pub use reflect_gen::reflect_pg_ts_template;
 
-// `pg_type`: https://www.postgresql.org/docs/17/catalog-pg-type.html
 pub use reflect_gen::reflect_pg_type;
 
-// `pg_user_mappings`: https://www.postgresql.org/docs/17/catalog-pg-user-mapping.html
 pub use reflect_gen::reflect_pg_user_mappings;

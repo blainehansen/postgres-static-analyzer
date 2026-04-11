@@ -1,4 +1,7 @@
 
+[pg_aggregate]
+url = "https://www.postgresql.org/docs/17/catalog-pg-aggregate.html"
+
 [pg_aggregate.columns.aggfnoid]
 typ = "regproc"
 ref = "(references pg_proc.oid)"
@@ -166,6 +169,7 @@ exp = "pg_aggregate.aggminitval.map(Into::into)"
 
 [pg_am]
 hashCol = "amname"
+url = "https://www.postgresql.org/docs/17/catalog-pg-am.html"
 
 [pg_am.columns.oid]
 typ = "oid"
@@ -205,6 +209,9 @@ sel = "pg_description.description"
 ty = "Option<Str>"
 exp = "pg_am.description.map(Into::into)"
 joins = ["left join pg_description on pg_description.objoid = pg_am.oid and pg_description.objsubid = 0"]
+
+[pg_amop]
+url = "https://www.postgresql.org/docs/17/catalog-pg-amop.html"
 
 [pg_amop.columns.oid]
 typ = "oid"
@@ -278,6 +285,9 @@ ty = "Option<Qual>"
 exp = "Qual::maybe_parse(pg_amop.amopsortfamily)"
 joins = ["left join pg_opfamily as amopsortfamily_pg_opfamily on pg_amop.amopsortfamily = amopsortfamily_pg_opfamily.oid","left join pg_namespace as amopsortfamily_pg_namespace on amopsortfamily_pg_opfamily.opfnamespace = amopsortfamily_pg_namespace.oid"]
 
+[pg_amproc]
+url = "https://www.postgresql.org/docs/17/catalog-pg-amproc.html"
+
 [pg_amproc.columns.oid]
 typ = "oid"
 ref = ""
@@ -324,6 +334,9 @@ sel = "amproc::regproc::text"
 ty = "Qual"
 exp = "Qual::parse(pg_amproc.amproc)"
 
+[pg_attrdef]
+url = "https://www.postgresql.org/docs/17/catalog-pg-attrdef.html"
+
 [pg_attrdef.columns.oid]
 typ = "oid"
 ref = ""
@@ -353,6 +366,9 @@ desc = "The column default value, in nodeToString() representation. Use pg_get_e
 sel = "pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid)"
 ty = "Str"
 exp = "pg_attrdef.adbin.into()"
+
+[pg_attribute]
+url = "https://www.postgresql.org/docs/17/catalog-pg-attribute.html"
 
 [pg_attribute.columns.attrelid]
 typ = "oid"
@@ -586,6 +602,7 @@ pgEnum = "'i' => InitDb, 'e' => CreateExtension"
 
 [pg_roles]
 hashCol = "rolname"
+url = "https://www.postgresql.org/docs/17/view-pg-roles.html"
 
 [pg_roles.columns.rolname]
 typ = "name"
@@ -696,6 +713,9 @@ sel = "pg_shseclabel.provider"
 ty = "Option<Str>"
 exp = "pg_roles.seclabel_provider.map(Into::into)"
 
+[pg_auth_members]
+url = "https://www.postgresql.org/docs/17/catalog-pg-auth-members.html"
+
 [pg_auth_members.columns.oid]
 typ = "oid"
 ref = ""
@@ -743,6 +763,9 @@ typ = "bool"
 ref = ""
 desc = "True if the member can SET ROLE to the granted role"
 ty = "bool"
+
+[pg_cast]
+url = "https://www.postgresql.org/docs/17/catalog-pg-cast.html"
 
 [pg_cast.columns.oid]
 typ = "oid"
@@ -801,6 +824,7 @@ joins = ["left join pg_description on pg_description.objoid = pg_cast.oid and pg
 
 [pg_class]
 hashCol = true
+url = "https://www.postgresql.org/docs/17/catalog-pg-class.html"
 
 [pg_class.columns.oid]
 typ = "oid"
@@ -1073,6 +1097,9 @@ ty = "Option<PgClassInitprivsType>"
 exp = "pg_class.initprivs_type.map(PgClassInitprivsType::pg_from_char)"
 pgEnum = "'i' => InitDb, 'e' => CreateExtension"
 
+[pg_collation]
+url = "https://www.postgresql.org/docs/17/catalog-pg-collation.html"
+
 [pg_collation.columns.oid]
 typ = "oid"
 ref = ""
@@ -1170,6 +1197,9 @@ sel = "pg_description.description"
 ty = "Option<Str>"
 exp = "pg_collation.description.map(Into::into)"
 joins = ["left join pg_description on pg_description.objoid = pg_collation.oid and pg_description.objsubid = 0"]
+
+[pg_constraint]
+url = "https://www.postgresql.org/docs/17/catalog-pg-constraint.html"
 
 [pg_constraint.columns.oid]
 typ = "oid"
@@ -1379,6 +1409,9 @@ ty = "Option<Str>"
 exp = "pg_constraint.description.map(Into::into)"
 joins = ["left join pg_description on pg_description.objoid = pg_constraint.oid and pg_description.objsubid = 0"]
 
+[pg_conversion]
+url = "https://www.postgresql.org/docs/17/catalog-pg-conversion.html"
+
 [pg_conversion.columns.oid]
 typ = "oid"
 ref = ""
@@ -1450,6 +1483,7 @@ joins = ["left join pg_description on pg_description.objoid = pg_conversion.oid 
 
 [pg_database]
 hashCol = "datname"
+url = "https://www.postgresql.org/docs/17/catalog-pg-database.html"
 
 [pg_database.columns.oid]
 typ = "oid"
@@ -1603,6 +1637,9 @@ sel = "pg_shseclabel.provider"
 ty = "Option<Str>"
 exp = "pg_database.seclabel_provider.map(Into::into)"
 
+[pg_default_acl]
+url = "https://www.postgresql.org/docs/17/catalog-pg-default-acl.html"
+
 [pg_default_acl.columns.oid]
 typ = "oid"
 ref = ""
@@ -1640,6 +1677,9 @@ desc = "Access privileges that this type of object should have on creation"
 sel = "defaclacl::text[]"
 ty = "Option<Vec<aclitem::AclDefaultAclItem>>"
 exp = "pg_default_acl.defaclacl.map(|defaclacl| defaclacl.map(|acl| aclitem(acl, &AclDefaultGrantParser)).collect())"
+
+[pg_event_trigger]
+url = "https://www.postgresql.org/docs/17/catalog-pg-event-trigger.html"
 
 [pg_event_trigger.columns.oid]
 typ = "oid"
@@ -1720,6 +1760,9 @@ sel = "pg_seclabel.provider"
 ty = "Option<Str>"
 exp = "pg_event_trigger.seclabel_provider.map(Into::into)"
 
+[pg_extension]
+url = "https://www.postgresql.org/docs/17/catalog-pg-extension.html"
+
 [pg_extension.columns.oid]
 typ = "oid"
 ref = ""
@@ -1786,6 +1829,9 @@ sel = "pg_description.description"
 ty = "Option<Str>"
 exp = "pg_extension.description.map(Into::into)"
 joins = ["left join pg_description on pg_description.objoid = pg_extension.oid and pg_description.objsubid = 0"]
+
+[pg_foreign_data_wrapper]
+url = "https://www.postgresql.org/docs/17/catalog-pg-foreign-data-wrapper.html"
 
 [pg_foreign_data_wrapper.columns.oid]
 typ = "oid"
@@ -1866,6 +1912,9 @@ sel = "pg_init_privs.privtype"
 ty = "Option<PgForeignDataWrapperInitprivsType>"
 exp = "pg_foreign_data_wrapper.initprivs_type.map(PgForeignDataWrapperInitprivsType::pg_from_char)"
 pgEnum = "'i' => InitDb, 'e' => CreateExtension"
+
+[pg_foreign_server]
+url = "https://www.postgresql.org/docs/17/catalog-pg-foreign-server.html"
 
 [pg_foreign_server.columns.oid]
 typ = "oid"
@@ -1954,6 +2003,9 @@ ty = "Option<PgForeignServerInitprivsType>"
 exp = "pg_foreign_server.initprivs_type.map(PgForeignServerInitprivsType::pg_from_char)"
 pgEnum = "'i' => InitDb, 'e' => CreateExtension"
 
+[pg_foreign_table]
+url = "https://www.postgresql.org/docs/17/catalog-pg-foreign-table.html"
+
 [pg_foreign_table.columns.ftrelid]
 typ = "oid"
 ref = "(references pg_class.oid)"
@@ -1977,6 +2029,9 @@ ref = ""
 desc = "Foreign table options, as “keyword=value” strings"
 ty = "Option<Vec<Str>>"
 exp = "pg_foreign_table.ftoptions.map(|items| items.map(Into::into).collect())"
+
+[pg_index]
+url = "https://www.postgresql.org/docs/17/catalog-pg-index.html"
 
 [pg_index.columns.indexrelid]
 typ = "oid"
@@ -2122,6 +2177,9 @@ sel = "pg_get_expr(pg_index.indpred, pg_index.indrelid)"
 ty = "Option<Str>"
 exp = "pg_index.indpred.map(Into::into)"
 
+[pg_inherits]
+url = "https://www.postgresql.org/docs/17/catalog-pg-inherits.html"
+
 [pg_inherits.columns.inhrelid]
 typ = "oid"
 ref = "(references pg_class.oid)"
@@ -2153,6 +2211,7 @@ skip = true
 
 [pg_language]
 hashCol = "lanname"
+url = "https://www.postgresql.org/docs/17/catalog-pg-language.html"
 
 [pg_language.columns.oid]
 typ = "oid"
@@ -2266,6 +2325,7 @@ pgEnum = "'i' => InitDb, 'e' => CreateExtension"
 
 [pg_namespace]
 hashCol = "nspname"
+url = "https://www.postgresql.org/docs/17/catalog-pg-namespace.html"
 
 [pg_namespace.columns.oid]
 typ = "oid"
@@ -2341,6 +2401,9 @@ sel = "pg_init_privs.privtype"
 ty = "Option<PgNamespaceInitprivsType>"
 exp = "pg_namespace.initprivs_type.map(PgNamespaceInitprivsType::pg_from_char)"
 pgEnum = "'i' => InitDb, 'e' => CreateExtension"
+
+[pg_opclass]
+url = "https://www.postgresql.org/docs/17/catalog-pg-opclass.html"
 
 [pg_opclass.columns.oid]
 typ = "oid"
@@ -2423,6 +2486,7 @@ joins = ["left join pg_description on pg_description.objoid = pg_opclass.oid and
 
 [pg_operator]
 hashCol = true
+url = "https://www.postgresql.org/docs/17/catalog-pg-operator.html"
 
 [pg_operator.columns.oid]
 typ = "oid"
@@ -2549,6 +2613,9 @@ ty = "Option<Str>"
 exp = "pg_operator.description.map(Into::into)"
 joins = ["left join pg_description on pg_description.objoid = pg_operator.oid and pg_description.objsubid = 0"]
 
+[pg_opfamily]
+url = "https://www.postgresql.org/docs/17/catalog-pg-opfamily.html"
+
 [pg_opfamily.columns.oid]
 typ = "oid"
 ref = ""
@@ -2597,6 +2664,9 @@ ty = "Option<Str>"
 exp = "pg_opfamily.description.map(Into::into)"
 joins = ["left join pg_description on pg_description.objoid = pg_opfamily.oid and pg_description.objsubid = 0"]
 
+[pg_parameter_acl]
+url = "https://www.postgresql.org/docs/17/catalog-pg-parameter-acl.html"
+
 [pg_parameter_acl.columns.oid]
 typ = "oid"
 ref = ""
@@ -2635,6 +2705,9 @@ sel = "pg_init_privs.privtype"
 ty = "Option<PgParameterAclInitprivsType>"
 exp = "pg_parameter_acl.initprivs_type.map(PgParameterAclInitprivsType::pg_from_char)"
 pgEnum = "'i' => InitDb, 'e' => CreateExtension"
+
+[pg_partitioned_table]
+url = "https://www.postgresql.org/docs/17/catalog-pg-partitioned-table.html"
 
 [pg_partitioned_table.columns.partrelid]
 typ = "oid"
@@ -2697,6 +2770,9 @@ desc = "Expression trees (in nodeToString() representation) for partition key co
 sel = "pg_get_expr(pg_partitioned_table.partexprs, pg_partitioned_table.partrelid)"
 ty = "Option<Str>"
 exp = "pg_partitioned_table.partexprs.map(Into::into)"
+
+[pg_policy]
+url = "https://www.postgresql.org/docs/17/catalog-pg-policy.html"
 
 [pg_policy.columns.oid]
 typ = "oid"
@@ -2769,6 +2845,7 @@ joins = ["left join pg_description on pg_description.objoid = pg_policy.oid and 
 
 [pg_publication]
 hashCol = "pubname"
+url = "https://www.postgresql.org/docs/17/catalog-pg-publication.html"
 
 [pg_publication.columns.oid]
 typ = "oid"
@@ -2854,6 +2931,9 @@ sel = "pg_seclabel.provider"
 ty = "Option<Str>"
 exp = "pg_publication.seclabel_provider.map(Into::into)"
 
+[pg_publication_namespace]
+url = "https://www.postgresql.org/docs/17/catalog-pg-publication-namespace.html"
+
 [pg_publication_namespace.columns.oid]
 typ = "oid"
 ref = ""
@@ -2876,6 +2956,9 @@ desc = "Reference to schema"
 sel = "pg_publication_namespace.pnnspid::regnamespace::text"
 ty = "Str"
 exp = "pg_publication_namespace.pnnspid.into()"
+
+[pg_publication_rel]
+url = "https://www.postgresql.org/docs/17/catalog-pg-publication-rel.html"
 
 [pg_publication_rel.columns.oid]
 typ = "oid"
@@ -2914,6 +2997,9 @@ ref = "(references pg_attribute.attnum)"
 desc = "This is an array of values that indicates which table columns are part of the publication. For example, a value of 1 3 would mean that the first and the third table columns are published. A null value indicates that all columns are published."
 ty = "Option<Vec<u16>>"
 exp = "pg_publication_rel.prattrs.map(|items| items.map(i16::unsigned_abs).collect())"
+
+[pg_range]
+url = "https://www.postgresql.org/docs/17/catalog-pg-range.html"
 
 [pg_range.columns.rngtypid]
 typ = "oid"
@@ -2972,6 +3058,9 @@ sel = "case when rngsubdiff = 0 then null else rngsubdiff::regproc::text end"
 ty = "Option<Qual>"
 exp = "Qual::maybe_parse(pg_range.rngsubdiff)"
 
+[pg_rules]
+url = "https://www.postgresql.org/docs/17/view-pg-rules.html"
+
 [pg_rules.columns.schemaname]
 typ = "name"
 ref = "(references pg_namespace.nspname)"
@@ -3012,6 +3101,9 @@ ty = "Option<Str>"
 exp = "pg_rules.description.map(Into::into)"
 joins = ["join pg_rewrite on pg_rewrite.ev_type != '1' and pg_rules.rulename = pg_rewrite.rulename and (quote_ident(pg_rules.schemaname) || '.' || quote_ident(pg_rules.tablename))::regclass::oid = pg_rewrite.ev_class","left join pg_description on pg_description.objoid = pg_rewrite.oid and pg_description.objsubid = 0"]
 
+[pg_views]
+url = "https://www.postgresql.org/docs/17/view-pg-views.html"
+
 [pg_views.columns.schemaname]
 typ = "name"
 ref = "(references pg_namespace.nspname)"
@@ -3043,6 +3135,9 @@ ref = ""
 desc = "View definition (a reconstructed SELECT query)"
 ty = "Str"
 exp = "pg_views.definition.into()"
+
+[pg_matviews]
+url = "https://www.postgresql.org/docs/17/view-pg-matviews.html"
 
 [pg_matviews.columns.schemaname]
 typ = "name"
@@ -3092,6 +3187,9 @@ ref = ""
 desc = "Materialized view definition (a reconstructed SELECT query)"
 ty = "Str"
 exp = "pg_matviews.definition.into()"
+
+[pg_sequence]
+url = "https://www.postgresql.org/docs/17/catalog-pg-sequence.html"
 
 [pg_sequence.columns.seqrelid]
 typ = "oid"
@@ -3144,6 +3242,9 @@ typ = "bool"
 ref = ""
 desc = "Whether the sequence cycles"
 ty = "bool"
+
+[pg_statistic_ext]
+url = "https://www.postgresql.org/docs/17/catalog-pg-statistic-ext.html"
 
 [pg_statistic_ext.columns.oid]
 typ = "oid"
@@ -3221,6 +3322,9 @@ sel = "pg_description.description"
 ty = "Option<Str>"
 exp = "pg_statistic_ext.description.map(Into::into)"
 joins = ["left join pg_description on pg_description.objoid = pg_statistic_ext.oid and pg_description.objsubid = 0"]
+
+[pg_subscription]
+url = "https://www.postgresql.org/docs/17/catalog-pg-subscription.html"
 
 [pg_subscription.columns.oid]
 typ = "oid"
@@ -3371,6 +3475,9 @@ sel = "pg_seclabel.provider"
 ty = "Option<Str>"
 exp = "pg_subscription.seclabel_provider.map(Into::into)"
 
+[pg_transform]
+url = "https://www.postgresql.org/docs/17/catalog-pg-transform.html"
+
 [pg_transform.columns.oid]
 typ = "oid"
 ref = ""
@@ -3409,6 +3516,9 @@ desc = "The OID of the function to use when converting output from the procedura
 sel = "case when trftosql = 0 then null else trftosql::regproc::text end"
 ty = "Option<Qual>"
 exp = "Qual::maybe_parse(pg_transform.trftosql)"
+
+[pg_trigger]
+url = "https://www.postgresql.org/docs/17/catalog-pg-trigger.html"
 
 [pg_trigger.columns.oid]
 typ = "oid"
@@ -3579,6 +3689,7 @@ exp = "pg_trigger.seclabel_provider.map(Into::into)"
 
 [pg_ts_config]
 hashCol = true
+url = "https://www.postgresql.org/docs/17/catalog-pg-ts-config.html"
 
 [pg_ts_config.columns.oid]
 typ = "oid"
@@ -3644,6 +3755,9 @@ sel = "pg_seclabel.provider"
 ty = "Option<Str>"
 exp = "pg_ts_config.seclabel_provider.map(Into::into)"
 
+[pg_ts_config_map]
+url = "https://www.postgresql.org/docs/17/catalog-pg-ts-config-map.html"
+
 [pg_ts_config_map.columns.mapcfg]
 typ = "oid"
 ref = "(references pg_ts_config.oid)"
@@ -3674,6 +3788,7 @@ exp = "Qual::parse(pg_ts_config_map.mapdict)"
 
 [pg_ts_dict]
 hashCol = true
+url = "https://www.postgresql.org/docs/17/catalog-pg-ts-dict.html"
 
 [pg_ts_dict.columns.oid]
 typ = "oid"
@@ -3746,6 +3861,9 @@ sel = "pg_seclabel.provider"
 ty = "Option<Str>"
 exp = "pg_ts_dict.seclabel_provider.map(Into::into)"
 
+[pg_ts_parser]
+url = "https://www.postgresql.org/docs/17/catalog-pg-ts-parser.html"
+
 [pg_ts_parser.columns.oid]
 typ = "oid"
 ref = ""
@@ -3808,6 +3926,9 @@ sel = "prslextype::regproc::text"
 ty = "Qual"
 exp = "Qual::parse(pg_ts_parser.prslextype)"
 
+[pg_ts_template]
+url = "https://www.postgresql.org/docs/17/catalog-pg-ts-template.html"
+
 [pg_ts_template.columns.oid]
 typ = "oid"
 ref = ""
@@ -3848,6 +3969,7 @@ exp = "Qual::parse(pg_ts_template.tmpllexize)"
 
 [pg_type]
 hashCol = true
+url = "https://www.postgresql.org/docs/17/catalog-pg-type.html"
 
 [pg_type.columns.oid]
 typ = "oid"
@@ -4132,6 +4254,9 @@ sel = "pg_init_privs.privtype"
 ty = "Option<PgTypeInitprivsType>"
 exp = "pg_type.initprivs_type.map(PgTypeInitprivsType::pg_from_char)"
 pgEnum = "'i' => InitDb, 'e' => CreateExtension"
+
+[pg_user_mappings]
+url = "https://www.postgresql.org/docs/17/view-pg-user-mappings.html"
 
 [pg_user_mappings.columns.umid]
 typ = "oid"

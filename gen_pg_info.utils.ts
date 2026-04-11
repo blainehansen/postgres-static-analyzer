@@ -91,6 +91,7 @@ export type ColumnDecision = z.infer<typeof ColumnDecision>
 export const TableDecision = z.strictObject({
 	hashCol: z.union([z.string(), z.literal(true)]).optional(),
 	columns: z.record(z.string(), ColumnDecision),
+	url: z.string(),
 })
 export type TableDecision = z.infer<typeof TableDecision>
 

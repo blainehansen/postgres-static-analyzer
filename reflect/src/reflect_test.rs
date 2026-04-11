@@ -6,10 +6,10 @@ async fn test_reflect_pg_state() -> anyhow::Result<()> {
 		let populate_all_sql = tokio::fs::read_to_string("./populate_all.sql").await?;
 		client.batch_execute(&populate_all_sql).await?;
 
-		let pg_state = reflect_pg_state(&client).await?;
+		let db_state = reflect_db_state(&client).await?;
 
 		insta::assert_ron_snapshot!(
-			pg_state,
+			db_state,
 			{
 				".**" => insta::sorted_redaction(),
 			}

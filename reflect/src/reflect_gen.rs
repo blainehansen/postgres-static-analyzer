@@ -2,6 +2,7 @@ use super::*;
 use futures::TryStreamExt;
 use crate::aclitem::*;
 
+/// Asynchronously pull the contents of [`pg_aggregate`](https://www.postgresql.org/docs/17/catalog-pg-aggregate.html)
 pub async fn reflect_pg_aggregate(
 	client: &PgClient
 ) -> Result<Vec<PgAggregate>, postgres::Error> {
@@ -37,6 +38,7 @@ pub async fn reflect_pg_aggregate(
 }
 
 
+/// Asynchronously pull the contents of [`pg_am`](https://www.postgresql.org/docs/17/catalog-pg-am.html)
 pub async fn reflect_pg_am(
 	client: &PgClient
 ) -> Result<Set<PgAm>, postgres::Error> {
@@ -56,6 +58,7 @@ pub async fn reflect_pg_am(
 }
 
 
+/// Asynchronously pull the contents of [`pg_amop`](https://www.postgresql.org/docs/17/catalog-pg-amop.html)
 pub async fn reflect_pg_amop(
 	client: &PgClient
 ) -> Result<Vec<PgAmop>, postgres::Error> {
@@ -79,6 +82,7 @@ pub async fn reflect_pg_amop(
 }
 
 
+/// Asynchronously pull the contents of [`pg_amproc`](https://www.postgresql.org/docs/17/catalog-pg-amproc.html)
 pub async fn reflect_pg_amproc(
 	client: &PgClient
 ) -> Result<Vec<PgAmproc>, postgres::Error> {
@@ -99,6 +103,7 @@ pub async fn reflect_pg_amproc(
 }
 
 
+/// Asynchronously pull the contents of [`pg_attrdef`](https://www.postgresql.org/docs/17/catalog-pg-attrdef.html)
 pub async fn reflect_pg_attrdef(
 	client: &PgClient
 ) -> Result<Vec<PgAttrdef>, postgres::Error> {
@@ -117,6 +122,7 @@ pub async fn reflect_pg_attrdef(
 }
 
 
+/// Asynchronously pull the contents of [`pg_attribute`](https://www.postgresql.org/docs/17/catalog-pg-attribute.html)
 pub async fn reflect_pg_attribute(
 	client: &PgClient
 ) -> Result<Vec<PgAttribute>, postgres::Error> {
@@ -156,6 +162,7 @@ pub async fn reflect_pg_attribute(
 }
 
 
+/// Asynchronously pull the contents of [`pg_roles`](https://www.postgresql.org/docs/17/view-pg-roles.html)
 pub async fn reflect_pg_roles(
 	client: &PgClient
 ) -> Result<Set<PgRoles>, postgres::Error> {
@@ -185,6 +192,7 @@ pub async fn reflect_pg_roles(
 }
 
 
+/// Asynchronously pull the contents of [`pg_auth_members`](https://www.postgresql.org/docs/17/catalog-pg-auth-members.html)
 pub async fn reflect_pg_auth_members(
 	client: &PgClient
 ) -> Result<Vec<PgAuthMembers>, postgres::Error> {
@@ -206,6 +214,7 @@ pub async fn reflect_pg_auth_members(
 }
 
 
+/// Asynchronously pull the contents of [`pg_cast`](https://www.postgresql.org/docs/17/catalog-pg-cast.html)
 pub async fn reflect_pg_cast(
 	client: &PgClient
 ) -> Result<Vec<PgCast>, postgres::Error> {
@@ -227,6 +236,7 @@ pub async fn reflect_pg_cast(
 }
 
 
+/// Asynchronously pull the contents of [`pg_class`](https://www.postgresql.org/docs/17/catalog-pg-class.html)
 pub async fn reflect_pg_class(
 	client: &PgClient
 ) -> Result<Set<PgClass>, postgres::Error> {
@@ -266,6 +276,7 @@ pub async fn reflect_pg_class(
 }
 
 
+/// Asynchronously pull the contents of [`pg_collation`](https://www.postgresql.org/docs/17/catalog-pg-collation.html)
 pub async fn reflect_pg_collation(
 	client: &PgClient
 ) -> Result<Vec<PgCollation>, postgres::Error> {
@@ -294,6 +305,7 @@ pub async fn reflect_pg_collation(
 }
 
 
+/// Asynchronously pull the contents of [`pg_constraint`](https://www.postgresql.org/docs/17/catalog-pg-constraint.html)
 pub async fn reflect_pg_constraint(
 	client: &PgClient
 ) -> Result<Vec<PgConstraint>, postgres::Error> {
@@ -335,6 +347,7 @@ pub async fn reflect_pg_constraint(
 }
 
 
+/// Asynchronously pull the contents of [`pg_conversion`](https://www.postgresql.org/docs/17/catalog-pg-conversion.html)
 pub async fn reflect_pg_conversion(
 	client: &PgClient
 ) -> Result<Vec<PgConversion>, postgres::Error> {
@@ -358,6 +371,7 @@ pub async fn reflect_pg_conversion(
 }
 
 
+/// Asynchronously pull the contents of [`pg_database`](https://www.postgresql.org/docs/17/catalog-pg-database.html)
 pub async fn reflect_pg_database(
 	client: &PgClient
 ) -> Result<PgDatabase, postgres::Error> {
@@ -389,6 +403,7 @@ pub async fn reflect_pg_database(
 }
 
 
+/// Asynchronously pull the contents of [`pg_default_acl`](https://www.postgresql.org/docs/17/catalog-pg-default-acl.html)
 pub async fn reflect_pg_default_acl(
 	client: &PgClient
 ) -> Result<Vec<PgDefaultAcl>, postgres::Error> {
@@ -408,6 +423,7 @@ pub async fn reflect_pg_default_acl(
 }
 
 
+/// Asynchronously pull the contents of [`pg_event_trigger`](https://www.postgresql.org/docs/17/catalog-pg-event-trigger.html)
 pub async fn reflect_pg_event_trigger(
 	client: &PgClient
 ) -> Result<Vec<PgEventTrigger>, postgres::Error> {
@@ -432,6 +448,7 @@ pub async fn reflect_pg_event_trigger(
 }
 
 
+/// Asynchronously pull the contents of [`pg_extension`](https://www.postgresql.org/docs/17/catalog-pg-extension.html)
 pub async fn reflect_pg_extension(
 	client: &PgClient
 ) -> Result<Vec<PgExtension>, postgres::Error> {
@@ -455,6 +472,7 @@ pub async fn reflect_pg_extension(
 }
 
 
+/// Asynchronously pull the contents of [`pg_foreign_data_wrapper`](https://www.postgresql.org/docs/17/catalog-pg-foreign-data-wrapper.html)
 pub async fn reflect_pg_foreign_data_wrapper(
 	client: &PgClient
 ) -> Result<Vec<PgForeignDataWrapper>, postgres::Error> {
@@ -479,6 +497,7 @@ pub async fn reflect_pg_foreign_data_wrapper(
 }
 
 
+/// Asynchronously pull the contents of [`pg_foreign_server`](https://www.postgresql.org/docs/17/catalog-pg-foreign-server.html)
 pub async fn reflect_pg_foreign_server(
 	client: &PgClient
 ) -> Result<Vec<PgForeignServer>, postgres::Error> {
@@ -504,6 +523,7 @@ pub async fn reflect_pg_foreign_server(
 }
 
 
+/// Asynchronously pull the contents of [`pg_foreign_table`](https://www.postgresql.org/docs/17/catalog-pg-foreign-table.html)
 pub async fn reflect_pg_foreign_table(
 	client: &PgClient
 ) -> Result<Vec<PgForeignTable>, postgres::Error> {
@@ -522,6 +542,7 @@ pub async fn reflect_pg_foreign_table(
 }
 
 
+/// Asynchronously pull the contents of [`pg_index`](https://www.postgresql.org/docs/17/catalog-pg-index.html)
 pub async fn reflect_pg_index(
 	client: &PgClient
 ) -> Result<Vec<PgIndex>, postgres::Error> {
@@ -554,6 +575,7 @@ pub async fn reflect_pg_index(
 }
 
 
+/// Asynchronously pull the contents of [`pg_inherits`](https://www.postgresql.org/docs/17/catalog-pg-inherits.html)
 pub async fn reflect_pg_inherits(
 	client: &PgClient
 ) -> Result<Vec<PgInherits>, postgres::Error> {
@@ -572,6 +594,7 @@ pub async fn reflect_pg_inherits(
 }
 
 
+/// Asynchronously pull the contents of [`pg_language`](https://www.postgresql.org/docs/17/catalog-pg-language.html)
 pub async fn reflect_pg_language(
 	client: &PgClient
 ) -> Result<Set<PgLanguage>, postgres::Error> {
@@ -600,6 +623,7 @@ pub async fn reflect_pg_language(
 }
 
 
+/// Asynchronously pull the contents of [`pg_namespace`](https://www.postgresql.org/docs/17/catalog-pg-namespace.html)
 pub async fn reflect_pg_namespace(
 	client: &PgClient
 ) -> Result<Set<PgNamespace>, postgres::Error> {
@@ -623,6 +647,7 @@ pub async fn reflect_pg_namespace(
 }
 
 
+/// Asynchronously pull the contents of [`pg_opclass`](https://www.postgresql.org/docs/17/catalog-pg-opclass.html)
 pub async fn reflect_pg_opclass(
 	client: &PgClient
 ) -> Result<Vec<PgOpclass>, postgres::Error> {
@@ -647,6 +672,7 @@ pub async fn reflect_pg_opclass(
 }
 
 
+/// Asynchronously pull the contents of [`pg_operator`](https://www.postgresql.org/docs/17/catalog-pg-operator.html)
 pub async fn reflect_pg_operator(
 	client: &PgClient
 ) -> Result<Set<PgOperator>, postgres::Error> {
@@ -678,6 +704,7 @@ pub async fn reflect_pg_operator(
 }
 
 
+/// Asynchronously pull the contents of [`pg_opfamily`](https://www.postgresql.org/docs/17/catalog-pg-opfamily.html)
 pub async fn reflect_pg_opfamily(
 	client: &PgClient
 ) -> Result<Vec<PgOpfamily>, postgres::Error> {
@@ -698,6 +725,7 @@ pub async fn reflect_pg_opfamily(
 }
 
 
+/// Asynchronously pull the contents of [`pg_parameter_acl`](https://www.postgresql.org/docs/17/catalog-pg-parameter-acl.html)
 pub async fn reflect_pg_parameter_acl(
 	client: &PgClient
 ) -> Result<Vec<PgParameterAcl>, postgres::Error> {
@@ -717,6 +745,7 @@ pub async fn reflect_pg_parameter_acl(
 }
 
 
+/// Asynchronously pull the contents of [`pg_partitioned_table`](https://www.postgresql.org/docs/17/catalog-pg-partitioned-table.html)
 pub async fn reflect_pg_partitioned_table(
 	client: &PgClient
 ) -> Result<Vec<PgPartitionedTable>, postgres::Error> {
@@ -740,6 +769,7 @@ pub async fn reflect_pg_partitioned_table(
 }
 
 
+/// Asynchronously pull the contents of [`pg_policy`](https://www.postgresql.org/docs/17/catalog-pg-policy.html)
 pub async fn reflect_pg_policy(
 	client: &PgClient
 ) -> Result<Vec<PgPolicy>, postgres::Error> {
@@ -763,6 +793,7 @@ pub async fn reflect_pg_policy(
 }
 
 
+/// Asynchronously pull the contents of [`pg_publication`](https://www.postgresql.org/docs/17/catalog-pg-publication.html)
 pub async fn reflect_pg_publication(
 	client: &PgClient
 ) -> Result<Set<PgPublication>, postgres::Error> {
@@ -789,6 +820,7 @@ pub async fn reflect_pg_publication(
 }
 
 
+/// Asynchronously pull the contents of [`pg_publication_namespace`](https://www.postgresql.org/docs/17/catalog-pg-publication-namespace.html)
 pub async fn reflect_pg_publication_namespace(
 	client: &PgClient
 ) -> Result<Vec<PgPublicationNamespace>, postgres::Error> {
@@ -806,6 +838,7 @@ pub async fn reflect_pg_publication_namespace(
 }
 
 
+/// Asynchronously pull the contents of [`pg_publication_rel`](https://www.postgresql.org/docs/17/catalog-pg-publication-rel.html)
 pub async fn reflect_pg_publication_rel(
 	client: &PgClient
 ) -> Result<Vec<PgPublicationRel>, postgres::Error> {
@@ -825,6 +858,7 @@ pub async fn reflect_pg_publication_rel(
 }
 
 
+/// Asynchronously pull the contents of [`pg_range`](https://www.postgresql.org/docs/17/catalog-pg-range.html)
 pub async fn reflect_pg_range(
 	client: &PgClient
 ) -> Result<Vec<PgRange>, postgres::Error> {
@@ -847,6 +881,7 @@ pub async fn reflect_pg_range(
 }
 
 
+/// Asynchronously pull the contents of [`pg_rules`](https://www.postgresql.org/docs/17/view-pg-rules.html)
 pub async fn reflect_pg_rules(
 	client: &PgClient
 ) -> Result<Vec<PgRules>, postgres::Error> {
@@ -867,6 +902,7 @@ pub async fn reflect_pg_rules(
 }
 
 
+/// Asynchronously pull the contents of [`pg_views`](https://www.postgresql.org/docs/17/view-pg-views.html)
 pub async fn reflect_pg_views(
 	client: &PgClient
 ) -> Result<Vec<PgViews>, postgres::Error> {
@@ -886,6 +922,7 @@ pub async fn reflect_pg_views(
 }
 
 
+/// Asynchronously pull the contents of [`pg_matviews`](https://www.postgresql.org/docs/17/view-pg-matviews.html)
 pub async fn reflect_pg_matviews(
 	client: &PgClient
 ) -> Result<Vec<PgMatviews>, postgres::Error> {
@@ -905,6 +942,7 @@ pub async fn reflect_pg_matviews(
 }
 
 
+/// Asynchronously pull the contents of [`pg_sequence`](https://www.postgresql.org/docs/17/catalog-pg-sequence.html)
 pub async fn reflect_pg_sequence(
 	client: &PgClient
 ) -> Result<Vec<PgSequence>, postgres::Error> {
@@ -928,6 +966,7 @@ pub async fn reflect_pg_sequence(
 }
 
 
+/// Asynchronously pull the contents of [`pg_statistic_ext`](https://www.postgresql.org/docs/17/catalog-pg-statistic-ext.html)
 pub async fn reflect_pg_statistic_ext(
 	client: &PgClient
 ) -> Result<Vec<PgStatisticExt>, postgres::Error> {
@@ -952,6 +991,7 @@ pub async fn reflect_pg_statistic_ext(
 }
 
 
+/// Asynchronously pull the contents of [`pg_subscription`](https://www.postgresql.org/docs/17/catalog-pg-subscription.html)
 pub async fn reflect_pg_subscription(
 	client: &PgClient
 ) -> Result<Vec<PgSubscription>, postgres::Error> {
@@ -985,6 +1025,7 @@ pub async fn reflect_pg_subscription(
 }
 
 
+/// Asynchronously pull the contents of [`pg_transform`](https://www.postgresql.org/docs/17/catalog-pg-transform.html)
 pub async fn reflect_pg_transform(
 	client: &PgClient
 ) -> Result<Vec<PgTransform>, postgres::Error> {
@@ -1004,6 +1045,7 @@ pub async fn reflect_pg_transform(
 }
 
 
+/// Asynchronously pull the contents of [`pg_trigger`](https://www.postgresql.org/docs/17/catalog-pg-trigger.html)
 pub async fn reflect_pg_trigger(
 	client: &PgClient
 ) -> Result<Vec<PgTrigger>, postgres::Error> {
@@ -1040,6 +1082,7 @@ pub async fn reflect_pg_trigger(
 }
 
 
+/// Asynchronously pull the contents of [`pg_ts_config`](https://www.postgresql.org/docs/17/catalog-pg-ts-config.html)
 pub async fn reflect_pg_ts_config(
 	client: &PgClient
 ) -> Result<Set<PgTsConfig>, postgres::Error> {
@@ -1062,6 +1105,7 @@ pub async fn reflect_pg_ts_config(
 }
 
 
+/// Asynchronously pull the contents of [`pg_ts_config_map`](https://www.postgresql.org/docs/17/catalog-pg-ts-config-map.html)
 pub async fn reflect_pg_ts_config_map(
 	client: &PgClient
 ) -> Result<Vec<PgTsConfigMap>, postgres::Error> {
@@ -1081,6 +1125,7 @@ pub async fn reflect_pg_ts_config_map(
 }
 
 
+/// Asynchronously pull the contents of [`pg_ts_dict`](https://www.postgresql.org/docs/17/catalog-pg-ts-dict.html)
 pub async fn reflect_pg_ts_dict(
 	client: &PgClient
 ) -> Result<Set<PgTsDict>, postgres::Error> {
@@ -1104,6 +1149,7 @@ pub async fn reflect_pg_ts_dict(
 }
 
 
+/// Asynchronously pull the contents of [`pg_ts_parser`](https://www.postgresql.org/docs/17/catalog-pg-ts-parser.html)
 pub async fn reflect_pg_ts_parser(
 	client: &PgClient
 ) -> Result<Vec<PgTsParser>, postgres::Error> {
@@ -1126,6 +1172,7 @@ pub async fn reflect_pg_ts_parser(
 }
 
 
+/// Asynchronously pull the contents of [`pg_ts_template`](https://www.postgresql.org/docs/17/catalog-pg-ts-template.html)
 pub async fn reflect_pg_ts_template(
 	client: &PgClient
 ) -> Result<Vec<PgTsTemplate>, postgres::Error> {
@@ -1145,6 +1192,7 @@ pub async fn reflect_pg_ts_template(
 }
 
 
+/// Asynchronously pull the contents of [`pg_type`](https://www.postgresql.org/docs/17/catalog-pg-type.html)
 pub async fn reflect_pg_type(
 	client: &PgClient
 ) -> Result<Set<PgType>, postgres::Error> {
@@ -1196,6 +1244,7 @@ pub async fn reflect_pg_type(
 }
 
 
+/// Asynchronously pull the contents of [`pg_user_mappings`](https://www.postgresql.org/docs/17/view-pg-user-mappings.html)
 pub async fn reflect_pg_user_mappings(
 	client: &PgClient
 ) -> Result<Vec<PgUserMappings>, postgres::Error> {
