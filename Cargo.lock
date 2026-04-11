@@ -835,7 +835,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "postgres-static-analyzer-catalog-structs"
+name = "postgres-static-analyzer-ddl-catalog-structs"
 version = "0.1.0"
 dependencies = [
  "chrono",
@@ -855,11 +855,24 @@ dependencies = [
  "futures",
  "insta",
  "itertools",
- "postgres-static-analyzer-catalog-structs",
- "queries_crate",
+ "postgres-static-analyzer-ddl-catalog-structs",
+ "postgres-static-analyzer-reflect-queries",
  "ron 0.8.1",
  "temp_container_utils",
  "tokio",
+]
+
+[[package]]
+name = "postgres-static-analyzer-reflect-queries"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "deadpool-postgres",
+ "futures",
+ "postgres",
+ "postgres-protocol",
+ "postgres-types",
+ "tokio-postgres",
 ]
 
 [[package]]
@@ -901,19 +914,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8fd00f0bb2e90d81d1044c2b32617f68fcb9fa3bb7640c23e9c748e53fb30934"
 dependencies = [
  "unicode-ident",
-]
-
-[[package]]
-name = "queries_crate"
-version = "1.0.0"
-dependencies = [
- "chrono",
- "deadpool-postgres",
- "futures",
- "postgres",
- "postgres-protocol",
- "postgres-types",
- "tokio-postgres",
 ]
 
 [[package]]

@@ -1,11 +1,13 @@
-pub(crate) use queries_crate::tokio_postgres::{self as postgres, /*Config as PgConfig,*/ Client as PgClient};
+pub(crate) use postgres_static_analyzer_reflect_queries as queries_crate;
+pub(crate) use queries_crate::tokio_postgres as postgres;
+pub use queries_crate::tokio_postgres::Client as PgClient;
 
 #[cfg(test)]
 mod reflect_test;
 
 mod reflect_gen;
 
-pub use postgres_static_analyzer_catalog_structs::*;
+pub use postgres_static_analyzer_ddl_catalog_structs::*;
 use futures::TryStreamExt;
 
 pub async fn reflect_pg_state(
@@ -206,47 +208,47 @@ pub async fn reflect_pg_state(
 
 
 // `pg_aggregate`: https://www.postgresql.org/docs/17/catalog-pg-aggregate.html
-use reflect_gen::reflect_pg_aggregate;
+pub use reflect_gen::reflect_pg_aggregate;
 
 // `pg_am`: https://www.postgresql.org/docs/17/catalog-pg-am.html
-use reflect_gen::reflect_pg_am;
+pub use reflect_gen::reflect_pg_am;
 
 // `pg_amop`: https://www.postgresql.org/docs/17/catalog-pg-amop.html
-use reflect_gen::reflect_pg_amop;
+pub use reflect_gen::reflect_pg_amop;
 
 // `pg_amproc`: https://www.postgresql.org/docs/17/catalog-pg-amproc.html
-use reflect_gen::reflect_pg_amproc;
+pub use reflect_gen::reflect_pg_amproc;
 
 // `pg_attrdef`: https://www.postgresql.org/docs/17/catalog-pg-attrdef.html
-use reflect_gen::reflect_pg_attrdef;
+pub use reflect_gen::reflect_pg_attrdef;
 
 // `pg_attribute`: https://www.postgresql.org/docs/17/catalog-pg-attribute.html
-use reflect_gen::reflect_pg_attribute;
+pub use reflect_gen::reflect_pg_attribute;
 
 // `pg_authid`: https://www.postgresql.org/docs/17/catalog-pg-authid.html
 // `pg_roles`: https://www.postgresql.org/docs/17/view-pg-roles.html
-use reflect_gen::reflect_pg_roles;
+pub use reflect_gen::reflect_pg_roles;
 
 // `pg_auth_members`: https://www.postgresql.org/docs/17/catalog-pg-auth-members.html
-use reflect_gen::reflect_pg_auth_members;
+pub use reflect_gen::reflect_pg_auth_members;
 
 // `pg_cast`: https://www.postgresql.org/docs/17/catalog-pg-cast.html
-use reflect_gen::reflect_pg_cast;
+pub use reflect_gen::reflect_pg_cast;
 
 // `pg_class`: https://www.postgresql.org/docs/17/catalog-pg-class.html
-use reflect_gen::reflect_pg_class;
+pub use reflect_gen::reflect_pg_class;
 
 // `pg_collation`: https://www.postgresql.org/docs/17/catalog-pg-collation.html
-use reflect_gen::reflect_pg_collation;
+pub use reflect_gen::reflect_pg_collation;
 
 // `pg_constraint`: https://www.postgresql.org/docs/17/catalog-pg-constraint.html
-use reflect_gen::reflect_pg_constraint;
+pub use reflect_gen::reflect_pg_constraint;
 
 // `pg_conversion`: https://www.postgresql.org/docs/17/catalog-pg-conversion.html
-use reflect_gen::reflect_pg_conversion;
+pub use reflect_gen::reflect_pg_conversion;
 
 // `pg_database`: https://www.postgresql.org/docs/17/catalog-pg-database.html
-use reflect_gen::reflect_pg_database;
+pub use reflect_gen::reflect_pg_database;
 
 // `pg_db_role_setting`: https://www.postgresql.org/docs/17/catalog-pg-db-role-setting.html
 pub async fn reflect_pg_db_role_setting(
@@ -269,7 +271,7 @@ pub async fn reflect_pg_db_role_setting(
 }
 
 // `pg_default_acl`: https://www.postgresql.org/docs/17/catalog-pg-default-acl.html
-use reflect_gen::reflect_pg_default_acl;
+pub use reflect_gen::reflect_pg_default_acl;
 
 // `pg_depend`: https://www.postgresql.org/docs/17/catalog-pg-depend.html
 
@@ -295,51 +297,51 @@ pub async fn reflect_pg_enum(
 }
 
 // `pg_event_trigger`: https://www.postgresql.org/docs/17/catalog-pg-event-trigger.html
-use reflect_gen::reflect_pg_event_trigger;
+pub use reflect_gen::reflect_pg_event_trigger;
 
 // `pg_extension`: https://www.postgresql.org/docs/17/catalog-pg-extension.html
-use reflect_gen::reflect_pg_extension;
+pub use reflect_gen::reflect_pg_extension;
 
 // `pg_foreign_data_wrapper`: https://www.postgresql.org/docs/17/catalog-pg-foreign-data-wrapper.html
-use reflect_gen::reflect_pg_foreign_data_wrapper;
+pub use reflect_gen::reflect_pg_foreign_data_wrapper;
 
 // `pg_foreign_server`: https://www.postgresql.org/docs/17/catalog-pg-foreign-server.html
-use reflect_gen::reflect_pg_foreign_server;
+pub use reflect_gen::reflect_pg_foreign_server;
 
 // `pg_foreign_table`: https://www.postgresql.org/docs/17/catalog-pg-foreign-table.html
-use reflect_gen::reflect_pg_foreign_table;
+pub use reflect_gen::reflect_pg_foreign_table;
 
 // `pg_index`: https://www.postgresql.org/docs/17/catalog-pg-index.html
-use reflect_gen::reflect_pg_index;
+pub use reflect_gen::reflect_pg_index;
 
 // `pg_inherits`: https://www.postgresql.org/docs/17/catalog-pg-inherits.html
-use reflect_gen::reflect_pg_inherits;
+pub use reflect_gen::reflect_pg_inherits;
 
 // `pg_init_privs`: https://www.postgresql.org/docs/17/catalog-pg-init-privs.html
 
 // `pg_language`: https://www.postgresql.org/docs/17/catalog-pg-language.html
-use reflect_gen::reflect_pg_language;
+pub use reflect_gen::reflect_pg_language;
 
 // `pg_namespace`: https://www.postgresql.org/docs/17/catalog-pg-namespace.html
-use reflect_gen::reflect_pg_namespace;
+pub use reflect_gen::reflect_pg_namespace;
 
 // `pg_opclass`: https://www.postgresql.org/docs/17/catalog-pg-opclass.html
-use reflect_gen::reflect_pg_opclass;
+pub use reflect_gen::reflect_pg_opclass;
 
 // `pg_operator`: https://www.postgresql.org/docs/17/catalog-pg-operator.html
-use reflect_gen::reflect_pg_operator;
+pub use reflect_gen::reflect_pg_operator;
 
 // `pg_opfamily`: https://www.postgresql.org/docs/17/catalog-pg-opfamily.html
-use reflect_gen::reflect_pg_opfamily;
+pub use reflect_gen::reflect_pg_opfamily;
 
 // `pg_parameter_acl`: https://www.postgresql.org/docs/17/catalog-pg-parameter-acl.html
-use reflect_gen::reflect_pg_parameter_acl;
+pub use reflect_gen::reflect_pg_parameter_acl;
 
 // `pg_partitioned_table`: https://www.postgresql.org/docs/17/catalog-pg-partitioned-table.html
-use reflect_gen::reflect_pg_partitioned_table;
+pub use reflect_gen::reflect_pg_partitioned_table;
 
 // `pg_policy`: https://www.postgresql.org/docs/17/catalog-pg-policy.html
-use reflect_gen::reflect_pg_policy;
+pub use reflect_gen::reflect_pg_policy;
 
 // `pg_proc`: https://www.postgresql.org/docs/17/catalog-pg-proc.html
 pub async fn reflect_pg_proc(
@@ -390,32 +392,32 @@ pub async fn reflect_pg_proc(
 }
 
 // `pg_publication`: https://www.postgresql.org/docs/17/catalog-pg-publication.html
-use reflect_gen::reflect_pg_publication;
+pub use reflect_gen::reflect_pg_publication;
 
 // `pg_publication_namespace`: https://www.postgresql.org/docs/17/catalog-pg-publication-namespace.html
-use reflect_gen::reflect_pg_publication_namespace;
+pub use reflect_gen::reflect_pg_publication_namespace;
 
 // `pg_publication_rel`: https://www.postgresql.org/docs/17/catalog-pg-publication-rel.html
-use reflect_gen::reflect_pg_publication_rel;
+pub use reflect_gen::reflect_pg_publication_rel;
 
 // `pg_range`: https://www.postgresql.org/docs/17/catalog-pg-range.html
-use reflect_gen::reflect_pg_range;
+pub use reflect_gen::reflect_pg_range;
 
 // `pg_replication_origin`: https://www.postgresql.org/docs/17/catalog-pg-replication-origin.html
 
 // `pg_rewrite`: https://www.postgresql.org/docs/17/catalog-pg-rewrite.html
 
 // `pg_rules`: https://www.postgresql.org/docs/17/view-pg-rules.html
-use reflect_gen::reflect_pg_rules;
+pub use reflect_gen::reflect_pg_rules;
 // `pg_views`: https://www.postgresql.org/docs/17/view-pg-views.html
-use reflect_gen::reflect_pg_views;
+pub use reflect_gen::reflect_pg_views;
 // `pg_matviews`: https://www.postgresql.org/docs/17/view-pg-matviews.html
-use reflect_gen::reflect_pg_matviews;
+pub use reflect_gen::reflect_pg_matviews;
 
 // `pg_seclabel`: https://www.postgresql.org/docs/17/catalog-pg-seclabel.html
 
 // `pg_sequence`: https://www.postgresql.org/docs/17/catalog-pg-sequence.html
-use reflect_gen::reflect_pg_sequence;
+pub use reflect_gen::reflect_pg_sequence;
 
 // `pg_shdepend`: https://www.postgresql.org/docs/17/catalog-pg-shdepend.html
 
@@ -424,34 +426,34 @@ use reflect_gen::reflect_pg_sequence;
 // `pg_shseclabel`: https://www.postgresql.org/docs/17/catalog-pg-shseclabel.html
 
 // `pg_statistic_ext`: https://www.postgresql.org/docs/17/catalog-pg-statistic-ext.html
-use reflect_gen::reflect_pg_statistic_ext;
+pub use reflect_gen::reflect_pg_statistic_ext;
 
 // `pg_subscription`: https://www.postgresql.org/docs/17/catalog-pg-subscription.html
-use reflect_gen::reflect_pg_subscription;
+pub use reflect_gen::reflect_pg_subscription;
 
 // `pg_transform`: https://www.postgresql.org/docs/17/catalog-pg-transform.html
-use reflect_gen::reflect_pg_transform;
+pub use reflect_gen::reflect_pg_transform;
 
 // `pg_trigger`: https://www.postgresql.org/docs/17/catalog-pg-trigger.html
-use reflect_gen::reflect_pg_trigger;
+pub use reflect_gen::reflect_pg_trigger;
 
 // `pg_ts_config`: https://www.postgresql.org/docs/17/catalog-pg-ts-config.html
-use reflect_gen::reflect_pg_ts_config;
+pub use reflect_gen::reflect_pg_ts_config;
 
 // `pg_ts_config_map`: https://www.postgresql.org/docs/17/catalog-pg-ts-config-map.html
-use reflect_gen::reflect_pg_ts_config_map;
+pub use reflect_gen::reflect_pg_ts_config_map;
 
 // `pg_ts_dict`: https://www.postgresql.org/docs/17/catalog-pg-ts-dict.html
-use reflect_gen::reflect_pg_ts_dict;
+pub use reflect_gen::reflect_pg_ts_dict;
 
 // `pg_ts_parser`: https://www.postgresql.org/docs/17/catalog-pg-ts-parser.html
-use reflect_gen::reflect_pg_ts_parser;
+pub use reflect_gen::reflect_pg_ts_parser;
 
 // `pg_ts_template`: https://www.postgresql.org/docs/17/catalog-pg-ts-template.html
-use reflect_gen::reflect_pg_ts_template;
+pub use reflect_gen::reflect_pg_ts_template;
 
 // `pg_type`: https://www.postgresql.org/docs/17/catalog-pg-type.html
-use reflect_gen::reflect_pg_type;
+pub use reflect_gen::reflect_pg_type;
 
 // `pg_user_mappings`: https://www.postgresql.org/docs/17/catalog-pg-user-mapping.html
-use reflect_gen::reflect_pg_user_mappings;
+pub use reflect_gen::reflect_pg_user_mappings;

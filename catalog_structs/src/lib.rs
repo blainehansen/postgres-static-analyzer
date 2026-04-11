@@ -108,7 +108,6 @@ pub struct PgState {
 	pub pg_user_mappings: Vec<PgUserMappings>,
 }
 
-#[macro_export]
 macro_rules! impl_name_hash_and_equivalent {
 	($type:ty, $field:ident) => {
 		impl std::hash::Hash for $type {
@@ -130,8 +129,8 @@ macro_rules! impl_name_hash_and_equivalent {
 		}
 	};
 }
+pub(crate) use impl_name_hash_and_equivalent;
 
-#[macro_export]
 macro_rules! impl_qual_hash_and_equivalent {
 	($type:ty) => {
 		impl std::hash::Hash for $type {
@@ -174,9 +173,8 @@ macro_rules! impl_qual_hash_and_equivalent {
 		}
 	};
 }
+pub(crate) use impl_qual_hash_and_equivalent;
 
-
-// #[macro_export]
 // macro_rules! impl_pg_from_str {
 // 	($type:ident, $($variant:ident),+ $(,)?) => {
 // 		impl $type {
@@ -190,7 +188,6 @@ macro_rules! impl_qual_hash_and_equivalent {
 // 	};
 // }
 
-#[macro_export]
 macro_rules! pg_char_enum {
 	($name:ident { $($char:literal => $variant:ident),* $(,)? }) => {
 		#[derive(Debug, serde::Serialize, serde::Deserialize, PartialEq, Eq, Clone)]
@@ -212,6 +209,7 @@ macro_rules! pg_char_enum {
 		}
 	};
 }
+pub(crate) use pg_char_enum;
 
 // `pg_aggregate`: https://www.postgresql.org/docs/17/catalog-pg-aggregate.html
 

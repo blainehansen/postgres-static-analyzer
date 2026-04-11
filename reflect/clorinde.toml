@@ -1,8 +1,8 @@
 use-workspace-deps = "./Cargo.toml"
 
 [manifest.package]
-name = "queries_crate"
-version = "1.0.0"
+name = "postgres-static-analyzer-reflect-queries"
+version = "0.1.0"
 description = "Reflection queries for postgres-static-analyzer."
 license = "MIT"
 edition = "2024"

@@ -5,6 +5,29 @@ default_to_workspace = false
 # for tasks you *want* to run individually in members:
 # workspace = true
 
+[tasks.release]
+dependencies = [
+	"gen_pg_info_decisions",
+	"gen_pg_info",
+	"reflect_gen_queries",
+	"check",
+	"test",
+	"publish",
+]
+
+[tasks.publish]
+command = "cargo"
+args = ["publish", "--dry-run", "--workspace", "--exclude", "temp_container_utils"]
+
+[tasks.check]
+command = "cargo"
+args = ["check"]
+
+[tasks.test]
+command = "cargo"
+args = ["test"]
+
+
 [tasks.reflect_gen_queries]
 command = "clorinde"
 install_crate = "clorinde"
@@ -40,9 +63,9 @@ condition = { files_modified = { input = ["extract_pg_info.ts"], output = ["./ex
 # extracts the info itself, making minimal decisions
 
 [tasks.gen_pg_info_decisions]
-dependencies = ["extract_pg_info"]
 command = "deno"
 args = ["run", "--allow-write", "--allow-read", "gen_pg_info_decisions.ts"]
+dependencies = ["extract_pg_info"]
 # generates the decisions, using all the heuristics and overrides
 
 [tasks.gen_pg_info]

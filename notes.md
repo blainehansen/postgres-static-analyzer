@@ -1,42 +1,131 @@
-tasks:
+# `postgres-static-analyzer`
 
-- get the `populate_all.sql` script fully working
-- make the decisions ts file more dumb for now, just get the first table working fully using the full_test script
-- then work through the tables in order, doing them manually
+TODO note that foreign server user mapping reflection will change based on what user is performing the reflection!
 
 
-pg_database.oid should be filtered to `current_database` and not returned
-columns with type `regproc` aren't precise enough
+This library gives tools for *statically* analyzing postgres sql code for type checking, permissions checking, and diff generation. It can't detect whether *data* operations will always succeed based on *constraints*, but it can detect if they will succeed based on inferred types.
 
-columns that have "reg" aliases can have a "qual" or something field that contains a Qual (renamed from Ref), and this Qual identifies them and acts as their hash identity
-Qual is equivalent to (str, str)
+Here are some of the top level types and functions:
 
-we should have a single *snapshot* test that truly reflects the whole database, `pg_catalog` and `information_schema` included
-the only filtering we'll do is to the current database, and to objects that are actually "live" such as non-deleted columns
+`DbState`
+
+A type declaratively representing what database objects exist in a database (data isn't included).
+
+`SqlBlock`
+
+A type representing a chunk of sql commands. (is this just an alias or a trait or something?)
+
+```rust
+struct ApplyOutcome {
+  db_state: DbState,
+  destroys_objects: bool,
+  mutates_objects: bool,
+  destroys_data: bool,
+  mutates_data: bool,
+  errors: Vec<Error>,
+}
+
+struct RejectFlags {
+  destroy_objects: bool,
+  destroy_data: bool,
+  mutate_objects: bool,
+  mutate_data: bool,
+}
+impl Default for RejectFlags {
+  fn default() -> Self {
+    Self { destroy_objects: false, destroy_data: false, mutate_objects: false, mutate_data: false }
+  }
+}
+```
+
+---
+
+`try_seq(seq: Vec<SqlBlock>, stop_on_error: bool) -> ApplyOutcome`
+
+This runs through the sequence of sql blocks, checking if each is valid, assuming starting from a "default" database, at the end returning the final state the database would be in, given errors are rejected and so don't occur, including the entirety of failed transactions, or if stopped at the first error.
+
+<!-- probably better idea to include a const SqlBlock representing various different default states of databases -->
+
+It also emits whether any objects or data are destroyed or mutated, and which ones.
+
+---
+
+`demand_seq(seq: Vec<SqlBlock>, reject_options: RejectFlags) -> Result<DbState, Error>`
+
+Same as above, but assumes `stop_on_error = true`, and returns a `Result` containing that first `Error` if encountered.
 
 
-columns referencing these things still need joins to get the name
-pg_am
-pg_tablespace
-pg_constraint
-pg_opclass
-pg_language
+---
 
-actually things referencing pg_tablespace should just be skipped, since I'm skipping it, and that holds for all the other tables I'm skipping entirely
-so if I find a column that's referencing something, and that something isn't in the list of tables I'm going to reflect, I skip the column entirely
+`try_role_seq(seq: Vec<(Role, SqlBlock)>) -> (DbState, Vec<Error>)`
+
+This checks that the given sequence of sql blocks, each with an adjoining `Role` designating *who* is executing them, is valid. Doing this allows permission checking alongside normal type checking.
+
+---
+
+`demand_role_seq(seq: Vec<(Role, SqlBlock)>) -> Result<DbState, Error>`
+
+---
+
+`compute_diff(from_seq: Vec<SqlBlock>, to_seq: Vec<SqlBlock>) -> SqlBlock`
+
+Determines the sql block necessary to migrate from the state implied by `from_seq` to that implied by `to_seq`.
+
+---
+
+`reflect_db_url(db_url: impl AsRef<str>) -> impl Future<Output=postgres::Result<DbState>>`
+`reflect_db_config(db_config: &postgres::Config) -> impl Future<Output=postgres::Result<DbState>>`
+`reflect_db_client(db_client: impl postgres::GenericClient) -> impl Future<Output=postgres::Result<DbState>>`
+
+Connects to the database and reads its actual current state.
+
+Since `DbState` implements `Into<SqlBlock>`, you can use this to run `compute_diff` against the state of a real db.
+
+---
+
+`backfill_missing(target: SqlBlock) -> Result<SqlBlock, Error>`
+
+figures out a command block necessary to ensure that `target` could succeed, if that's at all possible (`target` isn't self-contradictory or simply malformed)
+
+<!--
+this becomes a lot more straightforward if you can go from Error to SqlBlock! if Error has enough information to specify "missing" objects
+missing objects are th only ones you can do this for, as long as they're specified in sufficient detail
+so if there's a discrete Error type for missing objects with enough information about what the thing they were *trying* to reference was, then you can reconstruct it. the hard part is you need to infer at the missing site any necessary type information about what's needed
+
+this is acceptable is you have a "NotImplemented" variant of the error being returned from backfill_missing, so that you can punt certain kinds of possible but annoying reconstructions
+-->
+
+---
+
+
+`apply_command(db_state: DbState, sql_command: SqlCommand) -> ApplyOutcome`
+
+
+---
+
+How have you ensured this library is correct?
+
+
+to e2e test `compute_diff`, you randomly generate some (valid) DbState (or for every kind of item in the DbState), then `compute_diff` from empty to it, then apply that diff to a real database, then `reflect_db_client` and ensure the two states are exactly the same
+
+Then with `compute_diff` in hand, then you can e2e test the above `seq` functions, by randomly generating any two DbStates, computing the diff between them, and demanding that it is valid, and that you can execute all those states/diffs and end up in the right place (a form of further testing for `compute_diff`).
+
+And given the presence of `backfill_missing`, it's possible for every kind of top level command enumerated by sqlparser, to create a dummy version of it, backfill whatever's necessary for it, and then demand that the `seq` functions line up with the others
+
+Or rather the better way to think about this is using these techniques we can generate a massive corpus of test examples.
+
+
+Also if you can be given a `DbState` and randomly generate a command to run against it, then it's actually fine to have ones that are both invalid and valid, since you can just demand that the validity found by the library is the same as that for the real database.
+
+https://readyset.io/blog/stateful-property-testing-in-rust
+https://proptest-rs.github.io/proptest/
+https://crates.io/crates/proptest-stateful
+
+https://proptest-rs.github.io/proptest/proptest/tutorial/transforming-strategies.html
 
 
 
-crates:
-
-- state, for the dbstate etc structs
-- reflect, the one with actual tokio etc that can pull from a real database
-- arbitrary statement, strategies that can create valid or invalid statements given an existing state
-- diff, which can diff states and produce statements
-- static analysis, which can produce states from raw strings and states etc
-
-
-
+---
 
 
 
@@ -51,176 +140,6 @@ by default, public has USAGE on all languages
 by default, public has USAGE on all types/domains
 
 ```
-COLUMN
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
-
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
-
-
-TABLE and table-like objects
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- devuser | INSERT         | f            | devuser
- devuser | SELECT         | f            | devuser
- devuser | UPDATE         | f            | devuser
- devuser | DELETE         | f            | devuser
- devuser | TRUNCATE       | f            | devuser
- devuser | REFERENCES     | f            | devuser
- devuser | TRIGGER        | f            | devuser
- devuser | MAINTAIN       | f            | devuser
-
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- a       | INSERT         | f            | a
- a       | SELECT         | f            | a
- a       | UPDATE         | f            | a
- a       | DELETE         | f            | a
- a       | TRUNCATE       | f            | a
- a       | REFERENCES     | f            | a
- a       | TRIGGER        | f            | a
- a       | MAINTAIN       | f            | a
-
-
-SEQUENCE
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- devuser | SELECT         | f            | devuser
- devuser | UPDATE         | f            | devuser
- devuser | USAGE          | f            | devuser
-
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- a       | SELECT         | f            | a
- a       | UPDATE         | f            | a
- a       | USAGE          | f            | a
-
-
-DATABASE
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- public  | TEMPORARY      | f            | devuser
- public  | CONNECT        | f            | devuser
- devuser | CREATE         | f            | devuser
- devuser | TEMPORARY      | f            | devuser
- devuser | CONNECT        | f            | devuser
-
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- public  | TEMPORARY      | f            | a
- public  | CONNECT        | f            | a
- a       | CREATE         | f            | a
- a       | TEMPORARY      | f            | a
- a       | CONNECT        | f            | a
-
-
-FUNCTION or PROCEDURE
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- public  | EXECUTE        | f            | devuser
- devuser | EXECUTE        | f            | devuser
-
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- public  | EXECUTE        | f            | a
- a       | EXECUTE        | f            | a
-
-
-LANGUAGE
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- public  | USAGE          | f            | devuser
- devuser | USAGE          | f            | devuser
-
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- public  | USAGE          | f            | a
- a       | USAGE          | f            | a
-
-
-LARGE OBJECT
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- devuser | SELECT         | f            | devuser
- devuser | UPDATE         | f            | devuser
-
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- a       | SELECT         | f            | a
- a       | UPDATE         | f            | a
-
-
-SCHEMA
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- devuser | USAGE          | f            | devuser
- devuser | CREATE         | f            | devuser
-
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- a       | USAGE          | f            | a
- a       | CREATE         | f            | a
-
-
-PARAMETER
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- devuser | SET            | f            | devuser
- devuser | ALTER SYSTEM   | f            | devuser
-
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- a       | SET            | f            | a
- a       | ALTER SYSTEM   | f            | a
-
-
-TABLESPACE
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- devuser | CREATE         | f            | devuser
-
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- a       | CREATE         | f            | a
-
-
-FOREIGN DATA WRAPPER
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- devuser | USAGE          | f            | devuser
-
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- a       | USAGE          | f            | a
-
-
-FOREIGN SERVER
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- devuser | USAGE          | f            | devuser
-
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- a       | USAGE          | f            | a
-
-
-TYPE or DOMAIN
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- public  | USAGE          | f            | devuser
- devuser | USAGE          | f            | devuser
-
- grantee | privilege_type | is_grantable | grantor
----------+----------------+--------------+---------
- public  | USAGE          | f            | a
- a       | USAGE          | f            | a
-```
-
-
-
-```
-echo ''
 echo 'COLUMN'
 PGPASSWORD='devpassword' psql -U devuser -h localhost devdb <<EOF
 select
@@ -236,262 +155,5 @@ select
 from aclexplode(acldefault('c', 'a'::regrole::oid));
 EOF
 
-echo ''
-echo 'TABLE and table-like objects'
-PGPASSWORD='devpassword' psql -U devuser -h localhost devdb <<EOF
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('r', 'devuser'::regrole::oid));
-
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('r', 'a'::regrole::oid));
-EOF
-
-echo ''
-echo 'SEQUENCE'
-PGPASSWORD='devpassword' psql -U devuser -h localhost devdb <<EOF
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('s', 'devuser'::regrole::oid));
-
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('s', 'a'::regrole::oid));
-EOF
-
-echo ''
-echo 'DATABASE'
-PGPASSWORD='devpassword' psql -U devuser -h localhost devdb <<EOF
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('d', 'devuser'::regrole::oid));
-
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('d', 'a'::regrole::oid));
-EOF
-
-echo ''
-echo 'FUNCTION or PROCEDURE'
-PGPASSWORD='devpassword' psql -U devuser -h localhost devdb <<EOF
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('f', 'devuser'::regrole::oid));
-
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('f', 'a'::regrole::oid));
-EOF
-
-echo ''
-echo 'LANGUAGE'
-PGPASSWORD='devpassword' psql -U devuser -h localhost devdb <<EOF
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('l', 'devuser'::regrole::oid));
-
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('l', 'a'::regrole::oid));
-EOF
-
-echo ''
-echo 'LARGE OBJECT'
-PGPASSWORD='devpassword' psql -U devuser -h localhost devdb <<EOF
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('L', 'devuser'::regrole::oid));
-
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('L', 'a'::regrole::oid));
-EOF
-
-echo ''
-echo 'SCHEMA'
-PGPASSWORD='devpassword' psql -U devuser -h localhost devdb <<EOF
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('n', 'devuser'::regrole::oid));
-
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('n', 'a'::regrole::oid));
-EOF
-
-echo ''
-echo 'PARAMETER'
-PGPASSWORD='devpassword' psql -U devuser -h localhost devdb <<EOF
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('p', 'devuser'::regrole::oid));
-
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('p', 'a'::regrole::oid));
-EOF
-
-echo ''
-echo 'TABLESPACE'
-PGPASSWORD='devpassword' psql -U devuser -h localhost devdb <<EOF
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('t', 'devuser'::regrole::oid));
-
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('t', 'a'::regrole::oid));
-EOF
-
-echo ''
-echo 'FOREIGN DATA WRAPPER'
-PGPASSWORD='devpassword' psql -U devuser -h localhost devdb <<EOF
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('F', 'devuser'::regrole::oid));
-
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('F', 'a'::regrole::oid));
-EOF
-
-echo ''
-echo 'FOREIGN SERVER'
-PGPASSWORD='devpassword' psql -U devuser -h localhost devdb <<EOF
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('S', 'devuser'::regrole::oid));
-
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('S', 'a'::regrole::oid));
-EOF
-
-echo ''
-echo 'TYPE or DOMAIN'
-PGPASSWORD='devpassword' psql -U devuser -h localhost devdb <<EOF
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('T', 'devuser'::regrole::oid));
-
-select
-  case when grantee = 0 then 'public' else pg_get_userbyid(grantee)::text end as grantee,
-  privilege_type, is_grantable,
-  pg_get_userbyid(grantor)::text as grantor
-from aclexplode(acldefault('T', 'a'::regrole::oid));
-EOF
+etc...
 ```
-
-
-
-`pg_aggregate`: https://www.postgresql.org/docs/17/catalog-pg-aggregate.html
-`pg_am`: https://www.postgresql.org/docs/17/catalog-pg-am.html
-`pg_amop`: https://www.postgresql.org/docs/17/catalog-pg-amop.html
-`pg_amproc`: https://www.postgresql.org/docs/17/catalog-pg-amproc.html
-`pg_attrdef`: https://www.postgresql.org/docs/17/catalog-pg-attrdef.html
-`pg_attribute`: https://www.postgresql.org/docs/17/catalog-pg-attribute.html
-`pg_authid`: https://www.postgresql.org/docs/17/catalog-pg-authid.html
-`pg_auth_members`: https://www.postgresql.org/docs/17/catalog-pg-auth-members.html
-`pg_cast`: https://www.postgresql.org/docs/17/catalog-pg-cast.html
-`pg_class`: https://www.postgresql.org/docs/17/catalog-pg-class.html
-`pg_collation`: https://www.postgresql.org/docs/17/catalog-pg-collation.html
-`pg_constraint`: https://www.postgresql.org/docs/17/catalog-pg-constraint.html
-`pg_conversion`: https://www.postgresql.org/docs/17/catalog-pg-conversion.html
-`pg_database`: https://www.postgresql.org/docs/17/catalog-pg-database.html
-`pg_db_role_setting`: https://www.postgresql.org/docs/17/catalog-pg-db-role-setting.html
-`pg_default_acl`: https://www.postgresql.org/docs/17/catalog-pg-default-acl.html
-`pg_depend`: https://www.postgresql.org/docs/17/catalog-pg-depend.html
-`pg_description`: https://www.postgresql.org/docs/17/catalog-pg-description.html
-`pg_enum`: https://www.postgresql.org/docs/17/catalog-pg-enum.html
-`pg_event_trigger`: https://www.postgresql.org/docs/17/catalog-pg-event-trigger.html
-`pg_extension`: https://www.postgresql.org/docs/17/catalog-pg-extension.html
-`pg_foreign_data_wrapper`: https://www.postgresql.org/docs/17/catalog-pg-foreign-data-wrapper.html
-`pg_foreign_server`: https://www.postgresql.org/docs/17/catalog-pg-foreign-server.html
-`pg_foreign_table`: https://www.postgresql.org/docs/17/catalog-pg-foreign-table.html
-`pg_index`: https://www.postgresql.org/docs/17/catalog-pg-index.html
-`pg_inherits`: https://www.postgresql.org/docs/17/catalog-pg-inherits.html
-`pg_init_privs`: https://www.postgresql.org/docs/17/catalog-pg-init-privs.html
-`pg_language`: https://www.postgresql.org/docs/17/catalog-pg-language.html
-`pg_largeobject`: https://www.postgresql.org/docs/17/catalog-pg-largeobject.html
-`pg_largeobject_metadata`: https://www.postgresql.org/docs/17/catalog-pg-largeobject-metadata.html
-`pg_namespace`: https://www.postgresql.org/docs/17/catalog-pg-namespace.html
-`pg_opclass`: https://www.postgresql.org/docs/17/catalog-pg-opclass.html
-`pg_operator`: https://www.postgresql.org/docs/17/catalog-pg-operator.html
-`pg_opfamily`: https://www.postgresql.org/docs/17/catalog-pg-opfamily.html
-`pg_parameter_acl`: https://www.postgresql.org/docs/17/catalog-pg-parameter-acl.html
-`pg_partitioned_table`: https://www.postgresql.org/docs/17/catalog-pg-partitioned-table.html
-`pg_policy`: https://www.postgresql.org/docs/17/catalog-pg-policy.html
-`pg_proc`: https://www.postgresql.org/docs/17/catalog-pg-proc.html
-`pg_publication`: https://www.postgresql.org/docs/17/catalog-pg-publication.html
-`pg_publication_namespace`: https://www.postgresql.org/docs/17/catalog-pg-publication-namespace.html
-`pg_publication_rel`: https://www.postgresql.org/docs/17/catalog-pg-publication-rel.html
-`pg_range`: https://www.postgresql.org/docs/17/catalog-pg-range.html
-`pg_replication_origin`: https://www.postgresql.org/docs/17/catalog-pg-replication-origin.html
-`pg_rewrite`: https://www.postgresql.org/docs/17/catalog-pg-rewrite.html
-`pg_seclabel`: https://www.postgresql.org/docs/17/catalog-pg-seclabel.html
-`pg_sequence`: https://www.postgresql.org/docs/17/catalog-pg-sequence.html
-`pg_shdepend`: https://www.postgresql.org/docs/17/catalog-pg-shdepend.html
-`pg_shdescription`: https://www.postgresql.org/docs/17/catalog-pg-shdescription.html
-`pg_shseclabel`: https://www.postgresql.org/docs/17/catalog-pg-shseclabel.html
-`pg_statistic`: https://www.postgresql.org/docs/17/catalog-pg-statistic.html
-`pg_statistic_ext`: https://www.postgresql.org/docs/17/catalog-pg-statistic-ext.html
-`pg_statistic_ext_data`: https://www.postgresql.org/docs/17/catalog-pg-statistic-ext-data.html
-`pg_subscription`: https://www.postgresql.org/docs/17/catalog-pg-subscription.html
-`pg_subscription_rel`: https://www.postgresql.org/docs/17/catalog-pg-subscription-rel.html
-`pg_tablespace`: https://www.postgresql.org/docs/17/catalog-pg-tablespace.html
-`pg_transform`: https://www.postgresql.org/docs/17/catalog-pg-transform.html
-`pg_trigger`: https://www.postgresql.org/docs/17/catalog-pg-trigger.html
-`pg_ts_config`: https://www.postgresql.org/docs/17/catalog-pg-ts-config.html
-`pg_ts_config_map`: https://www.postgresql.org/docs/17/catalog-pg-ts-config-map.html
-`pg_ts_dict`: https://www.postgresql.org/docs/17/catalog-pg-ts-dict.html
-`pg_ts_parser`: https://www.postgresql.org/docs/17/catalog-pg-ts-parser.html
-`pg_ts_template`: https://www.postgresql.org/docs/17/catalog-pg-ts-template.html
-`pg_type`: https://www.postgresql.org/docs/17/catalog-pg-type.html
-`pg_user_mapping`: https://www.postgresql.org/docs/17/catalog-pg-user-mapping.html
