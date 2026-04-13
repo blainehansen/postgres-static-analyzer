@@ -73,7 +73,7 @@ pg_class.relreplident = { pgEnum="'d' => Default, 'n' => Nothing, 'f' => AllColu
 # Provider of the collation: d = database default, b = builtin, c = libc, i = icu
 pg_collation.collprovider = { pgEnum="'d' => DatabaseDefault, 'b' => Builtin, 'c' => Libc, 'i' => Icu" }
 pg_collation.collicurules = { nullable=true }
-pg_collation.collversion = { nullable=true }
+pg_collation.collversion = 'skip'
 
 # pg_constraint = {}
 pg_constraint.conbin = { sel="pg_get_expr(pg_constraint.conbin, pg_constraint.conrelid)", ty="Option<Str>", exp="pg_constraint.conbin.map(Into::into)" }
@@ -99,7 +99,7 @@ pg_database.datcollate = { nullable=true }
 pg_database.datctype = { nullable=true }
 pg_database.datlocale = { nullable=true }
 pg_database.daticurules = { nullable=true }
-pg_database.datcollversion = { nullable=true }
+pg_database.datcollversion = 'skip'
 
 pg_db_role_setting = 'manual'
 
@@ -132,6 +132,7 @@ pg_index.indpred = { sel="pg_get_expr(pg_index.indpred, pg_index.indrelid)", ty=
 pg_index.indisvalid = 'skip'
 pg_index.indcheckxmin = 'skip'
 pg_index.indisready = 'skip'
+pg_index.indisclustered = 'skip'
 pg_index.indislive = 'skip'
 pg_index.indoption = { sel="pg_index.indoption::int2[]", ty="Vec<i16>", exp="pg_index.indoption.collect()" }
 pg_index.indcollation = { sel="pg_temp.format_pg_collation_oidvector(pg_index.indcollation)", ty="Vec<Option<Str>>", exp="pg_index.indcollation.map(maybe_str).collect()" }

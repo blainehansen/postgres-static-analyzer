@@ -368,8 +368,7 @@ pub struct PgCollation {
 	pub colllocale: Option<Str>,
 	/// `text`  ICU collation rules for this collation object
 	pub collicurules: Option<Str>,
-	/// `text`  Provider-specific version of the collation. This is recorded when the collation is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
-	pub collversion: Option<Str>,
+	// collversion text  Provider-specific version of the collation. This is recorded when the collation is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
 	/// `text`  The comment from pg_description
 	pub description: Option<Str>,
 }
@@ -494,8 +493,7 @@ pub struct PgDatabase {
 	pub datlocale: Option<Str>,
 	/// `text`  ICU collation rules for this database
 	pub daticurules: Option<Str>,
-	/// `text`  Provider-specific version of the collation. This is recorded when the database is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
-	pub datcollversion: Option<Str>,
+	// datcollversion text  Provider-specific version of the collation. This is recorded when the database is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
 	/// `aclitem[]`  Access privileges; see Section 5.8 for details
 	pub datacl: Option<Vec<DbAclItem>>,
 	/// `text`  The comment from pg_shdescription
@@ -666,8 +664,7 @@ pub struct PgIndex {
 	pub indisexclusion: bool,
 	/// `bool`  If true, the uniqueness check is enforced immediately on insertion (irrelevant if indisunique is not true)
 	pub indimmediate: bool,
-	/// `bool`  If true, the table was last clustered on this index
-	pub indisclustered: bool,
+	// indisclustered bool  If true, the table was last clustered on this index
 	// indisvalid bool  If true, the index is currently valid for queries. False means the index is possibly incomplete: it must still be modified by INSERT/UPDATE operations, but it cannot safely be used for queries. If it is unique, the uniqueness property is not guaranteed true either.
 	// indcheckxmin bool  If true, queries must not use the index until the xmin of this pg_index row is below their TransactionXmin event horizon, because the table may contain broken HOT chains with incompatible rows that they can see
 	// indisready bool  If true, the index is currently ready for inserts. False means the index must be ignored by INSERT/UPDATE operations.

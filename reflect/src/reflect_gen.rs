@@ -293,7 +293,6 @@ pub async fn reflect_pg_collation(
 				collctype: pg_collation.collctype.map(Into::into),
 				colllocale: pg_collation.colllocale.map(Into::into),
 				collicurules: pg_collation.collicurules.map(Into::into),
-				collversion: pg_collation.collversion.map(Into::into),
 				description: pg_collation.description.map(Into::into),
 			}
 		})
@@ -388,7 +387,6 @@ pub async fn reflect_pg_database(
 				datctype: pg_database.datctype.map(Into::into),
 				datlocale: pg_database.datlocale.map(Into::into),
 				daticurules: pg_database.daticurules.map(Into::into),
-				datcollversion: pg_database.datcollversion.map(Into::into),
 				datacl: pg_database.datacl.map(|datacl| datacl.map(|acl| aclitems!(acl, DbAclItem, DbGrant)).collect()),
 				description: pg_database.description.map(Into::into),
 				seclabel: pg_database.seclabel.map(Into::into),
@@ -557,7 +555,6 @@ pub async fn reflect_pg_index(
 				indisprimary: pg_index.indisprimary,
 				indisexclusion: pg_index.indisexclusion,
 				indimmediate: pg_index.indimmediate,
-				indisclustered: pg_index.indisclustered,
 				indisreplident: pg_index.indisreplident,
 				indkey: pg_index.indkey.map(i16::unsigned_abs).collect(),
 				indcollation: pg_index.indcollation.map(maybe_str).collect(),

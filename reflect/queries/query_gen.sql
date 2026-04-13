@@ -239,7 +239,7 @@ where
 ;
 
 
---! reflect_pg_collation : (collencoding?, collcollate?, collctype?, colllocale?, collicurules?, collversion?, description?)
+--! reflect_pg_collation : (collencoding?, collcollate?, collctype?, colllocale?, collicurules?, description?)
 select
 	pg_collation.oid::regcollation::text as oid, -- oid  Row identifier
 	pg_collation.collname::text as collname, -- name  Collation name (unique per namespace and encoding)
@@ -252,7 +252,7 @@ select
 	pg_collation.collctype as collctype, -- text  LC_CTYPE for this collation object. If the provider is not libc, collctype is NULL and colllocale is used instead.
 	pg_collation.colllocale as colllocale, -- text  Collation provider locale name for this collation object. If the provider is libc, colllocale is NULL; collcollate and collctype are used instead.
 	pg_collation.collicurules as collicurules, -- text  ICU collation rules for this collation object
-	pg_collation.collversion as collversion, -- text  Provider-specific version of the collation. This is recorded when the collation is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
+	-- collversion text  Provider-specific version of the collation. This is recorded when the collation is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
 	pg_description.description as description -- text  The comment from pg_description
 from
 	pg_collation
@@ -318,7 +318,7 @@ from
 ;
 
 
---! reflect_pg_database : (datconnlimit?, datcollate?, datctype?, datlocale?, daticurules?, datcollversion?, datacl?, description?, seclabel?, seclabel_provider?)
+--! reflect_pg_database : (datconnlimit?, datcollate?, datctype?, datlocale?, daticurules?, datacl?, description?, seclabel?, seclabel_provider?)
 select
 	-- oid oid  Row identifier
 	pg_database.datname::text as datname, -- name  Database name
@@ -336,7 +336,7 @@ select
 	pg_database.datctype as datctype, -- text  LC_CTYPE for this database
 	pg_database.datlocale as datlocale, -- text  Collation provider locale name for this database. If the provider is libc, datlocale is NULL; datcollate and datctype are used instead.
 	pg_database.daticurules as daticurules, -- text  ICU collation rules for this database
-	pg_database.datcollversion as datcollversion, -- text  Provider-specific version of the collation. This is recorded when the database is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
+	-- datcollversion text  Provider-specific version of the collation. This is recorded when the database is created and then checked when it is used, to detect changes in the collation definition that could lead to data corruption.
 	pg_temp.format_db_aclitems(pg_database.datacl) as datacl, -- aclitem[]  Access privileges; see Section 5.8 for details
 	pg_shdescription.description as description, -- text  The comment from pg_shdescription
 	pg_shseclabel.label as seclabel, -- text  The seclabel from pg_shseclabel
@@ -460,7 +460,7 @@ select
 	pg_index.indisprimary as indisprimary, -- bool  If true, this index represents the primary key of the table (indisunique should always be true when this is true)
 	pg_index.indisexclusion as indisexclusion, -- bool  If true, this index supports an exclusion constraint
 	pg_index.indimmediate as indimmediate, -- bool  If true, the uniqueness check is enforced immediately on insertion (irrelevant if indisunique is not true)
-	pg_index.indisclustered as indisclustered, -- bool  If true, the table was last clustered on this index
+	-- indisclustered bool  If true, the table was last clustered on this index
 	-- indisvalid bool  If true, the index is currently valid for queries. False means the index is possibly incomplete: it must still be modified by INSERT/UPDATE operations, but it cannot safely be used for queries. If it is unique, the uniqueness property is not guaranteed true either.
 	-- indcheckxmin bool  If true, queries must not use the index until the xmin of this pg_index row is below their TransactionXmin event horizon, because the table may contain broken HOT chains with incompatible rows that they can see
 	-- indisready bool  If true, the index is currently ready for inserts. False means the index must be ignored by INSERT/UPDATE operations.
