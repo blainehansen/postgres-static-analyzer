@@ -1,3 +1,52 @@
+```
+git reset HEAD~1 && git tag -d v0.1.0 postgres-static-analyzer-reflect@0.1.0  postgres-static-analyzer-reflect-queries@0.1.0  postgres-static-analyzer-ddl-catalog-structs@0.1.0
+cargo ws version --message "v%v" --exact --no-git-push custom 0.1.0
+cargo ws publish --dry-run --publish-as-is
+
+
+```
+
+
+```
+Critical: Text search definitions
+
+pg_ts_dict.dicttemplate — The TEMPLATE= parameter from CREATE TEXT SEARCH DICTIONARY ... (TEMPLATE = ...) is the entire implementation linkage of a dictionary. Without it you cannot
+reconstruct the DDL. dictinitoption (included) and dictname are meaningless without knowing the template they're passed to.
+
+pg_ts_config.cfgparser — The PARSER= parameter from CREATE TEXT SEARCH CONFIGURATION ... (PARSER = ...). Without it you can't reconstruct the config definition. pg_ts_parser is reflected,
+but the link from a configuration to its parser is severed.
+
+---
+Important: Tablespaces
+
+pg_class.reltablespace — Covers tables, indexes, and sequences. CREATE TABLE ... TABLESPACE, CREATE INDEX ... TABLESPACE, ALTER TABLE ... SET TABLESPACE are all lost. Zero means "database
+default" so non-zero entries are the only ones with explicit DDL choices.
+
+pg_database.dattablespace — The database's default tablespace from CREATE DATABASE ... TABLESPACE / ALTER DATABASE ... SET TABLESPACE.
+
+pg_matviews.tablespace — Same underlying data as reltablespace for matviews, consistently skipped with reltablespace, but both are gone.
+
+---
+Minor: Column storage strategy
+
+pg_attribute.attstorage — ALTER TABLE ... ALTER COLUMN ... SET STORAGE {PLAIN|EXTERNAL|EXTENDED|MAIN}. The default is copied from the type definition (pg_type.typstorage), so this only
+matters when someone explicitly overrides it. When overridden it IS a DDL choice.
+
+---
+Very minor
+
+pg_index.indisclustered — ALTER TABLE ... CLUSTER ON index_name sets this. pg_dump emits this as a DDL statement. Explicitly skipped in that recent commit — was there a specific reason?
+
+pg_aggregate.aggtransspace / aggmtransspace — The SSPACE= / MSSPACE= parameters in CREATE AGGREGATE. Performance hints only, but specifiable in DDL.
+
+---
+The two text search ones are the most surprising because they're definitional — the reflected objects are genuinely incomplete without them.
+```
+
+
+
+
+
 # `postgres-static-analyzer`
 
 TODO note that foreign server user mapping reflection will change based on what user is performing the reflection!

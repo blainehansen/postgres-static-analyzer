@@ -224,6 +224,8 @@ pg_subscription.suborigin = { nullable=true }
 pg_subscription.substream = { pgEnum="'f' => DisallowStreamingInProgress, 't' => SpillApplyAfterCommitted, 'p' => ApplyDirectlyParallel" }
 # State codes for two-phase mode: d = disabled, p = pending enablement, e = enabled
 pg_subscription.subtwophasestate = { pgEnum="'d' => Disabled, 'p' => PendingEnablement, 'e' => Enabled" }
+# TODO not clear whether I should collapse subtwophasestate to a bool
+# sel = "case when subtwophasestate = 'd' then 'd' else 'e' end"
 
 pg_transform = {}
 

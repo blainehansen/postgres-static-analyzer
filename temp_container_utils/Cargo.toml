@@ -1,7 +1,10 @@
 [package]
 name = "temp_container_utils"
-version = "0.1.0"
 edition = "2024"
+publish = false
+
+[package.metadata.workspaces]
+independent = true
 
 [dependencies]
 futures = { workspace = true }

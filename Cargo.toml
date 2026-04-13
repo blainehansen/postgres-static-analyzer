@@ -6,12 +6,21 @@ members = [
 	"reflect",
 ]
 
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/blainehansen/postgres-static-analyzer"
+
+[workspace.metadata.workspaces]
+allow_branch = 'main'
+
 [workspace.dependencies]
 futures = "0.3"
 thiserror = "2"
 tokio = { version = "1", features = ["full", "rt"] }
 tokio-postgres = { version = "0.7" }
-postgres-types = { version = "*", features = ["derive"] }
+postgres-types = { version = "0.2", features = ["derive"] }
 rand = "0.9"
 rand_distr = "0.5"
 chrono = { version = "0.4", default-features = false, features = ["alloc", "std", "alloc", "clock", "now", "serde"] }

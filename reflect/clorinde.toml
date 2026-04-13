@@ -2,14 +2,15 @@ use-workspace-deps = "./Cargo.toml"
 
 [manifest.package]
 name = "postgres-static-analyzer-reflect-queries"
-version = "0.1.0"
 description = "Reflection queries for postgres-static-analyzer."
-license = "MIT"
-edition = "2024"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [manifest.dependencies]
 # serde = { version = "1.0", features = ["derive"] }
-postgres-static-analyzer-ddl-catalog-structs = { path = "../../catalog_structs" }
+postgres-static-analyzer-ddl-catalog-structs = { path = "../../catalog_structs", version = "0.1.0" }
 
 [types.mapping]
 "pg_temp_1.db_aclprivilege" = "postgres_static_analyzer_ddl_catalog_structs::DbAclPrivilege"
