@@ -1,13 +1,4 @@
 ```
-git reset HEAD~1 && git tag -d v0.1.0 postgres-static-analyzer-reflect@0.1.0  postgres-static-analyzer-reflect-queries@0.1.0  postgres-static-analyzer-ddl-catalog-structs@0.1.0
-cargo ws version --message "v%v" --exact --no-git-push custom 0.1.0
-cargo ws publish --dry-run --publish-as-is
-
-
-```
-
-
-```
 Critical: Text search definitions
 
 pg_ts_dict.dicttemplate — The TEMPLATE= parameter from CREATE TEXT SEARCH DICTIONARY ... (TEMPLATE = ...) is the entire implementation linkage of a dictionary. Without it you cannot

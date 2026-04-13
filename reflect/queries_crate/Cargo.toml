@@ -35,7 +35,7 @@ optional = true
 version = "0.6.10"
 
 [dependencies.postgres-static-analyzer-ddl-catalog-structs]
-version = "=0.1.0"
+version = "0.1.0"
 path = "../../catalog_structs"
 
 [dependencies.postgres-types]
