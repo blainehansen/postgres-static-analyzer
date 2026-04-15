@@ -2,9 +2,9 @@
 
 The goal of this repo is to produce a static analyzer for postgres.
 
-:warning: No static analyzer exists yet, I'm working up to it in stages. :warning:
+## :warning: No static analyzer exists yet, I'm working up to it in stages. :warning:
 
-If you're curious about what exactly a postgres static analyzer is and why I'm building one, [read this blog post](https://blainehansen.me/post/database-static-analyzers/).
+If you're curious about what exactly a postgres static analyzer is and why I'm considering building one (:warning: I'm not sure if I'll even keep pursuing this! :warning:) [read this blog post](https://blainehansen.me/post/database-static-analyzers/).
 
 The repo contains the following crates which could be used today:
 
@@ -23,7 +23,7 @@ The long term plan is to also make crates to:
 
 - Use [`arbitrary`](https://docs.rs/arbitrary/latest/arbitrary/) to generate random database schema states (defined in terms of `ddl-catalog-structs`), and random [sql commands](https://www.postgresql.org/docs/17/sql-commands.html) (both valid and invalid) given a database schema state.
 - Build a schema diff tool reminiscent of [migra](https://github.com/djrobstep/migra), but that is fully static (doesn't require a running database). Will use [stateful property-based tests](https://readyset.io/blog/stateful-property-testing-in-rust) to validate the implementation against the real postgres.
-- Build the actual static analyzer! Will also use [stateful property-based tests](https://readyset.io/blog/stateful-property-testing-in-rust) to validate the implementation against the real postgres.
+- Build the actual static analyzer! Will also use [stateful property-based tests](https://readyset.io/blog/stateful-property-testing-in-rust) to validate the implementation against the real postgres. Might use [flow nodes?](https://effectivetypescript.com/2024/03/24/flownodes/)
 
 ## Generation of structs and reflection functions
 
