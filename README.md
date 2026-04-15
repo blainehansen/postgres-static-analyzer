@@ -4,7 +4,7 @@ The goal of this repo is to produce a static analyzer for postgres.
 
 ## :warning: No static analyzer exists yet, I'm working up to it in stages. :warning:
 
-If you're curious about what exactly a postgres static analyzer is and why I'm considering building one (:warning: I'm not sure if I'll even keep pursuing this! :warning:) [read this blog post](https://blainehansen.me/post/database-static-analyzers/).
+If you're curious about what exactly a postgres static analyzer is and why I'm considering building one ( :warning: I'm not sure if I'll even keep pursuing this! :warning: ) [read this blog post](https://blainehansen.me/post/database-static-analyzers/).
 
 The repo contains the following crates which could be used today:
 
